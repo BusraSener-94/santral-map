@@ -129,7 +129,7 @@ const LOCS:Loc[]=[
   {num:23,name:"Lokma",             gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",       gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve."},
   {num:25,name:"Ziyaretçi Girişi",  gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana ziyaretçi ve öğrenci girişi."},
-  {num:26,name:"Otopark",           gps:[41.06640,28.94810],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs araç otoparkı (doğu taraf)."},
+  {num:26,name:"Otopark",           gps:[41.06648,28.94440],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs araç otoparkı – güney giriş yakını."},
   {num:27,name:"Etkinlik Çadırı",   gps:[41.06561,28.94565],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı."},
   {num:28,name:"Kuluçka",           gps:[41.06505,28.94554],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi."},
   {num:29,name:"Revir",             gps:[41.06549,28.94630],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi."},
@@ -137,7 +137,7 @@ const LOCS:Loc[]=[
   {num:31,name:"Gastronomi",        gps:[41.06607,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları."},
   {num:32,name:"BT",                gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi."},
   {num:33,name:"Tarihi Kapı",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi fabrika giriş kapısı."},
-  {num:34,name:"Otopark Girişi",    gps:[41.06610,28.94830],cats:["otopark"],  emoji:"🚗",desc:"Otopark giriş/çıkış noktası."},
+  {num:34,name:"Otopark Girişi",    gps:[41.06628,28.94420],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
   {num:35,name:"Amfi",              gps:[41.06440,28.94520],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
 ];
 
@@ -305,6 +305,22 @@ export default function CampusMap(){
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
   },[stopSim]);
+
+  // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
+  useEffect(()=>{
+    if(mode!=='idle') history.pushState({santral:true},'');
+  },[mode]);
+  useEffect(()=>{
+    const handler=(e:PopStateEvent)=>{
+      const s=e.state as {santral?:boolean}|null;
+      if(s?.santral){
+        if(showSteps){setShowSteps(false);history.pushState({santral:true},'');return;}
+        reset();
+      }
+    };
+    window.addEventListener('popstate',handler);
+    return()=>window.removeEventListener('popstate',handler);
+  },[showSteps,reset]);
 
   const visible=useMemo(()=>LOCS.filter(l=>
     (!search||l.name.toLowerCase().includes(search.toLowerCase()))&&
@@ -522,23 +538,25 @@ export default function CampusMap(){
                     </button>
                   )}
                   <button onClick={()=>setShowSteps(p=>!p)}
-                    style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",fontSize:13,padding:"10px 12px",borderRadius:10}}>
-                    ≡
+                    title={showSteps?"Adımları gizle":"Adımları göster"}
+                    style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
+                      fontSize:11,padding:"10px 10px",borderRadius:10,gap:2,minWidth:52}}>
+                    {showSteps?"▲ Gizle":"≡ Adım"}
                   </button>
                 </div>
               )}
 
-              {/* Adım listesi */}
-              {showSteps&&mode==='ready'&&(
-                <div style={{background:"#0f172a",borderRadius:10,maxHeight:180,overflowY:"auto",padding:"6px 4px"}}>
+              {/* Adım listesi – sadece showSteps açıksa, max 150px */}
+              {showSteps&&(mode==='ready'||mode==='sim'||mode==='nav')&&(
+                <div style={{background:"#0f172a",borderRadius:10,maxHeight:150,overflowY:"auto",padding:"4px 2px"}}>
                   {navSteps.map((s,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"7px 8px",
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
                       borderBottom:i<navSteps.length-1?"1px solid #1e293b":"none",
-                      opacity:i<curStepIdx?0.35:1}}>
-                      <span style={{fontSize:18,minWidth:28,textAlign:"center",
+                      opacity:i<curStepIdx?0.3:1}}>
+                      <span style={{fontSize:16,minWidth:24,textAlign:"center",
                         color:i===curStepIdx?"#f97316":"#64748b"}}>{s.arrow}</span>
-                      <span style={{fontSize:13,color:i===curStepIdx?"#f1f5f9":"#94a3b8",flex:1}}>{s.text}</span>
-                      {s.dist>0&&<span style={{fontSize:11,color:"#475569"}}>{s.dist}m</span>}
+                      <span style={{fontSize:12,color:i===curStepIdx?"#f1f5f9":"#94a3b8",flex:1,lineHeight:1.3}}>{s.text}</span>
+                      {s.dist>0&&<span style={{fontSize:10,color:"#475569",flexShrink:0}}>{s.dist}m</span>}
                     </div>
                   ))}
                 </div>
@@ -546,8 +564,8 @@ export default function CampusMap(){
             </div>
           )}
 
-          {/* Kategori filtreleri */}
-          {(mode==='idle'||mode==='ready')&&(
+          {/* Kategori filtreleri – sadece idle modda */}
+          {mode==='idle'&&(
             <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4} as React.CSSProperties}>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,

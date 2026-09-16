@@ -166,6 +166,9 @@ export default function CampusMap(){
   const[routeM,setRouteM]=useState(0);
   const[navSteps,setNavSteps]=useState<Step[]>([]);
   const[showSteps,setShowSteps]=useState(false);
+  // Swipe-to-close bottom sheet
+  const[sheetTranslate,setSheetTranslate]=useState(0);
+  const touchStartY=useRef(0);
 
   // Uygulama modu
   type Mode='idle'|'pickFrom'|'pickTo'|'ready'|'sim'|'nav'|'arrived';
@@ -454,12 +457,29 @@ export default function CampusMap(){
       </div>
 
       {/* ─── Alt panel ───────────────────────────────────────────────────── */}
-      <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:10,
-        background:"#1e293b",borderRadius:"16px 16px 0 0",
-        boxShadow:"0 -4px 24px rgba(0,0,0,0.5)"}}>
+      <div
+        style={{position:"absolute",bottom:0,left:0,right:0,zIndex:10,
+          background:"#1e293b",borderRadius:"16px 16px 0 0",
+          boxShadow:"0 -4px 24px rgba(0,0,0,0.5)",
+          transform:`translateY(${Math.max(0,sheetTranslate)}px)`,
+          transition:sheetTranslate===0?"transform 0.25s ease":"none"}}
+        onTouchStart={e=>{touchStartY.current=e.touches[0].clientY;}}
+        onTouchMove={e=>{
+          const dy=e.touches[0].clientY-touchStartY.current;
+          if(dy>0)setSheetTranslate(dy);
+        }}
+        onTouchEnd={()=>{
+          if(sheetTranslate>80){
+            setSheetTranslate(0);
+            if(mode!=='idle')reset();
+            else if(showSteps)setShowSteps(false);
+          } else {
+            setSheetTranslate(0);
+          }
+        }}>
 
         {/* Drag handle */}
-        <div style={{display:"flex",justifyContent:"center",padding:"8px 0 2px",touchAction:"manipulation"}}>
+        <div style={{display:"flex",justifyContent:"center",padding:"8px 0 2px",touchAction:"none",cursor:"grab"}}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
         </div>
 

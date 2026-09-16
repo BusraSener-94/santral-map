@@ -342,7 +342,17 @@ export default function CampusMap(){
 
   const mins=Math.max(1,Math.round(routeM/83));
   const remM=Math.max(0,Math.round(routeM*(1-simPct/100)));
+  const remMins=Math.max(1,Math.round(remM/83));
   const activeStep=navSteps[curStepIdx];
+  const nextStep=navSteps[curStepIdx+1]??null;
+
+  // Geçilen / kalan rota segmentleri
+  const passedRoute=useMemo(()=>{
+    if(!route||simPct===0)return[] as[number,number][];
+    const cum=cumRef.current,total=cum[cum.length-1]??1,trav=total*simPct/100;
+    let idx=0;for(let i=1;i<cum.length;i++){if(cum[i]>=trav){idx=i;break;}}
+    return route.slice(0,idx+1) as[number,number][];
+  },[route,simPct]);
 
   const BTN:React.CSSProperties={border:"none",borderRadius:10,cursor:"pointer",
     display:"flex",alignItems:"center",justifyContent:"center",gap:6,
@@ -359,7 +369,13 @@ export default function CampusMap(){
           maxBounds={[[41.055,28.925],[41.085,28.965]]} maxBoundsViscosity={0.8} zoomControl={false}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
-          {route&&<><Polyline positions={route} pathOptions={{color:"#000",weight:8,opacity:0.1}}/><Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.92,lineCap:"round",lineJoin:"round"}}/></>}
+          {route&&<>
+            {/* Geçilen yol – gri */}
+            {passedRoute.length>1&&<Polyline positions={passedRoute} pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round"}}/>}
+            {/* Kalan yol gölge + renk */}
+            <Polyline positions={route} pathOptions={{color:"#000",weight:9,opacity:0.12,lineCap:"round",lineJoin:"round"}}/>
+            <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
+          </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {mode==='nav'&&userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={3000}/>}
           {userPos&&mode!=='nav'&&<Marker position={userPos} icon={USER_DOT} zIndexOffset={2500}/>}
@@ -403,7 +419,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <ZoomCtrl/>
-          <MapFollower pos={userPos} active={mode==='nav'}/>
+          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>
       </div>
 
@@ -424,6 +440,44 @@ export default function CampusMap(){
             </button>
           )}
           <button onClick={reset} style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",minHeight:36,padding:"6px 10px",fontSize:20}}>✕</button>
+        </div>
+      )}
+
+      {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
+      {(mode==='sim'||mode==='nav')&&activeStep&&(
+        <div style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.5)"}}>
+          {/* Ana yön kartı */}
+          <div style={{background:"#0d9488",padding:"14px 18px",
+            display:"flex",alignItems:"center",gap:14}}>
+            <div style={{fontSize:52,lineHeight:1,minWidth:56,textAlign:"center",
+              filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>
+              {activeStep.arrow}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.2}}>
+                {activeStep.text}
+              </div>
+              {remM>0&&<div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>
+                ~{remM}m · {remMins} dk kaldı
+              </div>}
+            </div>
+            {mode==='sim'&&(
+              <button onClick={()=>{stopSim();setMode('ready');}}
+                style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
+                  minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>■</button>
+            )}
+          </div>
+          {/* Sonraki adım */}
+          {nextStep&&(
+            <div style={{background:"#065f46",padding:"8px 18px 8px 88px",
+              display:"flex",alignItems:"center",gap:8}}>
+              <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>Ardından</span>
+              <span style={{fontSize:18,color:"rgba(255,255,255,0.85)"}}>{nextStep.arrow}</span>
+              <span style={{fontSize:13,color:"rgba(255,255,255,0.85)",flex:1,
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nextStep.text}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -538,21 +592,11 @@ export default function CampusMap(){
                   style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>✕</button>
               </div>
 
-              {/* Simülasyon / Nav progress */}
+              {/* Sim/Nav ilerleyiş çubuğu – sadece küçük bar */}
               {(mode==='sim'||mode==='nav')&&(
-                <div style={{background:"#0f172a",borderRadius:10,padding:"10px 12px",display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:24,color:"#f97316",minWidth:28,textAlign:"center",fontWeight:700}}>
-                    {activeStep?.arrow??"↑"}
-                  </span>
-                  <div style={{flex:1}}>
-                    <div style={{height:5,background:"#1e293b",borderRadius:3,overflow:"hidden",marginBottom:4}}>
-                      <div style={{height:"100%",width:`${simPct}%`,background:"linear-gradient(90deg,#f97316,#fb923c)",borderRadius:3,transition:"width 0.1s linear"}}/>
-                    </div>
-                    <div style={{fontSize:12,color:"#f1f5f9",fontWeight:600}}>{activeStep?.text??""}</div>
-                    <div style={{fontSize:10,color:"#64748b",marginTop:2}}>{simPct}% · {remM}m kaldı</div>
-                  </div>
-                  {mode==='sim'&&<button onClick={()=>{stopSim();setMode('ready');}}
-                    style={{...BTN,background:"#475569",color:"#fff",minHeight:36,padding:"0 10px",fontSize:13,borderRadius:8}}>■</button>}
+                <div style={{height:4,background:"#0f172a",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${simPct}%`,background:"#0d9488",
+                    borderRadius:2,transition:"width 0.1s linear"}}/>
                 </div>
               )}
 

@@ -88,22 +88,12 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
 
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
 
-// Navigasyon sırasında haritayı kullanıcı konumuna kilitle + rotasyon
-function MapFollower({pos,active,bearing}:{pos:[number,number]|null;active:boolean;bearing:number}){
+// Navigasyon sırasında haritayı kullanıcı konumuna kilitle
+function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
   const m=useMap();
   useEffect(()=>{
     if(active&&pos)m.setView(pos,18,{animate:true,duration:0.5});
   },[active,pos,m]);
-  // Harita rotasyonu: CSS transform ile kuzey yukarı referanstan döndür
-  useEffect(()=>{
-    const el=m.getContainer();
-    if(active&&bearing!==0){
-      el.style.transform=`rotate(${-bearing}deg)`;
-      el.style.transformOrigin="center center";
-    } else {
-      el.style.transform="";
-    }
-  },[active,bearing,m]);
   return null;
 }
 
@@ -115,51 +105,73 @@ function ZoomCtrl(){
   },[m]);
   return null;
 }
+function CenterCtrl({userPos}:{userPos:[number,number]|null}){
+  const m=useMap();
+  useEffect(()=>{
+    const btn=document.getElementById("center-me");
+    if(!btn)return;
+    btn.onclick=()=>{if(userPos)m.setView(userPos,18,{animate:true,duration:0.5});};
+  },[m,userPos]);
+  return null;
+}
 
 // ── Veri ─────────────────────────────────────────────────────────────────────
-interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;}
+interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;}
 const CAT:Record<string,{c:string;l:string}>={
   eğitsel:{c:"#3b82f6",l:"Eğitsel"},sosyal:{c:"#f59e0b",l:"Sosyal"},
   idari:{c:"#8b5cf6",l:"İdari"},işlevsel:{c:"#10b981",l:"İşlevsel"},
   otopark:{c:"#6b7280",l:"Otopark"},giriş:{c:"#ef4444",l:"Giriş"},
 };
 const LOCS:Loc[]=[
-  {num:1, name:"Cami Tarafı Giriş", gps:[41.06930,28.94418],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs kuzey giriş kapısı."},
-  {num:2, name:"E1",                gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"E1 mühendislik ve enerji binası."},
-  {num:3, name:"E2",                gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"E2 mühendislik binası."},
-  {num:4, name:"Yemekhane",         gps:[41.06823,28.94445],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},
-  {num:5, name:"Nero",              gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve."},
-  {num:6, name:"Kafeler Alanı",     gps:[41.06818,28.94455],cats:["sosyal"],   emoji:"☕",desc:"Çeşitli kafeler ve sosyal alan."},
-  {num:7, name:"L1",                gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"L1 Enerji binası."},
-  {num:8, name:"L2",                gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası."},
-  {num:9, name:"L3",                gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası."},
-  {num:10,name:"Rektörlük",         gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük binası."},
-  {num:11,name:"E3",                gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"E3 akademik binası."},
-  {num:12,name:"E4",                gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
-  {num:13,name:"ÇSM Sınıflar",      gps:[41.06750,28.94655],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları."},
-  {num:14,name:"ÇSM Ofisler",       gps:[41.06769,28.94671],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – ofisler. Öğrenci İşleri ile aynı katta."},
-  {num:36,name:"Öğrenci İşleri",    gps:[41.06774,28.94678],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı."},
-  {num:15,name:"Enerji Müzesi",     gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi."},
-  {num:16,name:"KD4 Mimarlık",      gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık dijital fabrikasyon stüdyosu."},
-  {num:17,name:"Seyfi Arıkan",      gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Seyfi Arkan konferans salonu."},
-  {num:18,name:"E5",                gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"E5 akademik binası."},
-  {num:19,name:"E6",                gps:[41.06600,28.94680],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası."},
-  {num:20,name:"Kütüphane",         gps:[41.06629,28.94618],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi."},
-  {num:21,name:"EN-1",              gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
-  {num:22,name:"MIDL",              gps:[41.06740,28.94640],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Lab."},
-  {num:23,name:"Lokma",             gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
-  {num:24,name:"Espressolab",       gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve."},
-  {num:25,name:"Ziyaretçi Girişi",  gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana ziyaretçi ve öğrenci girişi."},
-  {num:26,name:"Otopark",           gps:[41.06380,28.94720],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs araç otoparkı – güneydoğu, Kazım Karabekir Cad. girişi."},
-  {num:27,name:"Etkinlik Çadırı",   gps:[41.06561,28.94565],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı."},
-  {num:28,name:"Kuluçka",           gps:[41.06505,28.94554],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi."},
-  {num:29,name:"Revir",             gps:[41.06549,28.94630],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi."},
-  {num:30,name:"Öğrenci Destek",    gps:[41.06539,28.94622],cats:["idari"],    emoji:"🤝",desc:"ÖDM – Öğrenci Danışmanlık Merkezi."},
-  {num:31,name:"Gastronomi",        gps:[41.06607,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları."},
-  {num:32,name:"BT",                gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi."},
-  {num:33,name:"Tarihi Kapı",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi fabrika giriş kapısı."},
-  {num:34,name:"Otopark Girişi",    gps:[41.06400,28.94690],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
-  {num:35,name:"Amfi",              gps:[41.06440,28.94520],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
+  // ── Girişler ──────────────────────────────────────────────────────────────
+  {num:1, name:"Cami Tarafı Giriş",  gps:[41.06930,28.94418],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı."},
+  {num:25,name:"Ziyaretçi Girişi",   gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana ziyaretçi ve öğrenci güney girişi."},
+  {num:33,name:"Tarihi Giriş",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı."},
+  // ── Eğitsel ───────────────────────────────────────────────────────────────
+  {num:2, name:"E1",                 gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"E1 mühendislik ve enerji binası."},
+  {num:3, name:"E2",                 gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"E2 mühendislik binası."},
+  {num:7, name:"L1",                 gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"L1 Enerji binası – tarihi kazan dairesi."},
+  {num:8, name:"L2",                 gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası."},
+  {num:9, name:"L3",                 gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası."},
+  {num:11,name:"E3",                 gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"E3 akademik binası."},
+  {num:12,name:"E4",                 gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
+  {num:13,name:"ÇSM Sınıflar",       gps:[41.06750,28.94655],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları."},
+  {num:18,name:"E5",                 gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"E5 akademik binası."},
+  {num:19,name:"E6",                 gps:[41.06600,28.94680],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası."},
+  {num:16,name:"KD4 Mimarlık",       gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık dijital fabrikasyon stüdyosu."},
+  {num:17,name:"Seyfi Arıkan",       gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Seyfi Arkan konferans salonu."},
+  {num:20,name:"Kütüphane",          gps:[41.06629,28.94618],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi."},
+  {num:22,name:"MIDL",               gps:[41.06740,28.94640],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı."},
+  {num:31,name:"Gastronomi Mutfak",  gps:[41.06607,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları laboratuvarı."},
+  {num:37,name:"Blab",               gps:[41.06720,28.94590],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
+  // ── İdari ─────────────────────────────────────────────────────────────────
+  {num:10,name:"Rektörlük",          gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri."},
+  {num:14,name:"ÇSM Ofisler",        gps:[41.06769,28.94671],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri."},
+  {num:36,name:"Öğrenci İşleri",     gps:[41.06774,28.94678],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat."},
+  {num:21,name:"EN-1",               gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
+  {num:30,name:"ÖDM",                gps:[41.06539,28.94622],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer."},
+  {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi."},
+  {num:40,name:"Banka",              gps:[41.06663,28.94540],cats:["işlevsel"], emoji:"🏦",desc:"Kampüs bankacılık şubesi."},
+  {num:41,name:"ATM",                gps:[41.06665,28.94537],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
+  // ── Sosyal ────────────────────────────────────────────────────────────────
+  {num:4, name:"Yemekhane",          gps:[41.06823,28.94445],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},
+  {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve."},
+  {num:38,name:"Starbucks",          gps:[41.06800,28.94448],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
+  {num:23,name:"Lokma",              gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
+  {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve."},
+  {num:39,name:"Sunpeak",            gps:[41.06950,28.94390],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – batı kampüs."},
+  {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık."},
+  {num:27,name:"Etkinlik Çadırı",    gps:[41.06561,28.94565],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı."},
+  {num:35,name:"Amfi",               gps:[41.06590,28.94900],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
+  // ── İşlevsel ──────────────────────────────────────────────────────────────
+  {num:28,name:"Kuluçka",            gps:[41.06505,28.94554],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
+  {num:29,name:"Revir",              gps:[41.06549,28.94630],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi."},
+  {num:42,name:"Kuaföz",             gps:[41.06660,28.94530],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu."},
+  {num:43,name:"Çalışma Alanı",      gps:[41.06855,28.94470],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
+  // ── Otopark ───────────────────────────────────────────────────────────────
+  {num:26,name:"Otopark",            gps:[41.06510,28.94760],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},
+  {num:34,name:"Otopark Girişi",     gps:[41.06530,28.94720],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
+  {num:44,name:"Arka Otopark",       gps:[41.06620,28.94900],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – doğu taraf."},
 ];
 
 // ── İkonlar ───────────────────────────────────────────────────────────────────
@@ -174,19 +186,27 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
     className:"",iconSize:[90,32],iconAnchor:[45,30],
   });
 }
-const PERSON=L.divIcon({html:`<div style="width:20px;height:20px;background:#f97316;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(249,115,22,0.3),0 2px 8px rgba(0,0,0,0.5);"></div>`,className:"",iconSize:[20,20],iconAnchor:[10,10]});
+// Turuncu puls noktası – PERSON simülasyon + nav modunda kullanılır
+const PERSON=L.divIcon({
+  html:`<div style="position:relative;width:26px;height:26px;">
+    <div style="position:absolute;inset:-4px;border-radius:50%;background:rgba(249,115,22,0.25);animation:gps-pulse 2s ease-out infinite;"></div>
+    <div style="position:absolute;inset:0;border-radius:50%;background:#f97316;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>
+  </div>`,
+  className:"",iconSize:[26,26],iconAnchor:[13,13]
+});
+
+// Yön oku – şeffaf merkez (PERSON üzerine gelir), sadece ok çıkar
 function makeUserIcon(heading:number|null):L.DivIcon{
   const rot=heading??0;
   return L.divIcon({
-    html:`<div style="position:relative;width:32px;height:32px;">
-      <div style="position:absolute;inset:-2px;background:rgba(59,130,246,0.2);border-radius:50%;animation:gps-pulse 2s ease-out infinite;"></div>
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(${rot}deg);">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="16,3 22,26 16,21 10,26" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-        </svg>
+    html:`<div style="position:relative;width:48px;height:48px;">
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div style="transform:rotate(${rot}deg);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:48px;height:48px;padding-top:1px;">
+          <div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:22px solid #f97316;filter:drop-shadow(0 0 3px rgba(255,255,255,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7));"></div>
+        </div>
       </div>
     </div>`,
-    className:"",iconSize:[32,32],iconAnchor:[16,16],
+    className:"",iconSize:[48,48],iconAnchor:[24,24],
   });
 }
 
@@ -444,8 +464,9 @@ export default function CampusMap(){
             <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
-          {mode==='nav'&&userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={3000}/>}
-          {userPos&&<Marker position={userPos} icon={makeUserIcon(heading)} zIndexOffset={2500}/>}
+          {/* PERSON (turuncu, puls) + yön oku (şeffaf, üstte) */}
+          {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
+          {userPos&&<Marker position={userPos} icon={makeUserIcon(heading)} zIndexOffset={3100}/>}
           {visible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             return(
@@ -486,7 +507,8 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <ZoomCtrl/>
-          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} bearing={(mode==='nav'||mode==='sim')?(heading??0):0}/>
+          <CenterCtrl userPos={userPos}/>
+          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>
       </div>
 
@@ -601,13 +623,33 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Zoom butonları ───────────────────────────────────────────────── */}
+      {/* ─── Sağ araç çubuğu: zoom + pusula + konuma git ──────────────────── */}
       <div style={{position:"absolute",right:12,top:70,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
         {[["z+","+"],["z-","−"]].map(([id,l])=>(
           <button key={id} id={id} style={{...BTN,width:40,height:40,background:"#1e293b",
             color:"#fff",border:"1px solid #334155",borderRadius:10,minHeight:40,
             boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>{l}</button>
         ))}
+        {/* Pusula – kuzey yönünü gösterir, N döner */}
+        {heading!==null&&(
+          <div style={{width:40,height:40,background:"#1e293b",border:"1px solid #334155",
+            borderRadius:10,boxShadow:"0 2px 8px rgba(0,0,0,0.3)",
+            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
+            <div style={{fontSize:11,fontWeight:800,color:"#ef4444",
+              transform:`rotate(${-heading}deg)`,lineHeight:1,marginBottom:1}}>N</div>
+            <div style={{width:0,height:0,
+              borderLeft:"4px solid transparent",borderRight:"4px solid transparent",
+              borderBottom:"8px solid #ef4444",
+              transform:`rotate(${-heading}deg)`}}/>
+          </div>
+        )}
+        {/* Konuma git butonu – GPS açıksa görünür */}
+        {gpsOn&&userPos&&(
+          <button id="center-me"
+            style={{...BTN,width:40,height:40,background:"#1e293b",
+              border:"1px solid #334155",borderRadius:10,minHeight:40,
+              boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📍</button>
+        )}
       </div>
 
       {/* ─── Alt panel ───────────────────────────────────────────────────── */}

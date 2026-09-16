@@ -4,6 +4,11 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import ROOMS_RAW from "../public/rooms.json";
+
+type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
+type RoomsData=Record<string,Record<string,RoomEntry[]>>;
+const ROOMS=ROOMS_RAW as RoomsData;
 
 // ── Sabitler ─────────────────────────────────────────────────────────────────
 const CAMPUS_CENTER: [number, number] = [41.0673, 28.9455];
@@ -475,16 +480,62 @@ export default function CampusMap(){
                 eventHandlers={{click:()=>handlePinClick(loc)}}>
                 {/* Popup sadece idle modda açılır */}
                 {(mode==='idle'||mode==='ready')&&(
-                  <Popup maxWidth={240} minWidth={200} closeButton>
+                  <Popup maxWidth={270} minWidth={220} closeButton>
                     <div style={{fontFamily:"'Segoe UI',sans-serif",padding:4}}>
-                      <div style={{
-                        background:`linear-gradient(135deg,${CAT[loc.cats[0]]?.c??"#3b82f6"},${CAT[loc.cats[0]]?.c??"#3b82f6"}88)`,
-                        borderRadius:8,padding:"14px 10px",textAlign:"center",marginBottom:8,
-                      }}>
-                        <div style={{fontSize:36,lineHeight:1}}>{loc.emoji}</div>
-                        <div style={{fontWeight:800,fontSize:15,color:"#fff",marginTop:4}}>{loc.name}</div>
-                      </div>
-                      <div style={{fontSize:12,color:"#475569",marginBottom:12,lineHeight:1.5}}>{loc.desc}</div>
+                      {loc.photo?(
+                        <div style={{borderRadius:8,overflow:"hidden",marginBottom:8,position:"relative"}}>
+                          <img src={loc.photo} alt={loc.name}
+                            style={{width:"100%",height:130,objectFit:"cover",display:"block"}}/>
+                          <div style={{position:"absolute",bottom:0,left:0,right:0,
+                            background:"linear-gradient(transparent,rgba(0,0,0,0.7))",
+                            padding:"20px 10px 8px",textAlign:"center"}}>
+                            <div style={{fontWeight:800,fontSize:15,color:"#fff"}}>{loc.name}</div>
+                            {ROOMS[String(loc.num)]&&(
+                              <div style={{fontSize:10,color:"rgba(255,255,255,0.75)"}}>
+                                {Object.values(ROOMS[String(loc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ):(
+                        <div style={{
+                          background:`linear-gradient(135deg,${CAT[loc.cats[0]]?.c??"#3b82f6"},${CAT[loc.cats[0]]?.c??"#3b82f6"}88)`,
+                          borderRadius:8,padding:"14px 10px",textAlign:"center",marginBottom:8,
+                        }}>
+                          <div style={{fontSize:36,lineHeight:1}}>{loc.emoji}</div>
+                          <div style={{fontWeight:800,fontSize:15,color:"#fff",marginTop:4}}>{loc.name}</div>
+                          {ROOMS[String(loc.num)]&&(
+                            <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:3}}>
+                              {Object.values(ROOMS[String(loc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div style={{fontSize:12,color:"#475569",marginBottom:8,lineHeight:1.5}}>{loc.desc}</div>
+                      {ROOMS[String(loc.num)]&&(
+                        <div style={{borderTop:"1px solid #e2e8f0",paddingTop:8,marginBottom:8}}>
+                          <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",letterSpacing:"0.05em",marginBottom:6}}>MAHAL LİSTESİ</div>
+                          <div style={{maxHeight:160,overflowY:"auto",fontSize:11,lineHeight:1.4}}>
+                            {Object.entries(ROOMS[String(loc.num)]).map(([floor,rooms])=>(
+                              <div key={floor} style={{marginBottom:8}}>
+                                <div style={{fontWeight:700,color:"#1e293b",fontSize:10,
+                                  background:"#f1f5f9",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
+                                  {floor}
+                                </div>
+                                {(rooms as RoomEntry[]).map((r,i)=>(
+                                  <div key={i} style={{display:"flex",gap:4,alignItems:"baseline",
+                                    padding:"2px 4px",borderBottom:"1px solid #f8fafc"}}>
+                                    <span style={{color:"#1e293b",fontWeight:700,minWidth:44,flexShrink:0}}>{r.oda}</span>
+                                    <span style={{color:"#475569",flex:1,overflow:"hidden",
+                                      textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
+                                    {r.cap&&<span style={{color:"#94a3b8",flexShrink:0,fontSize:10}}>{r.cap}👤</span>}
+                                  </div>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       <div style={{display:"flex",gap:8}}>
                         <button onClick={e=>{e.stopPropagation();setFrom(loc);setFromGPS(false);setMode('pickTo');
                           document.querySelectorAll('.leaflet-popup-close-button').forEach((b:Element)=>(b as HTMLElement).click());}}

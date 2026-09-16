@@ -88,12 +88,22 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
 
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
 
-// Navigasyon sırasında haritayı kullanıcı konumuna kilitle
-function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
+// Navigasyon sırasında haritayı kullanıcı konumuna kilitle + rotasyon
+function MapFollower({pos,active,bearing}:{pos:[number,number]|null;active:boolean;bearing:number}){
   const m=useMap();
   useEffect(()=>{
     if(active&&pos)m.setView(pos,18,{animate:true,duration:0.5});
   },[active,pos,m]);
+  // Harita rotasyonu: CSS transform ile kuzey yukarı referanstan döndür
+  useEffect(()=>{
+    const el=m.getContainer();
+    if(active&&bearing!==0){
+      el.style.transform=`rotate(${-bearing}deg)`;
+      el.style.transformOrigin="center center";
+    } else {
+      el.style.transform="";
+    }
+  },[active,bearing,m]);
   return null;
 }
 
@@ -126,8 +136,7 @@ const LOCS:Loc[]=[
   {num:10,name:"Rektörlük",         gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük binası."},
   {num:11,name:"E3",                gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"E3 akademik binası."},
   {num:12,name:"E4",                gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
-  {num:13,name:"ÇSM Ofisler",       gps:[41.06769,28.94671],cats:["idari"],    emoji:"🏢",desc:"Çalışma ve Sosyal Merkezi ofisleri."},
-  {num:14,name:"ÇSM Sınıflar",      gps:[41.06750,28.94655],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM sınıfları."},
+  {num:13,name:"ÇSM",               gps:[41.06760,28.94663],cats:["eğitsel","idari"],emoji:"🎓",desc:"Çalışma ve Sosyal Merkezi – ofisler ve sınıflar."},
   {num:15,name:"Enerji Müzesi",     gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi."},
   {num:16,name:"KD4 Mimarlık",      gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık dijital fabrikasyon stüdyosu."},
   {num:17,name:"Seyfi Arıkan",      gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Seyfi Arkan konferans salonu."},
@@ -164,7 +173,20 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
   });
 }
 const PERSON=L.divIcon({html:`<div style="width:20px;height:20px;background:#f97316;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(249,115,22,0.3),0 2px 8px rgba(0,0,0,0.5);"></div>`,className:"",iconSize:[20,20],iconAnchor:[10,10]});
-const USER_DOT=L.divIcon({html:`<div style="position:relative;width:20px;height:20px;"><div style="position:absolute;inset:0;background:rgba(59,130,246,0.4);border-radius:50%;animation:gps-pulse 2s ease-out infinite;"></div><div style="position:absolute;width:12px;height:12px;top:4px;left:4px;background:#3b82f6;border-radius:50%;border:2px solid white;"></div></div>`,className:"",iconSize:[20,20],iconAnchor:[10,10]});
+function makeUserIcon(heading:number|null):L.DivIcon{
+  const rot=heading??0;
+  return L.divIcon({
+    html:`<div style="position:relative;width:32px;height:32px;">
+      <div style="position:absolute;inset:-2px;background:rgba(59,130,246,0.2);border-radius:50%;animation:gps-pulse 2s ease-out infinite;"></div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transform:rotate(${rot}deg);">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,3 22,26 16,21 10,26" fill="#3b82f6" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>`,
+    className:"",iconSize:[32,32],iconAnchor:[16,16],
+  });
+}
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
 export default function CampusMap(){
@@ -192,6 +214,38 @@ export default function CampusMap(){
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
+  const[heading,setHeading]=useState<number|null>(null);
+  const prevPosRef=useRef<[number,number]|null>(null);
+
+  // Pusula: DeviceOrientationEvent → heading
+  useEffect(()=>{
+    const handler=(e:DeviceOrientationEvent)=>{
+      const alpha=(e as DeviceOrientationEvent&{webkitCompassHeading?:number}).webkitCompassHeading??e.alpha;
+      if(alpha!=null)setHeading(Math.round(alpha));
+    };
+    // iOS 13+ izin gerektirebilir
+    const setup=()=>{
+      window.addEventListener('deviceorientationabsolute',handler as EventListener,true);
+      window.addEventListener('deviceorientation',handler as EventListener,true);
+    };
+    if(typeof (DeviceOrientationEvent as unknown as{requestPermission?:()=>Promise<string>}).requestPermission==='function'){
+      (DeviceOrientationEvent as unknown as{requestPermission:()=>Promise<string>}).requestPermission().then(s=>{if(s==='granted')setup();}).catch(()=>{});
+    } else {setup();}
+    return()=>{
+      window.removeEventListener('deviceorientationabsolute',handler as EventListener,true);
+      window.removeEventListener('deviceorientation',handler as EventListener,true);
+    };
+  },[]);
+
+  // GPS güncellenince bearing hesapla (pusula yoksa)
+  useEffect(()=>{
+    if(!userPos)return;
+    if(heading===null&&prevPosRef.current){
+      const b=brng(prevPosRef.current[0],prevPosRef.current[1],userPos[0],userPos[1]);
+      if(hav(prevPosRef.current[0],prevPosRef.current[1],userPos[0],userPos[1])>3)setHeading(Math.round(b));
+    }
+    prevPosRef.current=userPos;
+  },[userPos,heading]);
 
   // Simülasyon
   const[simPos,setSimPos]=useState<[number,number]|null>(null);
@@ -257,7 +311,7 @@ export default function CampusMap(){
     setSimPos(r[0]);setSimPct(0);setMode('sim');
     simRef.current=setInterval(()=>{
       trav+=step;
-      if(trav>=total){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('ready');return;}
+      if(trav>=total){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('arrived');return;}
       setSimPct(Math.round((trav/total)*100));
       for(let i=1;i<cum.length;i++){
         if(cum[i]>=trav){
@@ -389,7 +443,7 @@ export default function CampusMap(){
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {mode==='nav'&&userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={3000}/>}
-          {userPos&&mode!=='nav'&&<Marker position={userPos} icon={USER_DOT} zIndexOffset={2500}/>}
+          {userPos&&<Marker position={userPos} icon={makeUserIcon(heading)} zIndexOffset={2500}/>}
           {visible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             return(
@@ -430,7 +484,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <ZoomCtrl/>
-          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
+          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} bearing={(mode==='nav'||mode==='sim')?(heading??0):0}/>
         </MapContainer>
       </div>
 

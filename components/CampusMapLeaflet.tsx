@@ -129,7 +129,7 @@ const LOCS:Loc[]=[
   {num:23,name:"Lokma",             gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",       gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve."},
   {num:25,name:"Ziyaretçi Girişi",  gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana ziyaretçi ve öğrenci girişi."},
-  {num:26,name:"Otopark",           gps:[41.06648,28.94440],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs araç otoparkı – güney giriş yakını."},
+  {num:26,name:"Otopark",           gps:[41.06380,28.94720],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs araç otoparkı – güneydoğu, Kazım Karabekir Cad. girişi."},
   {num:27,name:"Etkinlik Çadırı",   gps:[41.06561,28.94565],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı."},
   {num:28,name:"Kuluçka",           gps:[41.06505,28.94554],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi."},
   {num:29,name:"Revir",             gps:[41.06549,28.94630],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi."},
@@ -137,7 +137,7 @@ const LOCS:Loc[]=[
   {num:31,name:"Gastronomi",        gps:[41.06607,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları."},
   {num:32,name:"BT",                gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi."},
   {num:33,name:"Tarihi Kapı",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi fabrika giriş kapısı."},
-  {num:34,name:"Otopark Girişi",    gps:[41.06628,28.94420],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
+  {num:34,name:"Otopark Girişi",    gps:[41.06400,28.94690],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
   {num:35,name:"Amfi",              gps:[41.06440,28.94520],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
 ];
 

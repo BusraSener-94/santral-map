@@ -87,6 +87,16 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
 }
 
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
+
+// Navigasyon sırasında haritayı kullanıcı konumuna kilitle
+function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
+  const m=useMap();
+  useEffect(()=>{
+    if(active&&pos)m.setView(pos,18,{animate:true,duration:0.5});
+  },[active,pos,m]);
+  return null;
+}
+
 function ZoomCtrl(){
   const m=useMap();
   useEffect(()=>{
@@ -391,7 +401,9 @@ export default function CampusMap(){
               </Marker>
             );
           })}
-          <FitMap/><ZoomCtrl/>
+          <FitMap/>
+          <ZoomCtrl/>
+          <MapFollower pos={userPos} active={mode==='nav'}/>
         </MapContainer>
       </div>
 

@@ -125,7 +125,7 @@ const CAT:Record<string,{c:string;l:string}>={
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
   {num:1, name:"Cami Tarafı Giriş",  gps:[41.06930,28.94418],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı."},
-  {num:25,name:"Ziyaretçi Girişi",   gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana ziyaretçi ve öğrenci güney girişi."},
+  {num:25,name:"Misafir Girişi",      gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana misafir ve öğrenci güney girişi."},
   {num:33,name:"Tarihi Giriş",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı."},
   // ── Eğitsel ───────────────────────────────────────────────────────────────
   {num:2, name:"E1",                 gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"E1 mühendislik ve enerji binası."},
@@ -151,22 +151,22 @@ const LOCS:Loc[]=[
   {num:21,name:"EN-1",               gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
   {num:30,name:"ÖDM",                gps:[41.06539,28.94622],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer."},
   {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi."},
-  {num:40,name:"Banka",              gps:[41.06663,28.94540],cats:["işlevsel"], emoji:"🏦",desc:"Kampüs bankacılık şubesi."},
-  {num:41,name:"ATM",                gps:[41.06665,28.94537],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
+  {num:40,name:"Banka",              gps:[41.06872,28.94465],cats:["işlevsel"], emoji:"🏦",desc:"Kampüs bankacılık şubesi – E1 bölgesi."},
+  {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
   // ── Sosyal ────────────────────────────────────────────────────────────────
   {num:4, name:"Yemekhane",          gps:[41.06823,28.94445],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},
   {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve."},
-  {num:38,name:"Starbucks",          gps:[41.06800,28.94448],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
+  {num:38,name:"Starbucks",          gps:[41.06798,28.94442],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
   {num:23,name:"Lokma",              gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve."},
-  {num:39,name:"Sunpeak",            gps:[41.06950,28.94390],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – batı kampüs."},
+  {num:39,name:"Sunpeak",            gps:[41.06826,28.94440],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – Yemekhane bölgesi."},
   {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık."},
   {num:27,name:"Etkinlik Çadırı",    gps:[41.06561,28.94565],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı."},
   {num:35,name:"Amfi",               gps:[41.06590,28.94900],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06505,28.94554],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
   {num:29,name:"Revir",              gps:[41.06549,28.94630],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi."},
-  {num:42,name:"Kuaföz",             gps:[41.06660,28.94530],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu."},
+  {num:42,name:"Kuaföz",             gps:[41.06860,28.94452],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – E1 bölgesi."},
   {num:43,name:"Çalışma Alanı",      gps:[41.06855,28.94470],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",            gps:[41.06510,28.94760],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},

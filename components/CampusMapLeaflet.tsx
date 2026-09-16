@@ -354,6 +354,17 @@ export default function CampusMap(){
     return route.slice(0,idx+1) as[number,number][];
   },[route,simPct]);
 
+  // Simülasyonda yakındaki bina
+  const nearbyBldg=useMemo(()=>{
+    if(!simPos||mode!=='sim')return null;
+    let best:Loc|null=null,bd=Infinity;
+    for(const loc of LOCS){
+      const d=hav(simPos[0],simPos[1],loc.gps[0],loc.gps[1]);
+      if(d<45&&d<bd){bd=d;best=loc;}
+    }
+    return best;
+  },[simPos,mode]);
+
   const BTN:React.CSSProperties={border:"none",borderRadius:10,cursor:"pointer",
     display:"flex",alignItems:"center",justifyContent:"center",gap:6,
     fontFamily:"inherit",fontWeight:700,touchAction:"manipulation",minHeight:44};
@@ -481,6 +492,27 @@ export default function CampusMap(){
         </div>
       )}
 
+      {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
+      {nearbyBldg&&(
+        <div style={{position:"absolute",zIndex:16,
+          top:(mode==='sim'||mode==='nav')&&activeStep?170:70,
+          left:"50%",transform:"translateX(-50%)",
+          pointerEvents:"none"}}>
+          <div style={{background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
+            color:"#fff",padding:"8px 16px",borderRadius:24,
+            display:"flex",alignItems:"center",gap:8,
+            boxShadow:"0 4px 16px rgba(0,0,0,0.5)",
+            border:"1px solid rgba(255,255,255,0.1)",
+            whiteSpace:"nowrap"}}>
+            <span style={{fontSize:22}}>{nearbyBldg.emoji}</span>
+            <div>
+              <div style={{fontSize:13,fontWeight:700}}>{nearbyBldg.name}</div>
+              <div style={{fontSize:10,color:"#94a3b8"}}>{nearbyBldg.desc.slice(0,40)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Varış bildirimi ─────────────────────────────────────────────── */}
       {mode==='arrived'&&(
         <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
@@ -602,23 +634,38 @@ export default function CampusMap(){
 
               {/* Aksiyon butonları */}
               {mode==='ready'&&(
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={startSim}
-                    style={{...BTN,flex:1,background:"#f97316",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
-                    ▶ Simüle Et
-                  </button>
-                  {gpsOn&&userPos&&(
-                    <button onClick={()=>{setFromGPS(true);setMode('nav');}}
-                      style={{...BTN,flex:1,background:"#3b82f6",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
-                      📍 GPS ile Git
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  <div style={{display:"flex",gap:8}}>
+                    {/* Önizleme: navigasyona gerek yok, sadece izle */}
+                    <button onClick={startSim}
+                      style={{...BTN,flex:1,background:"#f97316",color:"#fff",fontSize:13,
+                        padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
+                      <span style={{fontSize:18}}>▶</span>
+                      <span style={{fontSize:11}}>Önizle</span>
                     </button>
-                  )}
-                  <button onClick={()=>setShowSteps(p=>!p)}
-                    title={showSteps?"Adımları gizle":"Adımları göster"}
-                    style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
-                      fontSize:11,padding:"10px 10px",borderRadius:10,gap:2,minWidth:52}}>
-                    {showSteps?"▲ Gizle":"≡ Adım"}
-                  </button>
+                    {/* Gerçek GPS navigasyon */}
+                    {gpsOn&&userPos?(
+                      <button onClick={()=>{setFromGPS(true);setMode('nav');}}
+                        style={{...BTN,flex:1,background:"#3b82f6",color:"#fff",fontSize:13,
+                          padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
+                        <span style={{fontSize:18}}>🚶</span>
+                        <span style={{fontSize:11}}>Git (GPS)</span>
+                      </button>
+                    ):(
+                      <button onClick={toggleGPS}
+                        style={{...BTN,flex:1,background:"#334155",color:"#94a3b8",fontSize:11,
+                          padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
+                        <span style={{fontSize:18}}>📍</span>
+                        <span>Konum Aç</span>
+                      </button>
+                    )}
+                    <button onClick={()=>setShowSteps(p=>!p)}
+                      style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
+                        fontSize:11,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:50}}>
+                      <span style={{fontSize:18}}>≡</span>
+                      <span>{showSteps?"Gizle":"Adım"}</span>
+                    </button>
+                  </div>
                 </div>
               )}
 

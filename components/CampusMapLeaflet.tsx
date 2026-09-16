@@ -167,7 +167,7 @@ const LOCS:Loc[]=[
   {num:39,name:"Sunpeak",            gps:[41.06826,28.94440],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – Yemekhane bölgesi."},
   {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık."},
   {num:27,name:"Etkinlik Çadırı",    gps:[41.06683,28.94651],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",photo:"/buildings/etkinlik-cadiri.jpg"},
-  {num:35,name:"Amfi",               gps:[41.06645,28.94955],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
+  {num:35,name:"Amfi",               gps:[41.06640,28.95040],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06632,28.94703],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
   {num:29,name:"Revir",              gps:[41.06639,28.94745],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
@@ -175,8 +175,8 @@ const LOCS:Loc[]=[
   {num:43,name:"Çalışma Alanı",      gps:[41.06855,28.94470],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",            gps:[41.06655,28.94720],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},
-  {num:34,name:"Otopark Girişi",     gps:[41.06700,28.94870],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
-  {num:44,name:"Arka Otopark",       gps:[41.06662,28.94880],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – doğu taraf."},
+  {num:34,name:"Otopark Girişi",     gps:[41.06700,28.94950],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
+  {num:44,name:"Arka Otopark",       gps:[41.06665,28.94960],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – doğu taraf."},
 ];
 
 // ── İkonlar ───────────────────────────────────────────────────────────────────

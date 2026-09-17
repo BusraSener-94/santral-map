@@ -142,7 +142,7 @@ const LOCS:Loc[]=[
   {num:12,name:"E4",                 gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
   {num:13,name:"ÇSM Sınıflar",       gps:[41.06750,28.94655],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",photo:"/buildings/csm-siniflar.jpg"},
   {num:18,name:"E5",                 gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"E5 akademik binası.",photo:"/buildings/e5.jpg"},
-  {num:19,name:"E6",                 gps:[41.06600,28.94680],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",photo:"/buildings/e6.jpg"},
+  {num:19,name:"E6",                 gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",photo:"/buildings/e6.jpg"},
   {num:16,name:"KD4 Mimarlık",       gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık dijital fabrikasyon stüdyosu.",photo:"/buildings/mimarlik-kd4.jpg"},
   {num:17,name:"Seyfi Arıkan",       gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Seyfi Arkan konferans salonu."},
   {num:20,name:"Kütüphane",          gps:[41.06629,28.94618],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",photo:"/buildings/kutuphane.jpg"},

@@ -469,9 +469,8 @@ export default function CampusMap(){
             <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
-          {/* PERSON (turuncu, puls) + yön oku (şeffaf, üstte) */}
+          {/* PERSON (turuncu, puls) */}
           {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
-          {userPos&&<Marker position={userPos} icon={makeUserIcon(heading)} zIndexOffset={3100}/>}
           {visible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             return(

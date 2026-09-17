@@ -192,13 +192,13 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
     className:"",iconSize:[90,32],iconAnchor:[45,30],
   });
 }
-// Turuncu puls noktası – PERSON simülasyon + nav modunda kullanılır
+// Karpuz – kullanıcı konumu simgesi
 const PERSON=L.divIcon({
-  html:`<div style="position:relative;width:26px;height:26px;">
-    <div style="position:absolute;inset:-4px;border-radius:50%;background:rgba(249,115,22,0.25);animation:gps-pulse 2s ease-out infinite;"></div>
-    <div style="position:absolute;inset:0;border-radius:50%;background:#f97316;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></div>
+  html:`<div style="position:relative;width:40px;height:40px;">
+    <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(249,115,22,0.20);animation:gps-pulse 2s ease-out infinite;"></div>
+    <img src="/karpuz.png" style="position:absolute;inset:0;width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));"/>
   </div>`,
-  className:"",iconSize:[26,26],iconAnchor:[13,13]
+  className:"",iconSize:[40,40],iconAnchor:[20,20]
 });
 
 // Yön oku – şeffaf merkez (PERSON üzerine gelir), sadece ok çıkar

@@ -170,7 +170,7 @@ const LOCS:Loc[]=[
   {num:35,name:"Amfi",               gps:[41.06380,28.94560],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
-  {num:29,name:"Revir",              gps:[41.06639,28.94745],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
+  {num:29,name:"Revir",              gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
   {num:42,name:"Kuaföz",             gps:[41.06860,28.94452],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – E1 bölgesi."},
   {num:43,name:"Çalışma Alanı",      gps:[41.06855,28.94470],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
   // ── Otopark ───────────────────────────────────────────────────────────────

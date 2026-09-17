@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import ROOMS_RAW from "../public/rooms.json";
@@ -181,8 +181,14 @@ const LOCS:Loc[]=[
 ];
 
 // ── İkonlar ───────────────────────────────────────────────────────────────────
-function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
+function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
   const col=isF?"#16a34a":isT?"#ef4444":(CAT[loc.cats[0]]?.c??"#3b82f6");
+  if(!showLabel){
+    return L.divIcon({
+      html:`<div style="width:13px;height:13px;border-radius:50%;background:${col};border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.6);"></div>`,
+      className:"",iconSize:[13,13],iconAnchor:[6,6],
+    });
+  }
   const bg=isF?"rgba(22,163,74,0.95)":isT?"rgba(239,68,68,0.95)":"rgba(15,23,42,0.88)";
   return L.divIcon({
     html:`<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
@@ -191,6 +197,12 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
     </div>`,
     className:"",iconSize:[90,32],iconAnchor:[45,30],
   });
+}
+function ZoomWatcher({setZoom}:{setZoom:(z:number)=>void}){
+  const map=useMap();
+  useMapEvents({zoomend:()=>setZoom(map.getZoom())});
+  useEffect(()=>{setZoom(map.getZoom());},[map,setZoom]);
+  return null;
 }
 // Karpuz – kullanıcı konumu simgesi
 const PERSON=L.divIcon({
@@ -237,6 +249,7 @@ export default function CampusMap(){
   // Arama & filtre
   const[search,setSearch]=useState("");
   const[cat,setCat]=useState<string|null>(null);
+  const[zoomLevel,setZoomLevel]=useState(16);
 
   // GPS
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
@@ -474,8 +487,9 @@ export default function CampusMap(){
           {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
           {visible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
+            const showLabel=zoomLevel>=17||iF||iT;
             return(
-              <Marker key={loc.num} position={loc.gps} icon={mkIcon(loc,iF,iT)}
+              <Marker key={loc.num} position={loc.gps} icon={mkIcon(loc,iF,iT,showLabel)}
                 zIndexOffset={(iF||iT)?1000:0}
                 eventHandlers={{click:()=>handlePinClick(loc)}}>
                 {/* Popup sadece idle modda açılır */}
@@ -558,6 +572,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <ZoomCtrl/>
+          <ZoomWatcher setZoom={setZoomLevel}/>
           <CenterCtrl userPos={userPos}/>
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>

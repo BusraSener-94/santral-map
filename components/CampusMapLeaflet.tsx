@@ -148,7 +148,7 @@ const LOCS:Loc[]=[
   {num:20,name:"Kütüphane",          gps:[41.06635,28.94598],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",photo:"/buildings/kutuphane.jpg"},
   {num:22,name:"MIDL",               gps:[41.06726,28.94597],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı.",photo:"/buildings/midl.jpg"},
   {num:31,name:"Gastronomi Mutfak",  gps:[41.06603,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları laboratuvarı.",photo:"/buildings/gastronomi.jpg"},
-  {num:37,name:"Blab",               gps:[41.06767,28.94578],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
+  {num:37,name:"Blab",               gps:[41.06753,28.94561],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",          gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri."},
   {num:14,name:"ÇSM Ofisler",        gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri."},

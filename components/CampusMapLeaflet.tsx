@@ -167,7 +167,7 @@ const LOCS:Loc[]=[
   {num:39,name:"Sunpeak",            gps:[41.06826,28.94440],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – Yemekhane bölgesi."},
   {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık."},
   {num:27,name:"Etkinlik Çadırı",    gps:[41.06683,28.94651],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",photo:"/buildings/etkinlik-cadiri.jpg"},
-  {num:35,name:"Amfi",               gps:[41.06570,28.95250],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
+  {num:35,name:"Amfi",               gps:[41.06380,28.94560],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06632,28.94703],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
   {num:29,name:"Revir",              gps:[41.06639,28.94745],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},

@@ -683,14 +683,19 @@ export default function CampusMap(){
       {/* ─── Header ─────────────────────────────────────────────────────── */}
       {mode!=='pickFrom'&&mode!=='pickTo'&&mode!=='arrived'&&(
         <div style={{position:"absolute",top:0,left:0,right:0,zIndex:10,
-          background:"linear-gradient(135deg,#8b0000,#c41230)",
-          padding:"10px 14px",display:"flex",alignItems:"center",gap:10,
+          background:"linear-gradient(135deg,#154360,#1a6fa8)",
+          padding:"8px 14px",display:"flex",alignItems:"center",gap:10,
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          <img src="/karpuza-sor.jpg" alt="Karpuza Sor" style={{height:46,width:"auto",objectFit:"contain",flexShrink:0,borderRadius:6}}/>
-          <div style={{flex:1}}>
-            <div style={{fontWeight:800,fontSize:15,color:"#fff",letterSpacing:.3}}>Karpuza Sor</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.65)"}}>Santral Kampüs Rehberi</div>
+          {/* Karpuza logo */}
+          <img src="/karpuza-sor.jpg" alt="Karpuza Sor" style={{height:58,width:"auto",objectFit:"contain",flexShrink:0,borderRadius:8,boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}/>
+          {/* Başlık */}
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontWeight:900,fontSize:17,color:"#fff",letterSpacing:.3,lineHeight:1.2}}>Karpuza Sor</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,0.70)",marginTop:1}}>Santral Kampüs Rehberi</div>
           </div>
+          {/* BİLGİ logosu */}
+          <img src="/bilgi-icon.png" alt="İstanbul Bilgi Üniversitesi" style={{height:36,width:36,objectFit:"contain",flexShrink:0,opacity:.95}}/>
+          {/* Konum butonu */}
           <button onClick={toggleGPS} style={{...BTN,
             background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
             border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
@@ -701,7 +706,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Sağ araç çubuğu: zoom + pusula + konuma git ──────────────────── */}
-      <div style={{position:"absolute",right:12,top:70,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
+      <div style={{position:"absolute",right:12,top:82,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
         {[["z+","+"],["z-","−"]].map(([id,l])=>(
           <button key={id} id={id} style={{...BTN,width:40,height:40,background:"#1e293b",
             color:"#fff",border:"1px solid #334155",borderRadius:10,minHeight:40,

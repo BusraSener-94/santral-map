@@ -121,7 +121,7 @@ function CenterCtrl({userPos}:{userPos:[number,number]|null}){
 }
 
 // ── Veri ─────────────────────────────────────────────────────────────────────
-interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;}
+interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;hidden?:boolean;}
 const CAT:Record<string,{c:string;l:string}>={
   eğitsel:{c:"#3b82f6",l:"Eğitsel"},sosyal:{c:"#f59e0b",l:"Sosyal"},
   idari:{c:"#8b5cf6",l:"İdari"},işlevsel:{c:"#10b981",l:"İşlevsel"},
@@ -160,9 +160,9 @@ const LOCS:Loc[]=[
   {num:40,name:"Yapı Kredi",         gps:[41.06746,28.94560],cats:["işlevsel"], emoji:"🏦",desc:"Yapı Kredi bankacılık şubesi."},
   {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
   // ── Sosyal ────────────────────────────────────────────────────────────────
-  {num:4, name:"Yemekhane",          gps:[41.06816,28.94461],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},
-  {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve."},
-  {num:38,name:"Starbucks",          gps:[41.06810,28.94465],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
+  {num:4, name:"Yemekhane",          gps:[41.06816,28.94461],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",hidden:true},
+  {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",hidden:true},
+  {num:38,name:"Starbucks",          gps:[41.06810,28.94465],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",hidden:true},
   {num:23,name:"Lokanta",            gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve.",photo:"/buildings/espressolab.jpg"},
   {num:39,name:"Sunpeak",            gps:[41.06826,28.94440],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – Yemekhane bölgesi."},
@@ -172,8 +172,8 @@ const LOCS:Loc[]=[
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
   {num:29,name:"Revir",              gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
-  {num:42,name:"Kuaföz",             gps:[41.06819,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu."},
-  {num:43,name:"Çalışma Alanı",      gps:[41.06822,28.94456],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
+  {num:42,name:"Kuaföz",             gps:[41.06819,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu.",hidden:true},
+  {num:43,name:"Çalışma Alanı",      gps:[41.06822,28.94456],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı.",hidden:true},
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},
   {num:34,name:"Otopark Girişi",     gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
@@ -434,6 +434,7 @@ export default function CampusMap(){
     (!search||l.name.toLowerCase().includes(search.toLowerCase()))&&
     (!cat||l.cats.includes(cat))
   ),[search,cat]);
+  const mapVisible=useMemo(()=>visible.filter(l=>!l.hidden),[visible]);
 
   const mins=Math.max(1,Math.round(routeM/83));
   const remM=Math.max(0,Math.round(routeM*(1-simPct/100)));
@@ -485,7 +486,7 @@ export default function CampusMap(){
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {/* PERSON (turuncu, puls) */}
           {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
-          {visible.map(loc=>{
+          {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             const showLabel=zoomLevel>=17||iF||iT;
             return(

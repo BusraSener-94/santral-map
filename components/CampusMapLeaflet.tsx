@@ -148,15 +148,15 @@ const LOCS:Loc[]=[
   {num:20,name:"Kütüphane",          gps:[41.06635,28.94598],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",photo:"/buildings/kutuphane.jpg"},
   {num:22,name:"MIDL",               gps:[41.06726,28.94597],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı.",photo:"/buildings/midl.jpg"},
   {num:31,name:"Gastronomi Mutfak",  gps:[41.06603,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları laboratuvarı.",photo:"/buildings/gastronomi.jpg"},
-  {num:37,name:"Blab",               gps:[41.06720,28.94590],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
+  {num:37,name:"Blab",               gps:[41.06767,28.94578],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",          gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri."},
   {num:14,name:"ÇSM Ofisler",        gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri."},
   {num:36,name:"Öğrenci İşleri",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat."},
-  {num:21,name:"EN-1",               gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
+  {num:21,name:"EN-1",               gps:[41.06757,28.94543],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
   {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",photo:"/buildings/odm.jpg"},
   {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",photo:"/buildings/bt.jpg"},
-  {num:40,name:"Banka",              gps:[41.06872,28.94465],cats:["işlevsel"], emoji:"🏦",desc:"Kampüs bankacılık şubesi – E1 bölgesi."},
+  {num:40,name:"Yapı Kredi",         gps:[41.06746,28.94560],cats:["işlevsel"], emoji:"🏦",desc:"Yapı Kredi bankacılık şubesi."},
   {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
   // ── Sosyal ────────────────────────────────────────────────────────────────
   {num:4, name:"Yemekhane",          gps:[41.06823,28.94445],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},

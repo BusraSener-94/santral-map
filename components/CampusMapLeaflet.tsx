@@ -192,8 +192,8 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
   if(loc.logo){
     const border=isF?"3px solid #16a34a":isT?"3px solid #ef4444":"none";
     return L.divIcon({
-      html:`<img src="${loc.logo}" alt="${loc.name}" style="width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));${border?`outline:${border};outline-offset:-2px;border-radius:50%;`:""}"/>`,
-      className:"",iconSize:[32,32],iconAnchor:[16,16],
+      html:`<img src="${loc.logo}" alt="${loc.name}" style="width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));${border?`outline:${border};outline-offset:-2px;border-radius:50%;`:""}"/>`,
+      className:"",iconSize:[26,26],iconAnchor:[13,13],
     });
   }
   const bg=isF?"rgba(22,163,74,0.95)":isT?"rgba(239,68,68,0.95)":"rgba(15,23,42,0.88)";

@@ -129,7 +129,7 @@ const CAT:Record<string,{c:string;l:string}>={
 };
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
-  {num:1, name:"Cami Tarafı Giriş",  gps:[41.06930,28.94418],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı."},
+  {num:1, name:"Cami Tarafı Giriş",  gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı."},
   {num:25,name:"Misafir Girişi",      gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana misafir ve öğrenci güney girişi."},
   {num:33,name:"Tarihi Giriş",       gps:[41.06568,28.94669],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",photo:"/buildings/tarihi-giris.jpg"},
   // ── Eğitsel ───────────────────────────────────────────────────────────────

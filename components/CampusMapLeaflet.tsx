@@ -680,19 +680,6 @@ export default function CampusMap(){
             color:"#fff",border:"1px solid #334155",borderRadius:10,minHeight:40,
             boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>{l}</button>
         ))}
-        {/* Pusula – kuzey yönünü gösterir, N döner */}
-        {heading!==null&&(
-          <div style={{width:40,height:40,background:"#1e293b",border:"1px solid #334155",
-            borderRadius:10,boxShadow:"0 2px 8px rgba(0,0,0,0.3)",
-            display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:1}}>
-            <div style={{fontSize:11,fontWeight:800,color:"#ef4444",
-              transform:`rotate(${-heading}deg)`,lineHeight:1,marginBottom:1}}>N</div>
-            <div style={{width:0,height:0,
-              borderLeft:"4px solid transparent",borderRight:"4px solid transparent",
-              borderBottom:"8px solid #ef4444",
-              transform:`rotate(${-heading}deg)`}}/>
-          </div>
-        )}
         {/* Konuma git butonu – GPS açıksa görünür */}
         {gpsOn&&userPos&&(
           <button id="center-me"

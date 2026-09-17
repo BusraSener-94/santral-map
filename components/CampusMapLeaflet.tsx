@@ -683,10 +683,10 @@ export default function CampusMap(){
       {/* ─── Header ─────────────────────────────────────────────────────── */}
       {mode!=='pickFrom'&&mode!=='pickTo'&&mode!=='arrived'&&(
         <div style={{position:"absolute",top:0,left:0,right:0,zIndex:10,
-          background:"linear-gradient(135deg,#14532d,#166534)",
+          background:"linear-gradient(135deg,#8b0000,#c41230)",
           padding:"10px 14px",display:"flex",alignItems:"center",gap:10,
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          <img src="/karpuza-sor-mark.svg" alt="Karpuza Sor" style={{width:32,height:38,objectFit:"contain",flexShrink:0}}/>
+          <img src="/karpuza-sor.jpg" alt="Karpuza Sor" style={{height:46,width:"auto",objectFit:"contain",flexShrink:0,borderRadius:6}}/>
           <div style={{flex:1}}>
             <div style={{fontWeight:800,fontSize:15,color:"#fff",letterSpacing:.3}}>Karpuza Sor</div>
             <div style={{fontSize:10,color:"rgba(255,255,255,0.65)"}}>Santral Kampüs Rehberi</div>

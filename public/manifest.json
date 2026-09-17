@@ -4,8 +4,8 @@
   "description": "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#091810",
-  "theme_color": "#14532d",
+  "background_color": "#1a0005",
+  "theme_color": "#c41230",
   "orientation": "any",
   "icons": [
     {

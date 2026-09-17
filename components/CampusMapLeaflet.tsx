@@ -160,6 +160,7 @@ const LOCS:Loc[]=[
   {num:40,name:"Yapı Kredi",         gps:[41.06746,28.94560],cats:["işlevsel"], emoji:"🏦",desc:"Yapı Kredi bankacılık şubesi."},
   {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
   {num:46,name:"Yapı Kredi ATM",     gps:[41.06828,28.94469],cats:["işlevsel"], emoji:"🏧",desc:"Yapı Kredi ATM – kafeterya yanı.",photo:"/buildings/yapikredi-atm.jpg"},
+  {num:47,name:"VakıfBank ATM",      gps:[41.06702,28.94539],cats:["işlevsel"], emoji:"🏧",desc:"VakıfBank ATM – güney kampüs.",photo:"/buildings/vakifbank-atm.jpg"},
   // ── Sosyal ────────────────────────────────────────────────────────────────
   {num:4, name:"Yemekhane",          gps:[41.06814,28.94451],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",photo:"/buildings/yemekhane.jpg"},
   {num:5, name:"Nero",               gps:[41.06809,28.94477],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",logo:"/buildings/nero-logo.png",photo:"/buildings/nero.jpg"},

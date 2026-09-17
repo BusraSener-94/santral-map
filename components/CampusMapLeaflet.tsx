@@ -131,7 +131,7 @@ const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
   {num:1, name:"Cami Tarafı Giriş",  gps:[41.06930,28.94418],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı."},
   {num:25,name:"Misafir Girişi",      gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana misafir ve öğrenci güney girişi."},
-  {num:33,name:"Tarihi Giriş",       gps:[41.06680,28.94730],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",photo:"/buildings/tarihi-giris.jpg"},
+  {num:33,name:"Tarihi Giriş",       gps:[41.06543,28.94683],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",photo:"/buildings/tarihi-giris.jpg"},
   // ── Eğitsel ───────────────────────────────────────────────────────────────
   {num:2, name:"E1",                 gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"E1 mühendislik ve enerji binası."},
   {num:3, name:"E2",                 gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"E2 mühendislik binası."},

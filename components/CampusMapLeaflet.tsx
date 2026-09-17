@@ -194,11 +194,11 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean):L.DivIcon{
 }
 // Karpuz – kullanıcı konumu simgesi
 const PERSON=L.divIcon({
-  html:`<div style="position:relative;width:40px;height:40px;">
-    <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(249,115,22,0.20);animation:gps-pulse 2s ease-out infinite;"></div>
-    <img src="/karpuz.png" style="position:absolute;inset:0;width:40px;height:40px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6));"/>
+  html:`<div style="position:relative;width:64px;height:64px;">
+    <div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(249,115,22,0.20);animation:gps-pulse 2s ease-out infinite;"></div>
+    <img src="/karpuz.png" style="position:absolute;inset:0;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));"/>
   </div>`,
-  className:"",iconSize:[40,40],iconAnchor:[20,20]
+  className:"",iconSize:[64,64],iconAnchor:[32,32]
 });
 
 // Yön oku – şeffaf merkez (PERSON üzerine gelir), sadece ok çıkar

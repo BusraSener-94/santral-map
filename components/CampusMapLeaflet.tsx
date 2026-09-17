@@ -175,7 +175,7 @@ const LOCS:Loc[]=[
   {num:43,name:"Çalışma Alanı",      gps:[41.06855,28.94470],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",            gps:[41.06390,28.94700],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},
-  {num:34,name:"Otopark Girişi",     gps:[41.06935,28.95035],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
+  {num:34,name:"Otopark Girişi",     gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},
   {num:44,name:"Arka Otopark",       gps:[41.06605,28.95075],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – doğu taraf."},
 ];
 

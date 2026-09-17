@@ -162,7 +162,7 @@ const LOCS:Loc[]=[
   // ── Sosyal ────────────────────────────────────────────────────────────────
   {num:4, name:"Yemekhane",          gps:[41.06823,28.94445],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi."},
   {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve."},
-  {num:38,name:"Starbucks",          gps:[41.06798,28.94442],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
+  {num:38,name:"Starbucks",          gps:[41.06805,28.94463],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi."},
   {num:23,name:"Lokanta",            gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve.",photo:"/buildings/espressolab.jpg"},
   {num:39,name:"Sunpeak",            gps:[41.06826,28.94440],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak kafe ve sosyal alan – Yemekhane bölgesi."},

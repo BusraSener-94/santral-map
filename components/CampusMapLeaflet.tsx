@@ -154,7 +154,7 @@ const LOCS:Loc[]=[
   {num:14,name:"ÇSM Ofisler",        gps:[41.06769,28.94671],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri."},
   {num:36,name:"Öğrenci İşleri",     gps:[41.06774,28.94678],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat."},
   {num:21,name:"EN-1",               gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
-  {num:30,name:"ÖDM",                gps:[41.06670,28.94674],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",photo:"/buildings/odm.jpg"},
+  {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",photo:"/buildings/odm.jpg"},
   {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",photo:"/buildings/bt.jpg"},
   {num:40,name:"Banka",              gps:[41.06872,28.94465],cats:["işlevsel"], emoji:"🏦",desc:"Kampüs bankacılık şubesi – E1 bölgesi."},
   {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},

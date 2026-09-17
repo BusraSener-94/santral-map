@@ -1,4 +1,4 @@
-const CACHE = 'santral-v68';
+const CACHE = 'santral-v69';
 const PRECACHE = ['/', '/campus_graph.json'];
 
 self.addEventListener('install', e => {

@@ -1,11 +1,11 @@
 {
-  "name": "Santral Kampüs Haritası",
-  "short_name": "Santral",
+  "name": "Karpuza Sor",
+  "short_name": "Karpuza Sor",
   "description": "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#7c2d12",
+  "background_color": "#091810",
+  "theme_color": "#14532d",
   "orientation": "any",
   "icons": [
     {

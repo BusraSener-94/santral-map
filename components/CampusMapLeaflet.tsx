@@ -121,7 +121,7 @@ function CenterCtrl({userPos}:{userPos:[number,number]|null}){
 }
 
 // ── Veri ─────────────────────────────────────────────────────────────────────
-interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;hidden?:boolean;logo?:string;logoSize?:number;}
+interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;hidden?:boolean;logo?:string;}
 const CAT:Record<string,{c:string;l:string}>={
   eğitsel:{c:"#3b82f6",l:"Eğitsel"},sosyal:{c:"#f59e0b",l:"Sosyal"},
   idari:{c:"#8b5cf6",l:"İdari"},işlevsel:{c:"#10b981",l:"İşlevsel"},
@@ -162,10 +162,10 @@ const LOCS:Loc[]=[
   // ── Sosyal ────────────────────────────────────────────────────────────────
   {num:4, name:"Yemekhane",          gps:[41.06816,28.94461],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",hidden:true},
   {num:5, name:"Nero",               gps:[41.06812,28.94473],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",hidden:true},
-  {num:38,name:"Starbucks",          gps:[41.06819,28.94464],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",logo:"/buildings/starbucks-logo.png",logoSize:20,photo:"/buildings/starbucks.jpg"},
+  {num:38,name:"Starbucks",          gps:[41.06810,28.94465],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",logo:"/buildings/starbucks-logo.png",photo:"/buildings/starbucks.jpg"},
   {num:23,name:"Lokanta",            gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
   {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve.",photo:"/buildings/espressolab.jpg"},
-  {num:39,name:"Sunpeak",            gps:[41.06801,28.94461],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak Coffee – kampüs yeni binası.",photo:"/buildings/sunpeak.jpg",logo:"/buildings/sunpeak-logo.png"},
+  {num:39,name:"Sunpeak",            gps:[41.06804,28.94463],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak Coffee – kampüs yeni binası.",photo:"/buildings/sunpeak.jpg",logo:"/buildings/sunpeak-logo.png"},
   {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık."},
   {num:27,name:"Etkinlik Çadırı",    gps:[41.06562,28.94564],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",photo:"/buildings/etkinlik-cadiri.jpg"},
   {num:35,name:"Amfi",               gps:[41.06380,28.94560],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu."},
@@ -190,11 +190,10 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
     });
   }
   if(loc.logo){
-    const sz=loc.logoSize??26,half=sz/2;
     const border=isF?"3px solid #16a34a":isT?"3px solid #ef4444":"none";
     return L.divIcon({
-      html:`<img src="${loc.logo}" alt="${loc.name}" style="width:${sz}px;height:${sz}px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));${border?`outline:${border};outline-offset:-2px;border-radius:50%;`:""}"/>`,
-      className:"",iconSize:[sz,sz],iconAnchor:[half,half],
+      html:`<img src="${loc.logo}" alt="${loc.name}" style="width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));${border?`outline:${border};outline-offset:-2px;border-radius:50%;`:""}"/>`,
+      className:"",iconSize:[26,26],iconAnchor:[13,13],
     });
   }
   const bg=isF?"rgba(22,163,74,0.95)":isT?"rgba(239,68,68,0.95)":"rgba(15,23,42,0.88)";

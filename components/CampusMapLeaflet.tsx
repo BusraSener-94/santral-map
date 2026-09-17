@@ -161,7 +161,7 @@ const LOCS:Loc[]=[
   {num:41,name:"ATM",                gps:[41.06868,28.94458],cats:["işlevsel"], emoji:"💳",desc:"Kampüs ATM makinesi – banka yanı."},
   {num:46,name:"Yapı Kredi ATM",     gps:[41.06828,28.94469],cats:["işlevsel"], emoji:"🏧",desc:"Yapı Kredi ATM – kafeterya yanı.",photo:"/buildings/yapikredi-atm.jpg"},
   // ── Sosyal ────────────────────────────────────────────────────────────────
-  {num:4, name:"Yemekhane",          gps:[41.06816,28.94461],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",hidden:true},
+  {num:4, name:"Yemekhane",          gps:[41.06814,28.94451],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",photo:"/buildings/yemekhane.jpg"},
   {num:5, name:"Nero",               gps:[41.06809,28.94477],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",logo:"/buildings/nero-logo.png",photo:"/buildings/nero.jpg"},
   {num:38,name:"Starbucks",          gps:[41.06815,28.94466],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",logo:"/buildings/starbucks-logo.png",logoSize:20,photo:"/buildings/starbucks.jpg"},
   {num:23,name:"Lokanta",            gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma."},
@@ -174,7 +174,7 @@ const LOCS:Loc[]=[
   {num:28,name:"Kuluçka",            gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner."},
   {num:29,name:"Revir",              gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
   {num:42,name:"Kuaföz",             gps:[41.06820,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – HairCraft.",logo:"/buildings/haircraft-logo.png",photo:"/buildings/haircraft.jpg"},
-  {num:43,name:"Çalışma Alanı",      gps:[41.06822,28.94456],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı.",hidden:true},
+  {num:43,name:"Çalışma Alanı",      gps:[41.06809,28.94445],cats:["işlevsel"], emoji:"📖",desc:"Açık öğrenci çalışma alanı."},
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney."},
   {num:34,name:"Otopark Girişi",     gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası."},

@@ -140,7 +140,7 @@ const LOCS:Loc[]=[
   {num:9, name:"L3",                 gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası."},
   {num:11,name:"E3",                 gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"E3 akademik binası."},
   {num:12,name:"E4",                 gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
-  {num:13,name:"ÇSM Sınıflar",       gps:[41.06750,28.94655],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",photo:"/buildings/csm-siniflar.jpg"},
+  {num:13,name:"ÇSM Sınıflar",       gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",photo:"/buildings/csm-siniflar.jpg"},
   {num:18,name:"E5",                 gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"E5 akademik binası.",photo:"/buildings/e5.jpg"},
   {num:19,name:"E6",                 gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",photo:"/buildings/e6.jpg"},
   {num:16,name:"KD4 Mimarlık",       gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık dijital fabrikasyon stüdyosu.",photo:"/buildings/mimarlik-kd4.jpg"},
@@ -152,7 +152,7 @@ const LOCS:Loc[]=[
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",          gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri."},
   {num:14,name:"ÇSM Ofisler",        gps:[41.06769,28.94671],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri."},
-  {num:36,name:"Öğrenci İşleri",     gps:[41.06774,28.94678],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat."},
+  {num:36,name:"Öğrenci İşleri",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat."},
   {num:21,name:"EN-1",               gps:[41.06720,28.94548],cats:["idari"],    emoji:"🏢",desc:"EN-1 idari ve ofis binası."},
   {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",photo:"/buildings/odm.jpg"},
   {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",photo:"/buildings/bt.jpg"},

@@ -264,8 +264,16 @@ export default function CampusMap(){
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
+  const[splash,setSplash]=useState<"visible"|"fading"|"hidden">("visible");
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
+
+  // Splash ekranı: 1.8s görünür, sonra fade-out
+  useEffect(()=>{
+    const t1=setTimeout(()=>setSplash("fading"),1800);
+    const t2=setTimeout(()=>setSplash("hidden"),2600);
+    return()=>{clearTimeout(t1);clearTimeout(t2);};
+  },[]);
 
   // Pusula: DeviceOrientationEvent → heading
   useEffect(()=>{
@@ -478,6 +486,27 @@ export default function CampusMap(){
     <div style={{position:"relative",height:"100dvh",width:"100%",overflow:"hidden",
       fontFamily:"'Segoe UI',system-ui,sans-serif",userSelect:"none"}}>
 
+      {/* ─── Splash ekranı ─────────────────────────────────────────────── */}
+      {splash!=="hidden"&&(
+        <div style={{position:"fixed",inset:0,zIndex:9999,
+          background:"#0c1828",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,
+          opacity:splash==="fading"?0:1,
+          transition:"opacity 0.75s ease",
+          pointerEvents:splash==="fading"?"none":"auto"}}>
+          <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+            style={{height:"52vh",width:"auto",maxWidth:"82vw",
+              objectFit:"contain",borderRadius:24,
+              boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:22}}>
+            <img src="/bilgi-icon.png" alt="BİLGİ" style={{height:32,width:32,objectFit:"contain",opacity:.9}}/>
+            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,letterSpacing:.5}}>
+              İstanbul Bilgi Üniversitesi
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Harita ─────────────────────────────────────────────────────── */}
       <div style={{position:"absolute",inset:0,zIndex:1}}>
         <MapContainer center={CAMPUS_CENTER} zoom={17}
@@ -684,18 +713,18 @@ export default function CampusMap(){
       {mode!=='pickFrom'&&mode!=='pickTo'&&mode!=='arrived'&&(
         <div style={{position:"absolute",top:0,left:0,right:0,zIndex:10,
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
-          padding:"8px 14px",display:"flex",alignItems:"center",gap:10,
+          padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          {/* Karpuza logo */}
-          <img src="/karpuza-sor.jpg" alt="Karpuza Sor" style={{height:58,width:"auto",objectFit:"contain",flexShrink:0,borderRadius:8,boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}/>
-          {/* Başlık */}
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{fontWeight:900,fontSize:17,color:"#fff",letterSpacing:.3,lineHeight:1.2}}>Karpuza Sor</div>
-            <div style={{fontSize:10,color:"rgba(255,255,255,0.70)",marginTop:1}}>Santral Kampüs Rehberi</div>
+          {/* Sol: BİLGİ ikonu */}
+          <img src="/bilgi-icon.png" alt="İstanbul Bilgi Üniversitesi"
+            style={{height:38,width:38,objectFit:"contain",flexShrink:0,opacity:.95}}/>
+          {/* Orta: Karpuza logo ortalı */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+              style={{height:58,width:"auto",objectFit:"contain",borderRadius:8,
+                boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}/>
           </div>
-          {/* BİLGİ logosu */}
-          <img src="/bilgi-icon.png" alt="İstanbul Bilgi Üniversitesi" style={{height:36,width:36,objectFit:"contain",flexShrink:0,opacity:.95}}/>
-          {/* Konum butonu */}
+          {/* Sağ: Konum butonu */}
           <button onClick={toggleGPS} style={{...BTN,
             background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
             border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,

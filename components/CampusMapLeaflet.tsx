@@ -147,7 +147,7 @@ const LOCS:Loc[]=[
   {num:17,name:"Seyfi Arıkan",       gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Seyfi Arkan konferans salonu."},
   {num:20,name:"Kütüphane",          gps:[41.06635,28.94598],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",photo:"/buildings/kutuphane.jpg"},
   {num:22,name:"MIDL",               gps:[41.06740,28.94640],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı.",photo:"/buildings/midl.jpg"},
-  {num:31,name:"Gastronomi Mutfak",  gps:[41.06686,28.94658],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları laboratuvarı.",photo:"/buildings/gastronomi.jpg"},
+  {num:31,name:"Gastronomi Mutfak",  gps:[41.06603,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve mutfak sanatları laboratuvarı.",photo:"/buildings/gastronomi.jpg"},
   {num:37,name:"Blab",               gps:[41.06720,28.94590],cats:["eğitsel"],  emoji:"🔬",desc:"BLab – öğrenci proje ve maker alanı."},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",          gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri."},

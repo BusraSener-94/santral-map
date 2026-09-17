@@ -12,7 +12,7 @@ const ROOMS=ROOMS_RAW as RoomsData;
 
 // ── Sabitler ─────────────────────────────────────────────────────────────────
 const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
-const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.061, 28.936], [41.073, 28.958]];
+const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 25; // metre – bu kadar yaklaşınca "ulaştınız"
 
 // ── Matematik ────────────────────────────────────────────────────────────────

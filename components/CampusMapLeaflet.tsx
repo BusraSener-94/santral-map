@@ -14,7 +14,7 @@ const ROOMS=ROOMS_RAW as RoomsData;
 // ── Sabitler ─────────────────────────────────────────────────────────────────
 const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
-const ARRIVE_M = 60; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
+const ARRIVE_M = 30; // metre – bu kadar yaklaşınca "ulaştınız"
 
 interface OnboardStep{text:string;target:string|null;}
 const ONBOARD_STEPS:OnboardStep[]=[

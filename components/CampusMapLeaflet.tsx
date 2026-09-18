@@ -23,7 +23,7 @@ const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
   {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
-  {text:"Herhangi bir binaya dokununca kart açılır.\n'Buradan Başla' → oradan yola çık 🟢\n'Buraya Git' → oraya git 🔴",target:null},
+  {text:"Herhangi bir binaya dokununca kart açılır.\n'Buradan Başla' → başlangıç noktanı belirle 🟢\nSonra varış seçersin → yol tarifi hazır 🗺",target:null},
   {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:null},
   {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
 ];

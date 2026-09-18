@@ -324,6 +324,9 @@ export default function CampusMap(){
   const simSpeedRef=useRef(1);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const[gpsError,setGpsError]=useState<string|null>(null);
+  const[fromSearch,setFromSearch]=useState("");
+  const[toSearch,setToSearch]=useState("");
+  const[activeRouteInput,setActiveRouteInput]=useState<'from'|'to'|null>(null);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -354,6 +357,17 @@ export default function CampusMap(){
     });
     setSheetTranslate(0); // alt panel açık kalsın
   },[]);
+
+  // fromSearch / toSearch senkronizasyonu
+  useEffect(()=>{
+    if(fromGPS)setFromSearch("📍 Konumunuz");
+    else if(from)setFromSearch(from.name);
+    else setFromSearch("");
+  },[from,fromGPS]);
+  useEffect(()=>{
+    if(to)setToSearch(to.name);
+    else setToSearch("");
+  },[to]);
 
   // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
   useEffect(()=>{
@@ -1125,6 +1139,102 @@ export default function CampusMap(){
                 style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 16px",fontSize:13,borderRadius:10}}>
                 🗺 Yol Tarifi
               </button>
+            </div>
+          )}
+
+          {/* IDLE: Başlangıç – Varış input'ları */}
+          {mode==='idle'&&(
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+
+              {/* Başlangıç */}
+              <div style={{position:"relative"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,background:"#0f172a",
+                  border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
+                  borderRadius:10,padding:"0 14px",minHeight:44}}>
+                  <span style={{width:9,height:9,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>
+                  <input value={fromSearch}
+                    onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
+                    onFocus={()=>setActiveRouteInput('from')}
+                    onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
+                    placeholder="Nereden?"
+                    style={{flex:1,background:"transparent",border:"none",color:"#fff",
+                      fontSize:14,outline:"none",minHeight:44,caretColor:"#16a34a"}}/>
+                  {gpsOn&&userPos&&!fromSearch&&(
+                    <button onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);if(to)calcRoute(userPos[0],userPos[1],to);}}
+                      style={{background:"none",border:"none",color:"#3b82f6",cursor:"pointer",
+                        fontSize:11,padding:"0 4px",whiteSpace:"nowrap",fontWeight:700}}>📍 GPS</button>
+                  )}
+                  {fromSearch&&(
+                    <button onMouseDown={e=>{e.preventDefault();setFrom(null);setFromGPS(false);}}
+                      style={{background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:16,padding:"0 2px"}}>✕</button>
+                  )}
+                </div>
+                {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
+                  <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 2px)",zIndex:50,
+                    background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.6)",
+                    maxHeight:170,overflowY:"auto",overflow:"hidden"}}>
+                    {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(fromSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
+                      <button key={loc.num}
+                        onMouseDown={e=>e.preventDefault()}
+                        onClick={()=>{
+                          setFrom(loc);setFromGPS(false);setFromSearch(loc.name);setActiveRouteInput(null);
+                          if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}
+                        }}
+                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                          background:"transparent",border:"none",
+                          borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                          cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                        <span style={{fontSize:16,flexShrink:0}}>{loc.emoji}</span>
+                        <span style={{fontSize:13,flex:1}}>{loc.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Varış */}
+              <div style={{position:"relative"}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,background:"#0f172a",
+                  border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
+                  borderRadius:10,padding:"0 14px",minHeight:44}}>
+                  <span style={{width:9,height:9,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
+                  <input value={toSearch}
+                    onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
+                    onFocus={()=>setActiveRouteInput('to')}
+                    onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
+                    placeholder="Nereye?"
+                    style={{flex:1,background:"transparent",border:"none",color:"#fff",
+                      fontSize:14,outline:"none",minHeight:44,caretColor:"#ef4444"}}/>
+                  {toSearch&&(
+                    <button onMouseDown={e=>{e.preventDefault();setTo(null);}}
+                      style={{background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:16,padding:"0 2px"}}>✕</button>
+                  )}
+                </div>
+                {activeRouteInput==='to'&&toSearch&&(
+                  <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 2px)",zIndex:50,
+                    background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.6)",
+                    maxHeight:170,overflowY:"auto",overflow:"hidden"}}>
+                    {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(toSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
+                      <button key={loc.num}
+                        onMouseDown={e=>e.preventDefault()}
+                        onClick={()=>{
+                          setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);
+                          const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+                          const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+                          if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}
+                        }}
+                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                          background:"transparent",border:"none",
+                          borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                          cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                        <span style={{fontSize:16,flexShrink:0}}>{loc.emoji}</span>
+                        <span style={{fontSize:13,flex:1}}>{loc.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
           )}
 

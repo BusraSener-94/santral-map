@@ -480,6 +480,7 @@ export default function CampusMap(){
     const cum=cumRef.current,r=route,total=cum[cum.length-1]??0;
     const TICK=50;
     let trav=0;
+    setSimSpeed(1);simSpeedRef.current=1;
     setSimPos(r[0]);setSimPct(0);setMode('sim');
     simRef.current=setInterval(()=>{
       const step=(83/60)*(TICK/1000)*8*simSpeedRef.current;

@@ -183,7 +183,7 @@ const LOCS:Loc[]=[
   {num:8, name:"L2",                 gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası.",photo:"/buildings/l2.jpg"},
   {num:9, name:"L3",                 gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası.",photo:"/buildings/l3.jpg"},
   {num:11,name:"E3",                 gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"E3 akademik binası.",photo:"/buildings/e3.jpg"},
-  {num:12,name:"E4",                 gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası."},
+  {num:12,name:"E4",                 gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"E4 akademik binası.",photo:"/buildings/e4.jpg"},
   {num:13,name:"ÇSM Sınıflar",       gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",photo:"/buildings/csm-siniflar.jpg"},
   {num:18,name:"E5",                 gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"E5 akademik binası.",photo:"/buildings/e5.jpg"},
   {num:19,name:"E6",                 gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",photo:"/buildings/e6.jpg"},

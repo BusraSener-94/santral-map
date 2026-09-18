@@ -327,6 +327,7 @@ export default function CampusMap(){
   const[simSpeed,setSimSpeed]=useState(1);
   const simSpeedRef=useRef(1);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const[gpsError,setGpsError]=useState<string|null>(null);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -428,14 +429,22 @@ export default function CampusMap(){
   const toggleGPS=useCallback(()=>{
     if(gpsOn){
       if(watchRef.current!=null){navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;}
-      setGpsOn(false);setUserPos(null);
+      setGpsOn(false);setUserPos(null);setGpsError(null);
     } else {
-      if(!navigator.geolocation)return;
-      setGpsOn(true);
+      if(!navigator.geolocation){setGpsError("Bu tarayıcı konum desteklemiyor.");return;}
+      setGpsOn(true);setGpsError(null);
       watchRef.current=navigator.geolocation.watchPosition(
-        p=>setUserPos([p.coords.latitude,p.coords.longitude]),
-        ()=>setGpsOn(false),
-        {enableHighAccuracy:true,maximumAge:2000}
+        p=>{setUserPos([p.coords.latitude,p.coords.longitude]);setGpsError(null);},
+        (err)=>{
+          setGpsOn(false);
+          if(err.code===1)
+            setGpsError("Konum izni verilmedi. iPhone'da: Ayarlar → Safari → Konum → İzin Ver");
+          else if(err.code===2)
+            setGpsError("Konum alınamadı. Açık alanda tekrar deneyin.");
+          else
+            setGpsError("Konum zaman aşımına uğradı. Tekrar deneyin.");
+        },
+        {enableHighAccuracy:true,maximumAge:5000,timeout:15000}
       );
     }
   },[gpsOn]);
@@ -1037,12 +1046,22 @@ export default function CampusMap(){
               draggable={false}/>
           </div>
           {/* Sağ: Konum butonu */}
-          <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
-            background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
-            border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
-            color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4}}>
-            📍{gpsOn?" Aktif":" Konum"}
-          </button>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
+            <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
+              background:gpsError?"rgba(239,68,68,0.35)":gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
+              border:`1px solid ${gpsError?"#ef4444":gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
+              color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4}}>
+              {gpsError?"⚠️ Hata":gpsOn?"📍 Aktif":"📍 Konum"}
+            </button>
+            {gpsError&&(
+              <div style={{background:"rgba(239,68,68,0.92)",color:"#fff",fontSize:10,
+                padding:"5px 8px",borderRadius:6,maxWidth:180,lineHeight:1.4,textAlign:"right",
+                boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}
+                onClick={()=>setGpsError(null)}>
+                {gpsError}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

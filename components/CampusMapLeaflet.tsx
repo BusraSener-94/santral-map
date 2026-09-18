@@ -327,6 +327,11 @@ export default function CampusMap(){
   const[hlRect,setHlRect]=useState<DOMRect|null>(null);
   const[simSpeed,setSimSpeed]=useState(1);
   const simSpeedRef=useRef(1);
+  const[nightMode,setNightMode]=useState<boolean>(()=>{
+    if(typeof window==="undefined")return false;
+    return localStorage.getItem("karpuza_night")==="1";
+  });
+  const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -337,6 +342,21 @@ export default function CampusMap(){
     if(el)setHlRect(el.getBoundingClientRect());
     else setHlRect(null);
   },[onboardStep]);
+
+  const toggleNight=useCallback(()=>{
+    setNightMode(n=>{const next=!n;localStorage.setItem("karpuza_night",next?"1":"0");return next;});
+  },[]);
+
+  const handleLogoPress=useCallback(()=>{
+    longPressTimer.current=setTimeout(()=>{
+      localStorage.removeItem("karpuza_onboard");
+      setOnboardStep(0);
+      longPressTimer.current=null;
+    },700);
+  },[]);
+  const handleLogoRelease=useCallback(()=>{
+    if(longPressTimer.current){clearTimeout(longPressTimer.current);longPressTimer.current=null;}
+  },[]);
 
   const advanceOnboard=useCallback(()=>{
     setOnboardStep(s=>{
@@ -612,6 +632,13 @@ export default function CampusMap(){
   return(
     <div style={{position:"relative",height:"100dvh",width:"100%",overflow:"hidden",
       fontFamily:"'Segoe UI',system-ui,sans-serif",userSelect:"none"}}>
+      <style>{`
+        .leaflet-tile-pane{filter:${nightMode
+          ?"brightness(0.78) saturate(0.35) hue-rotate(190deg) contrast(1.1)"
+          :"saturate(1.7) hue-rotate(8deg) brightness(1.1) sepia(0.22) contrast(0.88)"
+        };}
+        .leaflet-container{background:${nightMode?"#1a1a2e":"#c8dfc8"};}
+      `}</style>
 
       {/* ─── Splash ekranı ─────────────────────────────────────────────── */}
       {splash!=="hidden"&&(
@@ -788,7 +815,10 @@ export default function CampusMap(){
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
           zoomControl={false}
           {...({rotate:true,touchRotate:true} as object)}>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          <TileLayer
+            url={nightMode
+              ?"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              :"https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"}
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
           {route&&<>
             {/* Geçilen yol – gri */}
@@ -1012,19 +1042,33 @@ export default function CampusMap(){
               {userProfile?`Merhaba, ${userProfile.name.split(" ")[0]}! 👋`:"santralistanbul Kampüsü"}
             </div>
           </div>
-          {/* Orta: Karpuza logo ortalı */}
+          {/* Orta: Karpuza logo ortalı — uzun basış turu yeniden başlatır */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
             <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
               style={{height:58,width:"auto",objectFit:"contain",borderRadius:8,
-                boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}/>
+                boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}
+              onTouchStart={handleLogoPress}
+              onTouchEnd={handleLogoRelease}
+              onMouseDown={handleLogoPress}
+              onMouseUp={handleLogoRelease}
+              onContextMenu={e=>e.preventDefault()}
+              draggable={false}/>
           </div>
-          {/* Sağ: Konum butonu */}
-          <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
-            background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
-            border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
-            color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4}}>
-            📍{gpsOn?" Aktif":" Konum"}
-          </button>
+          {/* Sağ: Konum + Gece/Gündüz */}
+          <div style={{display:"flex",flexDirection:"column",gap:4,alignItems:"flex-end"}}>
+            <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
+              background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
+              border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
+              color:"#fff",minHeight:34,padding:"0 10px",fontSize:12,borderRadius:8,gap:4}}>
+              📍{gpsOn?" Aktif":" Konum"}
+            </button>
+            <button onClick={toggleNight}
+              style={{...BTN,background:"rgba(255,255,255,0.1)",
+                border:"1px solid rgba(255,255,255,0.2)",
+                color:"#fff",minHeight:26,padding:"0 10px",fontSize:11,borderRadius:8,gap:3}}>
+              {nightMode?"☀️ Gündüz":"🌙 Gece"}
+            </button>
+          </div>
         </div>
       )}
 

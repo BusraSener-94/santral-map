@@ -14,7 +14,7 @@ const ROOMS=ROOMS_RAW as RoomsData;
 // ── Sabitler ─────────────────────────────────────────────────────────────────
 const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
-const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
+const ARRIVE_M = 60; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
 interface OnboardStep{text:string;target:string|null;}
 const ONBOARD_STEPS:OnboardStep[]=[
@@ -452,12 +452,13 @@ export default function CampusMap(){
     setMode('ready');
   },[gd,adList]);
 
-  // FROM veya GPS değişince rota yeniden hesapla
+  // FROM veya GPS değişince rota yeniden hesapla (nav/sim modunda tekrar hesaplama)
   useEffect(()=>{
     if(!to)return;
+    if(mode==='nav'||mode==='sim'||mode==='arrived')return;
     if(fromGPS&&userPos)calcRoute(userPos[0],userPos[1],to);
     else if(from&&!fromGPS)calcRoute(from.gps[0],from.gps[1],to);
-  },[from,fromGPS,userPos,to,calcRoute]);// eslint-disable-line
+  },[from,fromGPS,userPos,to,calcRoute,mode]);// eslint-disable-line
 
   // ── Simülasyon ──
   const stopSim=useCallback(()=>{

@@ -1425,32 +1425,44 @@ export default function CampusMap(){
       {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
       {onboardStep!==null&&(
         <>
-          {/* Spotlight: hedef alanı aydınlatır, etrafı karartır — butonu overlay arkasında bırakmaz */}
-          {hlRect&&(
-            <div style={{position:"fixed",
-              left:hlRect.left-10,top:hlRect.top-10,
-              width:hlRect.width+20,height:hlRect.height+20,
-              borderRadius:16,border:"2.5px solid #f97316",
-              animation:"onboard-glow 1.4s ease-in-out infinite",
-              boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",
+          {/* 4-div spotlight: hedef dışını karartır, buton tam görünür kalır */}
+          {hlRect ? (
+            <>
+              <div style={{position:"fixed",top:0,left:0,right:0,height:hlRect.top,
+                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
+              <div style={{position:"fixed",top:hlRect.bottom,left:0,right:0,bottom:0,
+                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
+              <div style={{position:"fixed",top:hlRect.top,height:hlRect.height,
+                left:0,width:hlRect.left,
+                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
+              <div style={{position:"fixed",top:hlRect.top,height:hlRect.height,
+                left:hlRect.right,right:0,
+                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
+              {/* Turuncu ring */}
+              <div style={{position:"fixed",
+                left:hlRect.left-10,top:hlRect.top-10,
+                width:hlRect.width+20,height:hlRect.height+20,
+                borderRadius:16,border:"2.5px solid #f97316",
+                animation:"onboard-glow 1.4s ease-in-out infinite",
+                zIndex:9992,pointerEvents:"none"}}/>
+              {/* Yön oku */}
+              <div style={{position:"fixed",
+                left:hlRect.left+hlRect.width/2,
+                top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-42,
+                transform:"translateX(-50%)",
+                fontSize:26,zIndex:9994,pointerEvents:"none",lineHeight:1,
+                animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
+                {hlRect.top<200?"⬆️":"⬇️"}
+              </div>
+            </>
+          ) : (
+            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",
               zIndex:9991,pointerEvents:"none"}}/>
           )}
 
-          {/* Yön oku */}
-          {hlRect&&(
-            <div style={{position:"fixed",
-              left:hlRect.left+hlRect.width/2,
-              top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-42,
-              transform:"translateX(-50%)",
-              fontSize:26,zIndex:9993,pointerEvents:"none",lineHeight:1,
-              animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
-              {hlRect.top<200?"⬆️":"⬇️"}
-            </div>
-          )}
-
-          {/* Overlay – hlRect varken arka plan şeffaf (spotlight karartıyor) */}
-          <div style={{position:"fixed",inset:0,zIndex:9992,
-            background: hlRect ? "transparent" : "rgba(0,0,0,0.52)",
+          {/* Kart overlay – şeffaf arka plan, sadece kart + tap zone içerir */}
+          <div style={{position:"fixed",inset:0,zIndex:9993,
+            background:"transparent",
             display:"flex",flexDirection:"column",
             alignItems:"center",justifyContent:"center",
             padding:"56px 20px 130px"}}>

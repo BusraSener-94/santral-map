@@ -120,6 +120,19 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
 
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
 
+function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
+  const m=useMap();
+  useEffect(()=>{
+    if(cat===null){m.fitBounds(CAMPUS_BOUNDS,{padding:[30,30],animate:true,duration:0.5});return;}
+    const pts=locs.filter(l=>l.cats.includes(cat)).map(l=>l.gps);
+    if(pts.length===0)return;
+    const lats=pts.map(p=>p[0]),lons=pts.map(p=>p[1]);
+    m.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]],
+      {padding:[60,60],animate:true,duration:0.5,maxZoom:18});
+  },[cat,m]); // eslint-disable-line
+  return null;
+}
+
 // Navigasyon sırasında haritayı kullanıcı konumuna kilitle
 function MapFollower({pos,active,lockZoom}:{pos:[number,number]|null;active:boolean;lockZoom:boolean}){
   const m=useMap();
@@ -833,6 +846,7 @@ export default function CampusMap(){
             );
           })}
           <FitMap/>
+          <FitOnCat cat={cat} locs={LOCS}/>
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>

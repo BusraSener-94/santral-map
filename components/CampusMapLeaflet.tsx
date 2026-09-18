@@ -33,8 +33,10 @@ const SHEET_TOKEN = "ks_bilgi_2526";
 type UserRole = "Öğrenci"|"Öğretmen"|"Personel"|"Misafir";
 interface UserProfile {
   name:string; role:UserRole;
+  email?:string;       // Öğrenci/Öğretmen/Personel
   studentId?:string;   // Öğrenci
-  department?:string;  // Öğretmen – bölüm/ders
+  faculty?:string;     // Öğretmen – fakülte
+  department?:string;  // Öğretmen – bölüm
   unit?:string;        // Personel – birim
   position?:string;    // Personel – görev
   ts:number;
@@ -296,7 +298,9 @@ export default function CampusMap(){
   const[welcomeStep,setWelcomeStep]=useState<"role"|"info"|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
+  const[wEmail,setWEmail]=useState("");
   const[wStudentId,setWStudentId]=useState("");
+  const[wFaculty,setWFaculty]=useState("");
   const[wDepartment,setWDepartment]=useState("");
   const[wUnit,setWUnit]=useState("");
   const[wPosition,setWPosition]=useState("");
@@ -469,12 +473,23 @@ export default function CampusMap(){
     }
   },[mode,userPos,to,route,navSteps]);
 
+  // E-posta domain doğrulama
+  const emailOk=useCallback(()=>{
+    if(wRole==="Misafir")return true;
+    const e=wEmail.trim().toLowerCase();
+    if(!e)return false;
+    if(wRole==="Öğrenci")return e.endsWith("@bilgi.edu.net");
+    return e.endsWith("@bilgi.edu.tr");
+  },[wRole,wEmail]);
+
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim())return;
+    if(!wRole||!wName.trim()||!emailOk())return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
+      email:      wRole!=="Misafir"&&wEmail.trim() ? wEmail.trim().toLowerCase() : undefined,
       studentId:  wRole==="Öğrenci"&&wStudentId.trim()  ? wStudentId.trim()  : undefined,
+      faculty:    wRole==="Öğretmen"&&wFaculty.trim()    ? wFaculty.trim()    : undefined,
       department: wRole==="Öğretmen"&&wDepartment.trim() ? wDepartment.trim() : undefined,
       unit:       wRole==="Personel"&&wUnit.trim()       ? wUnit.trim()       : undefined,
       position:   wRole==="Personel"&&wPosition.trim()   ? wPosition.trim()   : undefined,
@@ -489,7 +504,7 @@ export default function CampusMap(){
         body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
       }).catch(()=>{});
     }
-  },[wRole,wName,wStudentId,wDepartment,wUnit,wPosition]);
+  },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
@@ -637,6 +652,22 @@ export default function CampusMap(){
                 placeholder="Adınız Soyadınız"
                 style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                   background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              {/* E-posta: Misafir hariç zorunlu */}
+              {wRole!=="Misafir"&&(
+                <div>
+                  <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
+                    placeholder={wRole==="Öğrenci"?"e-posta@bilgi.edu.net":"e-posta@bilgi.edu.tr"}
+                    type="email" inputMode="email" autoCapitalize="none"
+                    style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                      border:`1.5px solid ${wEmail&&!emailOk()?"#ef4444":"rgba(255,255,255,0.2)"}`,
+                      background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+                  {wEmail&&!emailOk()&&(
+                    <div style={{color:"#f87171",fontSize:11,marginTop:4,paddingLeft:4}}>
+                      {wRole==="Öğrenci"?"@bilgi.edu.net":"@bilgi.edu.tr"} uzantılı e-posta giriniz
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Öğrenci: numara */}
               {wRole==="Öğrenci"&&(
                 <input value={wStudentId} onChange={e=>setWStudentId(e.target.value)}
@@ -645,13 +676,17 @@ export default function CampusMap(){
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
               )}
-              {/* Öğretmen: bölüm / ders */}
-              {wRole==="Öğretmen"&&(
+              {/* Öğretmen: fakülte + bölüm */}
+              {wRole==="Öğretmen"&&(<>
+                <input value={wFaculty} onChange={e=>setWFaculty(e.target.value)}
+                  placeholder="Fakülteniz (örn: Mühendislik)"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
                 <input value={wDepartment} onChange={e=>setWDepartment(e.target.value)}
                   placeholder="Bölümünüz / Verdiğiniz Ders"
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              )}
+              </>)}
               {/* Personel: birim + görev */}
               {wRole==="Personel"&&(<>
                 <input value={wUnit} onChange={e=>setWUnit(e.target.value)}
@@ -667,13 +702,14 @@ export default function CampusMap(){
                 Girdiğiniz bilgiler yalnızca kampüs kullanım istatistiği amacıyla
                 İstanbul Bilgi Üniversitesi bünyesinde saklanır.
               </div>
-              <button onClick={submitWelcome} disabled={!wName.trim()}
+              {(()=>{const ok=wName.trim()&&emailOk();return(
+              <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"14px",borderRadius:14,border:"none",
-                  background:wName.trim()?"#154360":"rgba(255,255,255,0.1)",
-                  color:wName.trim()?"#fff":"rgba(255,255,255,0.3)",
-                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default"}}>
+                  background:ok?"#154360":"rgba(255,255,255,0.1)",
+                  color:ok?"#fff":"rgba(255,255,255,0.3)",
+                  fontSize:15,fontWeight:700,cursor:ok?"pointer":"default"}}>
                 Haritaya Gir →
-              </button>
+              </button>);})()}
               <button onClick={()=>setWelcomeStep("role")}
                 style={{padding:"8px",background:"transparent",border:"none",
                   color:"rgba(255,255,255,0.4)",fontSize:13,cursor:"pointer"}}>

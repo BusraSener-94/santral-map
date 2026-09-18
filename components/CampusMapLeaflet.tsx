@@ -212,6 +212,7 @@ const LOCS:Loc[]=[
   {num:39,name:"Sunpeak",            gps:[41.06807,28.94463],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak Coffee – kampüs yeni binası.",photo:"/buildings/sunpeak.jpg",logo:"/buildings/sunpeak-logo.png"},
   {num:15,name:"Enerji Müzesi",      gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık.",photo:"/buildings/enerji-muzesi.jpg"},
   {num:27,name:"Etkinlik Çadırı",    gps:[41.06562,28.94564],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",photo:"/buildings/etkinlik-cadiri.jpg"},
+  {num:35,name:"Amfi",               gps:[41.06490,28.94490],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu.",photo:"/buildings/amfi.jpg"},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
   {num:28,name:"Kuluçka",            gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner.",photo:"/buildings/kulucka.jpg"},
   {num:29,name:"Revir",              gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",photo:"/buildings/revir.jpg"},
@@ -323,6 +324,8 @@ export default function CampusMap(){
   const[simSpeed,setSimSpeed]=useState(1);
   const simSpeedRef=useRef(1);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const[stickyNearby,setStickyNearby]=useState<Loc|null>(null);
+  const stickyNearbyTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const[gpsError,setGpsError]=useState<string|null>(null);
   const[showKarpuzIntro,setShowKarpuzIntro]=useState(false);
   const[fromSearch,setFromSearch]=useState("");
@@ -549,7 +552,9 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim())||!wKvkk)return;
+    const emailRequired=wRole!=="Misafir";
+    if(!wRole||!wName.trim()||!wKvkk)return;
+    if(emailRequired&&!/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim()))return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
       email: wEmail.trim().toLowerCase()||"-",
@@ -636,10 +641,20 @@ export default function CampusMap(){
     let best:Loc|null=null,bd=Infinity;
     for(const loc of LOCS){
       const d=hav(simPos[0],simPos[1],loc.gps[0],loc.gps[1]);
-      if(d<45&&d<bd){bd=d;best=loc;}
+      if(d<65&&d<bd){bd=d;best=loc;}
     }
     return best;
   },[simPos,mode]);
+
+  useEffect(()=>{
+    if(nearbyBldg){
+      if(stickyNearbyTimer.current)clearTimeout(stickyNearbyTimer.current);
+      setStickyNearby(nearbyBldg);
+    } else {
+      stickyNearbyTimer.current=setTimeout(()=>setStickyNearby(null),5000);
+    }
+    return()=>{if(stickyNearbyTimer.current)clearTimeout(stickyNearbyTimer.current);};
+  },[nearbyBldg]);
 
   const BTN:React.CSSProperties={border:"none",borderRadius:10,cursor:"pointer",
     display:"flex",alignItems:"center",justifyContent:"center",gap:6,
@@ -712,8 +727,8 @@ export default function CampusMap(){
                 border:"1.5px solid rgba(255,255,255,0.2)",
                 background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
 
-            {/* E-posta – @bilgi.edu.tr veya @bilgi.edu.net zorunlu */}
-            {(()=>{
+            {/* E-posta – Misafir dışında zorunlu */}
+            {wRole!=="Misafir"&&(()=>{
               const emailOk=/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
               const emailErr=wEmail.trim()&&!emailOk;
               return(<>
@@ -767,7 +782,7 @@ export default function CampusMap(){
 
             {/* Giriş butonu */}
             {(()=>{
-              const emailOk=/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
+              const emailOk=wRole==="Misafir"||/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
               const ok=!!(wName.trim()&&emailOk&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,
@@ -1092,7 +1107,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
-      {nearbyBldg&&(
+      {stickyNearby&&(
         <div style={{position:"absolute",zIndex:16,
           top:(mode==='sim'||mode==='nav')&&activeStep?170:70,
           left:"50%",transform:"translateX(-50%)",
@@ -1103,15 +1118,15 @@ export default function CampusMap(){
             boxShadow:"0 4px 16px rgba(0,0,0,0.5)",
             border:"1px solid rgba(255,255,255,0.1)",
             whiteSpace:"nowrap"}}>
-            {nearbyBldg.photo?(
-              <img src={nearbyBldg.photo} alt={nearbyBldg.name}
+            {stickyNearby.photo?(
+              <img src={stickyNearby.photo} alt={stickyNearby.name}
                 style={{width:42,height:42,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
             ):(
-              <span style={{fontSize:22}}>{nearbyBldg.emoji}</span>
+              <span style={{fontSize:22}}>{stickyNearby.emoji}</span>
             )}
             <div>
-              <div style={{fontSize:13,fontWeight:700}}>{nearbyBldg.name}</div>
-              <div style={{fontSize:10,color:"#94a3b8"}}>{nearbyBldg.desc.slice(0,40)}</div>
+              <div style={{fontSize:13,fontWeight:700}}>{stickyNearby.name}</div>
+              <div style={{fontSize:10,color:"#94a3b8"}}>{stickyNearby.desc.slice(0,40)}</div>
             </div>
           </div>
         </div>

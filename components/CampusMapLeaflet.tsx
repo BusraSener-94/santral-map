@@ -16,8 +16,9 @@ const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
-// Google Sheets Web App URL (boş bırakılırsa sadece localStorage'a kaydedilir)
-const SHEET_URL = "";
+// Google Sheets Web App URL
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbx-wzOfRVu_1CIQZzde3r8f1wdsHpSE1MIkxT-PxR3UVLl758OySrZO_P7ZBrlUGFFd/exec";
+const SHEET_TOKEN = "ks_bilgi_2526";
 
 type UserRole = "Öğrenci"|"Öğretmen"|"Personel"|"Misafir";
 interface UserProfile {
@@ -451,7 +452,7 @@ export default function CampusMap(){
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR")})
+        body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
       }).catch(()=>{});
     }
   },[wRole,wName,wStudentId,wDepartment,wUnit,wPosition]);
@@ -628,11 +629,15 @@ export default function CampusMap(){
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
               </>)}
+              <div style={{color:"rgba(255,255,255,0.35)",fontSize:10,textAlign:"center",lineHeight:1.4,marginTop:2}}>
+                Girdiğiniz bilgiler yalnızca kampüs kullanım istatistiği amacıyla
+                İstanbul Bilgi Üniversitesi bünyesinde saklanır.
+              </div>
               <button onClick={submitWelcome} disabled={!wName.trim()}
                 style={{padding:"14px",borderRadius:14,border:"none",
                   background:wName.trim()?"#154360":"rgba(255,255,255,0.1)",
                   color:wName.trim()?"#fff":"rgba(255,255,255,0.3)",
-                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default",marginTop:4}}>
+                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default"}}>
                 Haritaya Gir →
               </button>
               <button onClick={()=>setWelcomeStep("role")}

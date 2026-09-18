@@ -18,7 +18,7 @@ const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapm
 
 interface OnboardStep{text:string;target:string|null;}
 const ONBOARD_STEPS:OnboardStep[]=[
-  {text:"Merhaba! Ben Karpuza 🐾\nSana kampüsü tanıtayım!",target:null},
+  {text:"Merhaba! Ben Karpuz 🐾\nSana kampüsü tanıtayım!",target:null},
   {text:"Konumunu açmak için\nbu düğmeye dokun 📍",target:"gps-btn"},
   {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},

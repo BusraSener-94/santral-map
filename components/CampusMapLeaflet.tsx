@@ -299,6 +299,7 @@ export default function CampusMap(){
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wEmail,setWEmail]=useState("");
+  const[wKvkk,setWKvkk]=useState(false);
   const[wStudentId,setWStudentId]=useState("");
   const[wFaculty,setWFaculty]=useState("");
   const[wDepartment,setWDepartment]=useState("");
@@ -484,7 +485,7 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!emailOk())return;
+    if(!wRole||!wName.trim()||!emailOk()||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
       email:      wRole!=="Misafir"&&wEmail.trim() ? wEmail.trim().toLowerCase() : undefined,
@@ -504,7 +505,7 @@ export default function CampusMap(){
         body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
       }).catch(()=>{});
     }
-  },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk]);
+  },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
@@ -698,11 +699,16 @@ export default function CampusMap(){
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
               </>)}
-              <div style={{color:"rgba(255,255,255,0.35)",fontSize:10,textAlign:"center",lineHeight:1.4,marginTop:2}}>
-                Girdiğiniz bilgiler yalnızca kampüs kullanım istatistiği amacıyla
-                İstanbul Bilgi Üniversitesi bünyesinde saklanır.
-              </div>
-              {(()=>{const ok=wName.trim()&&emailOk();return(
+              {/* KVKK onay kutusu */}
+              <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:2}}>
+                <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
+                  style={{marginTop:2,width:16,height:16,accentColor:"#c41230",flexShrink:0,cursor:"pointer"}}/>
+                <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.5}}>
+                  Girdiğim bilgilerin kampüs kullanım istatistiği amacıyla İstanbul Bilgi Üniversitesi
+                  tarafından işlenmesine <span style={{color:"rgba(255,255,255,0.75)"}}>KVKK kapsamında onay veriyorum.</span>
+                </span>
+              </label>
+              {(()=>{const ok=!!(wName.trim()&&emailOk()&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"14px",borderRadius:14,border:"none",
                   background:ok?"#154360":"rgba(255,255,255,0.1)",

@@ -767,8 +767,9 @@ export default function CampusMap(){
                 <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
                   style={{marginTop:2,width:16,height:16,accentColor:"#c41230",flexShrink:0,cursor:"pointer"}}/>
                 <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.5}}>
-                  Girdiğim bilgilerin kampüs kullanım istatistiği amacıyla İstanbul Bilgi Üniversitesi
-                  tarafından işlenmesine{" "}
+                  Girdiğim bilgilerin yalnızca ziyaretçi sayısını ve en çok hangi kullanıcı tipi
+                  tarafından kullanıldığını ölçmek amacıyla İstanbul Bilgi Üniversitesi tarafından
+                  işlenmesine{" "}
                   <span onClick={e=>{e.preventDefault();setShowKvkkModal(true);}}
                     style={{color:"#60a5fa",textDecoration:"underline",cursor:"pointer"}}>
                     KVKK kapsamında

@@ -1119,7 +1119,9 @@ export default function CampusMap(){
               border:`1px solid ${gpsError?"#ef4444":gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
               color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4,
               ...(ONBOARD_STEPS[onboardStep??-1]?.target==="gps-btn"
-                ?{animation:"onboard-glow 1.4s ease-in-out infinite",boxShadow:"0 0 0 3px #f97316,0 0 18px rgba(249,115,22,0.7)"}
+                ?{background:"#f97316",border:"2px solid #fff",
+                   animation:"onboard-glow 1.4s ease-in-out infinite",
+                   boxShadow:"0 0 0 4px #f97316,0 0 28px rgba(249,115,22,0.9),0 0 0 8px rgba(249,115,22,0.25)"}
                 :{})}}>
               {gpsError?"⚠️ Hata":gpsOn?"📍 Aktif":"📍 Konum"}
             </button>
@@ -1430,7 +1432,7 @@ export default function CampusMap(){
               {/* Elementin hemen altında (üst element) veya üstünde (alt element) ok */}
               <div style={{position:"fixed",
                 left:hlRect.left+hlRect.width/2,
-                top: hlRect.top<200 ? hlRect.bottom+6 : hlRect.top-38,
+                top: hlRect.top<200 ? hlRect.bottom+18 : hlRect.top-42,
                 transform:"translateX(-50%)",
                 fontSize:26,zIndex:9993,pointerEvents:"none",lineHeight:1,
                 animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>

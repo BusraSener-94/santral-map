@@ -952,14 +952,16 @@ export default function CampusMap(){
                     fontSize:14,padding:"12px 0",borderRadius:12}}>
                   🟢 Buradan Başla
                 </button>
-                <button onClick={()=>{stopSim();setTo(selectedLoc);
-                  if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],selectedLoc);}
-                  else{setFrom(null);setFromGPS(false);setMode('pickFrom');}
-                  setSelectedLoc(null);}}
-                  style={{...BTN,flex:1,background:"#ef4444",color:"#fff",
-                    fontSize:14,padding:"12px 0",borderRadius:12}}>
-                  🔴 Buraya Git
-                </button>
+                {(from||fromGPS||(gpsOn&&userPos))&&(
+                  <button onClick={()=>{stopSim();setTo(selectedLoc);
+                    if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],selectedLoc);}
+                    else if(from){calcRoute(from.gps[0],from.gps[1],selectedLoc);}
+                    setSelectedLoc(null);}}
+                    style={{...BTN,flex:1,background:"#ef4444",color:"#fff",
+                      fontSize:14,padding:"12px 0",borderRadius:12}}>
+                    🔴 Buraya Git
+                  </button>
+                )}
               </div>
             </div>
           </div>

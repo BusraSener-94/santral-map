@@ -1216,7 +1216,7 @@ export default function CampusMap(){
               <div style={{position:"relative"}}>
                 <input id="search-input" value={fromSearch}
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
-                  onFocus={()=>setActiveRouteInput('from')}
+                  onFocus={()=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();}}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
                   placeholder="Başlangıç Noktası Yazın"
                   style={{width:"100%",boxSizing:"border-box",
@@ -1262,7 +1262,7 @@ export default function CampusMap(){
                 <div style={{flex:1,position:"relative",minWidth:0}}>
                   <input id="to-input" value={toSearch}
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
-                    onFocus={()=>setActiveRouteInput('to')}
+                    onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
                     placeholder="Varış Noktası Yazın"
                     style={{width:"100%",boxSizing:"border-box",
@@ -1419,7 +1419,7 @@ export default function CampusMap(){
 
           {/* Kategori filtreleri – sadece idle modda */}
           {mode==='idle'&&(
-            <div id="cat-row" style={{display:"flex",alignItems:"center",gap:6,overflowX:"auto",paddingBottom:4} as React.CSSProperties}>
+            <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4}}>
               <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>Binaları Filtreleyin:</span>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,

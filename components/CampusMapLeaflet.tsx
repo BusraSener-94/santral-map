@@ -16,7 +16,7 @@ const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
-interface OnboardStep{text:string;target:string|null;}
+interface OnboardStep{text:string;target:string|null;ring?:string;}
 const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Merhaba! Ben Karpuz 🐾\nSana kampüsü tanıtayım!",target:null},
   {text:"Konumunu açmak için\nbu düğmeye dokun 📍",target:"gps-btn"},
@@ -24,7 +24,7 @@ const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
   {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
   {text:"Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor: haritada gitmek\nistediğin noktaya dokun ya da aşağıya yaz 🗺",target:"to-input"},
-  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:"speed-btn"},
+  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:"nav-card",ring:"speed-btn"},
   {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
 ];
 
@@ -320,6 +320,7 @@ export default function CampusMap(){
   const prevPosRef=useRef<[number,number]|null>(null);
   const[onboardStep,setOnboardStep]=useState<number|null>(null);
   const[hlRect,setHlRect]=useState<DOMRect|null>(null);
+  const[ringRect,setRingRect]=useState<DOMRect|null>(null);
   const[simSpeed,setSimSpeed]=useState(1);
   const simSpeedRef=useRef(1);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
@@ -331,13 +332,17 @@ export default function CampusMap(){
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
-    if(onboardStep===null){setHlRect(null);return;}
-    const t=ONBOARD_STEPS[onboardStep].target;
-    if(!t){setHlRect(null);return;}
+    if(onboardStep===null){setHlRect(null);setRingRect(null);return;}
+    const step=ONBOARD_STEPS[onboardStep];
+    const t=step.target;
+    const r=step.ring??t;
     const update=()=>{
-      const el=document.getElementById(t);
+      const el=t?document.getElementById(t):null;
       if(el)setHlRect(el.getBoundingClientRect());
       else setHlRect(null);
+      const rel=r?document.getElementById(r):null;
+      if(rel)setRingRect(rel.getBoundingClientRect());
+      else setRingRect(null);
     };
     update();
     window.addEventListener('resize',update);
@@ -1008,7 +1013,7 @@ export default function CampusMap(){
 
       {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
       {(mode==='sim'||mode==='nav')&&activeStep&&(
-        <div style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
+        <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
           boxShadow:"0 4px 16px rgba(0,0,0,0.5)"}}>
           {/* Ana yön kartı */}
           <div style={{background:"#0d9488",padding:"14px 18px",
@@ -1438,22 +1443,26 @@ export default function CampusMap(){
               <div style={{position:"fixed",top:hlRect.top,height:hlRect.height,
                 left:hlRect.right,right:0,
                 background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
-              {/* Turuncu ring */}
-              <div style={{position:"fixed",
-                left:hlRect.left-10,top:hlRect.top-10,
-                width:hlRect.width+20,height:hlRect.height+20,
-                borderRadius:16,border:"2.5px solid #f97316",
-                animation:"onboard-glow 1.4s ease-in-out infinite",
-                zIndex:9992,pointerEvents:"none"}}/>
-              {/* Yön oku */}
-              <div style={{position:"fixed",
-                left:hlRect.left+hlRect.width/2,
-                top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-42,
-                transform:"translateX(-50%)",
-                fontSize:26,zIndex:9994,pointerEvents:"none",lineHeight:1,
-                animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
-                {hlRect.top<200?"⬆️":"⬇️"}
-              </div>
+              {/* Turuncu ring – ringRect varsa oraya, yoksa hlRect'e */}
+              {(ringRect??hlRect)&&(()=>{const rr=ringRect??hlRect!;return(
+                <div style={{position:"fixed",
+                  left:rr.left-10,top:rr.top-10,
+                  width:rr.width+20,height:rr.height+20,
+                  borderRadius:16,border:"2.5px solid #f97316",
+                  animation:"onboard-glow 1.4s ease-in-out infinite",
+                  zIndex:9992,pointerEvents:"none"}}/>
+              );})()}
+              {/* Yön oku – ringRect varsa oraya, yoksa hlRect'e */}
+              {(ringRect??hlRect)&&(()=>{const rr=ringRect??hlRect!;return(
+                <div style={{position:"fixed",
+                  left:rr.left+rr.width/2,
+                  top: rr.top<200 ? rr.bottom+14 : rr.top-42,
+                  transform:"translateX(-50%)",
+                  fontSize:26,zIndex:9994,pointerEvents:"none",lineHeight:1,
+                  animation: rr.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
+                  {rr.top<200?"⬆️":"⬇️"}
+                </div>
+              );})()}
             </>
           ) : (
             <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",

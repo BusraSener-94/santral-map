@@ -831,7 +831,12 @@ export default function CampusMap(){
             boxShadow:"0 4px 16px rgba(0,0,0,0.5)",
             border:"1px solid rgba(255,255,255,0.1)",
             whiteSpace:"nowrap"}}>
-            <span style={{fontSize:22}}>{nearbyBldg.emoji}</span>
+            {nearbyBldg.photo?(
+              <img src={nearbyBldg.photo} alt={nearbyBldg.name}
+                style={{width:42,height:42,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
+            ):(
+              <span style={{fontSize:22}}>{nearbyBldg.emoji}</span>
+            )}
             <div>
               <div style={{fontSize:13,fontWeight:700}}>{nearbyBldg.name}</div>
               <div style={{fontSize:10,color:"#94a3b8"}}>{nearbyBldg.desc.slice(0,40)}</div>

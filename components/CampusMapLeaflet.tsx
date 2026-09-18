@@ -373,14 +373,19 @@ export default function CampusMap(){
       const stored=localStorage.getItem("karpuza_user");
       if(stored){
         const p:UserProfile=JSON.parse(stored);
-        setUserProfile(p);
-        // Her oturumda ziyaret kaydı gönder
-        if(SHEET_URL){
-          fetch(SHEET_URL,{method:"POST",mode:"no-cors",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
-              name:p.name,role:p.role,email:p.email||"-",token:SHEET_TOKEN})
-          }).catch(()=>{});
+        // Eski profilde e-posta yoksa yeniden bilgi al
+        if(p.role!=="Misafir"&&!p.email){
+          setWRole(p.role);setWName(p.name);setWelcomeStep("info");
+        } else {
+          setUserProfile(p);
+          // Her oturumda ziyaret kaydı gönder
+          if(SHEET_URL){
+            fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
+                name:p.name,role:p.role,email:p.email||"-",token:SHEET_TOKEN})
+            }).catch(()=>{});
+          }
         }
       } else {setWelcomeStep("role");}
     },3700);
@@ -556,7 +561,7 @@ export default function CampusMap(){
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...profile,type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
+        body:JSON.stringify({...profile,email:profile.email||"-",type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
       }).catch(()=>{});
     }
   },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk,wKvkk]);

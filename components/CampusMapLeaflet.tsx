@@ -136,13 +136,12 @@ function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
 }
 
 // Navigasyon sırasında haritayı kullanıcı konumuna kilitle
-function MapFollower({pos,active,lockZoom}:{pos:[number,number]|null;active:boolean;lockZoom:boolean}){
+function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
   const m=useMap();
   useEffect(()=>{
     if(!active||!pos)return;
-    if(lockZoom)m.setView(pos,18,{animate:true,duration:0.5});
-    else m.panTo(pos,{animate:true,duration:0.5});
-  },[active,pos,m,lockZoom]);
+    m.panTo(pos,{animate:true,duration:0.5});
+  },[active,pos,m]);
   return null;
 }
 
@@ -920,7 +919,7 @@ export default function CampusMap(){
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>
-          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} lockZoom={mode==='nav'}/>
+          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>
       </div>
 

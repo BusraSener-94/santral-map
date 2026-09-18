@@ -313,6 +313,7 @@ export default function CampusMap(){
   const[wName,setWName]=useState("");
   const[wEmail,setWEmail]=useState("");
   const[wKvkk,setWKvkk]=useState(false);
+  const[showKvkkModal,setShowKvkkModal]=useState(false);
   const[wStudentId,setWStudentId]=useState("");
   const[wFaculty,setWFaculty]=useState("");
   const[wDepartment,setWDepartment]=useState("");
@@ -624,6 +625,36 @@ export default function CampusMap(){
         </div>
       )}
 
+      {/* ─── KVKK Metni Modal ───────────────────────────────────────────── */}
+      {showKvkkModal&&(
+        <div style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.75)",
+          display:"flex",alignItems:"flex-end",justifyContent:"center"}}
+          onClick={()=>setShowKvkkModal(false)}>
+          <div style={{background:"#0f172a",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",
+            width:"100%",maxWidth:480,maxHeight:"80vh",overflowY:"auto"}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+              <div style={{color:"#fff",fontWeight:700,fontSize:15}}>KVKK Aydınlatma Metni</div>
+              <button onClick={()=>setShowKvkkModal(false)}
+                style={{background:"transparent",border:"none",color:"rgba(255,255,255,0.5)",
+                  fontSize:22,cursor:"pointer",padding:"0 4px",lineHeight:1}}>✕</button>
+            </div>
+            <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,lineHeight:1.8,display:"flex",flexDirection:"column",gap:12}}>
+              <p style={{margin:0}}><strong style={{color:"#fff"}}>Veri Sorumlusu:</strong> İstanbul Bilgi Üniversitesi</p>
+              <p style={{margin:0}}><strong style={{color:"#fff"}}>Toplanan Kişisel Veriler:</strong> Ad soyad, kurumsal e-posta adresi, öğrenci numarası (öğrenciler için), fakülte/bölüm/birim/görev bilgileri.</p>
+              <p style={{margin:0}}><strong style={{color:"#fff"}}>İşleme Amacı:</strong> Bu veriler yalnızca santralistanbul Kampüsü navigasyon uygulamasının kullanım istatistiklerinin analizi amacıyla toplanmaktadır.</p>
+              <p style={{margin:0}}><strong style={{color:"#fff"}}>Saklama ve Güvenlik:</strong> Veriler İstanbul Bilgi Üniversitesi bünyesinde saklanır, üçüncü taraflarla paylaşılmaz ve ticari amaçla kullanılmaz.</p>
+              <p style={{margin:0}}><strong style={{color:"#fff"}}>Haklarınız:</strong> 6698 sayılı KVKK kapsamında verilerinize erişme, düzeltme, silme ve işlemeye itiraz etme haklarına sahipsiniz. Talepleriniz için üniversite veri koruma birimi ile iletişime geçebilirsiniz.</p>
+            </div>
+            <button onClick={()=>setShowKvkkModal(false)}
+              style={{marginTop:20,width:"100%",padding:"13px",borderRadius:12,border:"none",
+                background:"#154360",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+              Anladım
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ─── Hoşgeldin / Kullanıcı kaydı ──────────────────────────────── */}
       {welcomeStep&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",
@@ -721,7 +752,11 @@ export default function CampusMap(){
                   style={{marginTop:2,width:16,height:16,accentColor:"#c41230",flexShrink:0,cursor:"pointer"}}/>
                 <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.5}}>
                   Girdiğim bilgilerin kampüs kullanım istatistiği amacıyla İstanbul Bilgi Üniversitesi
-                  tarafından işlenmesine <span style={{color:"rgba(255,255,255,0.75)"}}>KVKK kapsamında onay veriyorum.</span>
+                  tarafından işlenmesine{" "}
+                  <span onClick={e=>{e.preventDefault();setShowKvkkModal(true);}}
+                    style={{color:"#60a5fa",textDecoration:"underline",cursor:"pointer"}}>
+                    KVKK kapsamında
+                  </span>{" "}onay veriyorum.
                 </span>
               </label>
               {(()=>{const ok=!!(wName.trim()&&emailOk()&&wKvkk);return(

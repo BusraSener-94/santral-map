@@ -550,7 +550,7 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!wEmail.trim()||!wKvkk)return;
+    if(!wRole||!wName.trim()||!/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim())||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
       email: wEmail.trim().toLowerCase()||"-",
@@ -690,7 +690,7 @@ export default function CampusMap(){
 
           {/* Karpuz logosu – büyük */}
           <img src="/karpuza-sor.png" alt="Karpuza Sor"
-            style={{height:160,width:"auto",objectFit:"contain",borderRadius:20,
+            style={{height:220,width:"auto",objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 40px rgba(0,0,0,0.7)",marginBottom:16}}/>
 
           {/* Karpuz tanıtımı */}
@@ -713,13 +713,24 @@ export default function CampusMap(){
                 border:"1.5px solid rgba(255,255,255,0.2)",
                 background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
 
-            {/* E-posta (opsiyonel) */}
-            <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
-              placeholder="E-posta adresiniz (zorunlu)"
-              type="email" inputMode="email" autoCapitalize="none"
-              style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
-                border:"1.5px solid rgba(255,255,255,0.2)",
-                background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+            {/* E-posta – @bilgi.edu.tr veya @bilgi.edu.net zorunlu */}
+            {(()=>{
+              const emailOk=/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim());
+              const emailErr=wEmail.trim()&&!emailOk;
+              return(<>
+                <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
+                  placeholder="ad.soyad@bilgi.edu.tr"
+                  type="email" inputMode="email" autoCapitalize="none"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                    border:`1.5px solid ${emailErr?"#ef4444":emailOk?"#22c55e":"rgba(255,255,255,0.2)"}`,
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+                {emailErr&&(
+                  <div style={{color:"#f87171",fontSize:11,marginTop:-4,paddingLeft:4}}>
+                    @bilgi.edu.tr veya @bilgi.edu.net adresi giriniz
+                  </div>
+                )}
+              </>);
+            })()}
 
             {/* Rol seçimi – aynı ekranda kalır */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:2}}>
@@ -735,17 +746,10 @@ export default function CampusMap(){
               ))}
             </div>
 
-            {/* Ek bilgi – rol seçilince belirir */}
+            {/* Ek bilgi – sadece Öğretmen için fakülte (opsiyonel) */}
             {wRole==="Öğretmen"&&(
               <input value={wExtra} onChange={e=>setWExtra(e.target.value)}
-                placeholder="Fakülteniz (örn: Mühendislik)"
-                style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
-                  border:"1.5px solid rgba(255,255,255,0.2)",
-                  background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
-            )}
-            {wRole==="Personel"&&(
-              <input value={wExtra} onChange={e=>setWExtra(e.target.value)}
-                placeholder="Göreviniz (örn: Uzman, Sekreter)"
+                placeholder="Fakülteniz (opsiyonel)"
                 style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
                   border:"1.5px solid rgba(255,255,255,0.2)",
                   background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
@@ -763,7 +767,9 @@ export default function CampusMap(){
             </label>
 
             {/* Giriş butonu */}
-            {(()=>{const ok=!!(wName.trim()&&wEmail.trim()&&wRole&&wKvkk);return(
+            {(()=>{
+              const emailOk=/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim());
+              const ok=!!(wName.trim()&&emailOk&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,
                   background:ok?"linear-gradient(135deg,#1d4ed8,#2563eb)":"rgba(255,255,255,0.08)",

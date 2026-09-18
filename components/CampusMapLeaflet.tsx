@@ -1159,6 +1159,29 @@ export default function CampusMap(){
             </div>
           )}
 
+          {/* PICKTО: Varış noktası arama listesi */}
+          {mode==='pickTo'&&(
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <input value={search} onChange={e=>setSearch(e.target.value)}
+                placeholder="Nereye gitmek istiyorsun?"
+                autoFocus
+                style={{flex:1,background:"#0f172a",border:"1px solid #ef4444",borderRadius:10,
+                  padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
+              <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
+                {visible.slice(0,10).map(loc=>(
+                  <button key={loc.num} onClick={()=>handlePinClick(loc)}
+                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
+                      background:"#0f172a",border:"none",borderRadius:8,cursor:"pointer",
+                      color:"#fff",textAlign:"left",width:"100%"}}>
+                    <span style={{fontSize:18,flexShrink:0}}>{loc.emoji}</span>
+                    <span style={{fontSize:14,fontWeight:600,flex:1}}>{loc.name}</span>
+                    <span style={{color:"#ef4444",fontSize:12,flexShrink:0}}>Buraya Git →</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* READY / SIM / NAV: Rota bilgisi */}
           {(mode==='ready'||mode==='sim'||mode==='nav')&&(
             <div style={{display:"flex",flexDirection:"column",gap:8}}>

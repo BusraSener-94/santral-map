@@ -653,8 +653,8 @@ export default function CampusMap(){
       {/* ─── Harita ─────────────────────────────────────────────────────── */}
       <div style={{position:"absolute",inset:0,zIndex:1}}>
         <MapContainer center={CAMPUS_CENTER} zoom={17}
-          style={{height:"100%",width:"100%"}} minZoom={15} maxZoom={19}
-          maxBounds={[[41.055,28.925],[41.085,28.965]]} maxBoundsViscosity={0.8} zoomControl={false}
+          style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
+          zoomControl={false}
           {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>

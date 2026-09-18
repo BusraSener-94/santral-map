@@ -900,23 +900,30 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Üst banner: seçim modu ──────────────────────────────────────── */}
+      {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
       {(mode==='pickFrom'||mode==='pickTo')&&(
-        <div style={{position:"absolute",top:0,left:0,right:0,zIndex:20,
+        <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%)",
+          zIndex:20,display:"flex",alignItems:"center",gap:8,
           background:mode==='pickFrom'?"#16a34a":"#ef4444",
-          padding:"14px 16px",display:"flex",alignItems:"center",gap:12,
-          boxShadow:"0 3px 12px rgba(0,0,0,0.4)"}}>
-          <span style={{fontSize:22}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
-          <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
-            {mode==='pickFrom'?"Haritada başlangıç noktasına dokun":"Haritada varış noktasına dokun"}
+          borderRadius:50,padding:"10px 14px 10px 16px",
+          boxShadow:"0 6px 24px rgba(0,0,0,0.45)",
+          whiteSpace:"nowrap",animation:"onboard-fadein 0.25s ease"}}>
+          <span style={{fontSize:18}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
+          <span style={{color:"#fff",fontWeight:700,fontSize:14}}>
+            {mode==='pickFrom'?"Başlangıç noktasını seç":"Varış noktasını seç"}
           </span>
           {mode==='pickFrom'&&gpsOn&&userPos&&(
             <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}
-              style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",fontSize:12,padding:"6px 12px",minHeight:36}}>
-              📍 Konum
+              style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
+                fontSize:12,padding:"4px 12px",minHeight:30,borderRadius:30}}>
+              📍 GPS
             </button>
           )}
-          <button onClick={reset} style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",minHeight:36,padding:"6px 10px",fontSize:20}}>✕</button>
+          <button onClick={reset}
+            style={{...BTN,background:"rgba(0,0,0,0.18)",color:"#fff",
+              minHeight:30,width:30,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
+            ✕
+          </button>
         </div>
       )}
 

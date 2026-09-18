@@ -379,7 +379,7 @@ export default function CampusMap(){
           fetch(SHEET_URL,{method:"POST",mode:"no-cors",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
-              name:p.name,role:p.role,token:SHEET_TOKEN})
+              name:p.name,role:p.role,email:p.email||"-",token:SHEET_TOKEN})
           }).catch(()=>{});
         }
       } else {setWelcomeStep("role");}

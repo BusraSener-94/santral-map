@@ -342,6 +342,7 @@ export default function CampusMap(){
       if(s>=ONBOARD_STEPS.length-1){localStorage.setItem("karpuza_onboard","1");return null;}
       return s+1;
     });
+    setSheetTranslate(0); // alt panel açık kalsın
   },[]);
 
   // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
@@ -1046,12 +1047,14 @@ export default function CampusMap(){
           boxShadow:"0 -4px 24px rgba(0,0,0,0.5)",
           transform:`translateY(${Math.max(0,sheetTranslate)}px)`,
           transition:sheetTranslate===0?"transform 0.25s ease":"none"}}
-        onTouchStart={e=>{touchStartY.current=e.touches[0].clientY;}}
+        onTouchStart={e=>{if(onboardStep!==null)return;touchStartY.current=e.touches[0].clientY;}}
         onTouchMove={e=>{
+          if(onboardStep!==null)return;
           const dy=e.touches[0].clientY-touchStartY.current;
           if(dy>0)setSheetTranslate(dy);
         }}
         onTouchEnd={()=>{
+          if(onboardStep!==null)return;
           if(sheetTranslate>80){
             setSheetTranslate(0);
             if(mode!=='idle')reset();

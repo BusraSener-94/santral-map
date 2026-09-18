@@ -342,7 +342,7 @@ export default function CampusMap(){
     update();
     window.addEventListener('resize',update);
     return()=>window.removeEventListener('resize',update);
-  },[onboardStep]);
+  },[onboardStep,mode]);
 
   const handleLogoPress=useCallback(()=>{
     longPressTimer.current=setTimeout(()=>{

@@ -23,7 +23,9 @@ const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
   {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
-  {text:"Hazırım! Haydi kampüsü\nkeşfedelim 🍉",target:null},
+  {text:"Herhangi bir binaya dokununca kart açılır.\n'Buradan Başla' → oradan yola çık 🟢\n'Buraya Git' → oraya git 🔴",target:null},
+  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:null},
+  {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
 ];
 
 // Google Sheets Web App URL
@@ -629,8 +631,8 @@ export default function CampusMap(){
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               santralistanbul Kampüsü
             </div>
-            <div style={{color:"rgba(255,255,255,0.15)",fontSize:10,letterSpacing:2,marginTop:8}}>
-              L&amp;B
+            <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:3,marginTop:8}}>
+              ETM
             </div>
           </div>
         </div>

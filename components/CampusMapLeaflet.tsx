@@ -16,6 +16,12 @@ const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
+// Google Sheets Web App URL (boş bırakılırsa sadece localStorage'a kaydedilir)
+const SHEET_URL = "";
+
+type UserRole = "Öğrenci"|"Öğretmen"|"Personel"|"Misafir";
+interface UserProfile { name:string; role:UserRole; studentId?:string; ts:number; }
+
 // ── Matematik ────────────────────────────────────────────────────────────────
 function hav(a:number,b:number,c:number,d:number):number{
   const R=6371000,dL=(c-a)*Math.PI/180,dO=(d-b)*Math.PI/180;
@@ -268,13 +274,23 @@ export default function CampusMap(){
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
   const[splash,setSplash]=useState<"visible"|"fading"|"hidden">("visible");
+  const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
+  const[welcomeStep,setWelcomeStep]=useState<"role"|"info"|null>(null);
+  const[wRole,setWRole]=useState<UserRole|null>(null);
+  const[wName,setWName]=useState("");
+  const[wStudentId,setWStudentId]=useState("");
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
 
-  // Splash ekranı: 1.8s görünür, sonra fade-out
+  // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
   useEffect(()=>{
     const t1=setTimeout(()=>setSplash("fading"),1800);
-    const t2=setTimeout(()=>setSplash("hidden"),2600);
+    const t2=setTimeout(()=>{
+      setSplash("hidden");
+      const stored=localStorage.getItem("karpuza_user");
+      if(stored){setUserProfile(JSON.parse(stored));}
+      else{setWelcomeStep("role");}
+    },2600);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 
@@ -410,6 +426,20 @@ export default function CampusMap(){
   },[mode,userPos,to,route,navSteps]);
 
   // ── Pin tıklama mantığı ──
+  const submitWelcome=useCallback(()=>{
+    if(!wRole||!wName.trim())return;
+    const profile:UserProfile={name:wName.trim(),role:wRole,
+      studentId:wRole==="Öğrenci"&&wStudentId.trim()?wStudentId.trim():undefined,ts:Date.now()};
+    localStorage.setItem("karpuza_user",JSON.stringify(profile));
+    setUserProfile(profile);setWelcomeStep(null);
+    if(SHEET_URL){
+      fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR")})
+      }).catch(()=>{});
+    }
+  },[wRole,wName,wStudentId]);
+
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
     if(mode==='pickTo'){
@@ -508,6 +538,74 @@ export default function CampusMap(){
               santralistanbul Kampüsü
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ─── Hoşgeldin / Kullanıcı kaydı ──────────────────────────────── */}
+      {welcomeStep&&(
+        <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+          <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+            style={{height:120,width:"auto",objectFit:"contain",borderRadius:16,marginBottom:20,
+              boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}/>
+          <img src="/bilgi-logotype.png" alt="BİLGİ"
+            style={{height:26,width:"auto",maxWidth:"60vw",objectFit:"contain",marginBottom:6,opacity:.9}}/>
+          <div style={{color:"rgba(255,255,255,0.5)",fontSize:11,marginBottom:28,letterSpacing:.5}}>
+            santralistanbul Kampüsü
+          </div>
+
+          {welcomeStep==="role"&&(<>
+            <div style={{color:"#fff",fontWeight:700,fontSize:18,marginBottom:6,textAlign:"center"}}>
+              Hoş Geldiniz!
+            </div>
+            <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,marginBottom:22,textAlign:"center"}}>
+              Devam etmek için rolünüzü seçin
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,width:"100%",maxWidth:300}}>
+              {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>(
+                <button key={r} onClick={()=>{setWRole(r);setWelcomeStep("info");}}
+                  style={{padding:"14px 10px",borderRadius:14,border:"2px solid rgba(255,255,255,0.15)",
+                    background:"rgba(255,255,255,0.07)",color:"#fff",fontSize:15,fontWeight:600,
+                    cursor:"pointer",transition:"all .15s"}}>
+                  {r==="Öğrenci"?"🎓 Öğrenci":r==="Öğretmen"?"👨‍🏫 Öğretmen":r==="Personel"?"🏢 Personel":"🙋 Misafir"}
+                </button>
+              ))}
+            </div>
+          </>)}
+
+          {welcomeStep==="info"&&(<>
+            <div style={{color:"#fff",fontWeight:700,fontSize:17,marginBottom:4,textAlign:"center"}}>
+              {wRole==="Öğrenci"?"🎓":wRole==="Öğretmen"?"👨‍🏫":wRole==="Personel"?"🏢":"🙋"} {wRole}
+            </div>
+            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginBottom:22}}>
+              Adınızı girin, haritaya geçelim
+            </div>
+            <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:12}}>
+              <input value={wName} onChange={e=>setWName(e.target.value)}
+                placeholder="Adınız Soyadınız"
+                style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                  background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              {wRole==="Öğrenci"&&(
+                <input value={wStudentId} onChange={e=>setWStudentId(e.target.value)}
+                  placeholder="Öğrenci Numaranız"
+                  inputMode="numeric"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              )}
+              <button onClick={submitWelcome} disabled={!wName.trim()}
+                style={{padding:"14px",borderRadius:14,border:"none",
+                  background:wName.trim()?"#154360":"rgba(255,255,255,0.1)",
+                  color:wName.trim()?"#fff":"rgba(255,255,255,0.3)",
+                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default"}}>
+                Haritaya Gir →
+              </button>
+              <button onClick={()=>setWelcomeStep("role")}
+                style={{padding:"8px",background:"transparent",border:"none",
+                  color:"rgba(255,255,255,0.4)",fontSize:13,cursor:"pointer"}}>
+                ← Geri
+              </button>
+            </div>
+          </>)}
         </div>
       )}
 
@@ -720,12 +818,12 @@ export default function CampusMap(){
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          {/* Sol: BİLGİ logotype */}
+          {/* Sol: BİLGİ logotype + kullanıcı selamı */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0}}>
             <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
               style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
-            <div style={{color:"rgba(255,255,255,0.70)",fontSize:9.5,letterSpacing:.5,lineHeight:1,paddingLeft:2}}>
-              santralistanbul Kampüsü
+            <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>
+              {userProfile?`Merhaba, ${userProfile.name.split(" ")[0]}! 👋`:"santralistanbul Kampüsü"}
             </div>
           </div>
           {/* Orta: Karpuza logo ortalı */}

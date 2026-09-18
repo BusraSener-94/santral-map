@@ -1148,7 +1148,11 @@ export default function CampusMap(){
                 placeholder="Bina ara…"
                 style={{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:10,
                   padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
-              <button id="route-btn" onClick={()=>setMode('pickFrom')}
+              <button id="route-btn" onClick={()=>{
+                (document.activeElement as HTMLElement)?.blur();
+                if(gpsOn&&userPos){setFromGPS(true);setMode('pickTo');}
+                else setMode('pickFrom');
+              }}
                 style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 16px",fontSize:13,borderRadius:10}}>
                 🗺 Yol Tarifi
               </button>

@@ -351,8 +351,18 @@ export default function CampusMap(){
     const t2=setTimeout(()=>{
       setSplash("hidden");
       const stored=localStorage.getItem("karpuza_user");
-      if(stored){setUserProfile(JSON.parse(stored));}
-      else{setWelcomeStep("role");}
+      if(stored){
+        const p:UserProfile=JSON.parse(stored);
+        setUserProfile(p);
+        // Her oturumda ziyaret kaydı gönder
+        if(SHEET_URL){
+          fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
+              name:p.name,role:p.role,token:SHEET_TOKEN})
+          }).catch(()=>{});
+        }
+      } else {setWelcomeStep("role");}
     },2600);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
@@ -517,7 +527,7 @@ export default function CampusMap(){
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
+        body:JSON.stringify({...profile,type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
       }).catch(()=>{});
     }
   },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk,wKvkk]);

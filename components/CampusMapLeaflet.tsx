@@ -23,7 +23,7 @@ const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
   {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
-  {text:"Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor:\nHaritaya dokun ya da aşağıya yaz 🗺",target:null},
+  {text:"Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor:\nHaritaya dokun ya da aşağıya yaz 🗺",target:"to-input"},
   {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:null},
   {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
 ];
@@ -1245,7 +1245,7 @@ export default function CampusMap(){
 
               {/* Varış input */}
               <div style={{flex:1,position:"relative",minWidth:0}}>
-                <input value={toSearch}
+                <input id="to-input" value={toSearch}
                   onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
                   onFocus={()=>setActiveRouteInput('to')}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}

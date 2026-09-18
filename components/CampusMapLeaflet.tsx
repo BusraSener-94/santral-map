@@ -310,6 +310,7 @@ export default function CampusMap(){
   const[splash,setSplash]=useState<"visible"|"fading"|"hidden">("visible");
   const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
+  const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wEmail,setWEmail]=useState("");
@@ -524,7 +525,7 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!wKvkk)return;
+    if(!wRole||!wName.trim()||!wEmail.trim()||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
       email: wEmail.trim().toLowerCase()||"-",
@@ -561,7 +562,8 @@ export default function CampusMap(){
       else{setMode('pickFrom');}
       return;
     }
-    // idle modunda popup açılır (Leaflet varsayılan davranışı)
+    // idle/ready modunda bina modalı aç
+    setSelectedLoc(loc);
   },[mode,from,fromGPS,userPos,gpsOn,calcRoute,stopSim]);
 
   const reset=useCallback(()=>{
@@ -689,7 +691,7 @@ export default function CampusMap(){
 
             {/* E-posta (opsiyonel) */}
             <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
-              placeholder="E-posta adresiniz (opsiyonel)"
+              placeholder="E-posta adresiniz (zorunlu)"
               type="email" inputMode="email" autoCapitalize="none"
               style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
                 border:"1.5px solid rgba(255,255,255,0.2)",
@@ -737,7 +739,7 @@ export default function CampusMap(){
             </label>
 
             {/* Giriş butonu */}
-            {(()=>{const ok=!!(wName.trim()&&wRole&&wKvkk);return(
+            {(()=>{const ok=!!(wName.trim()&&wEmail.trim()&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,
                   background:ok?"linear-gradient(135deg,#1d4ed8,#2563eb)":"rgba(255,255,255,0.08)",
@@ -785,81 +787,6 @@ export default function CampusMap(){
               <Marker key={loc.num} position={loc.gps} icon={mkIcon(loc,iF,iT,showLabel)}
                 zIndexOffset={(iF||iT)?1000:0}
                 eventHandlers={{click:()=>handlePinClick(loc)}}>
-                {/* Popup sadece idle modda açılır */}
-                {(mode==='idle'||mode==='ready')&&(
-                  <Popup maxWidth={270} minWidth={220} closeButton>
-                    <div style={{fontFamily:"'Segoe UI',sans-serif",padding:4}}>
-                      {loc.photo?(
-                        <div style={{borderRadius:8,overflow:"hidden",marginBottom:8,position:"relative"}}>
-                          <img src={loc.photo} alt={loc.name}
-                            style={{width:"100%",height:130,objectFit:"cover",display:"block"}}/>
-                          <div style={{position:"absolute",bottom:0,left:0,right:0,
-                            background:"linear-gradient(transparent,rgba(0,0,0,0.7))",
-                            padding:"20px 10px 8px",textAlign:"center"}}>
-                            <div style={{fontWeight:800,fontSize:15,color:"#fff"}}>{loc.name}</div>
-                            {ROOMS[String(loc.num)]&&(
-                              <div style={{fontSize:10,color:"rgba(255,255,255,0.75)"}}>
-                                {Object.values(ROOMS[String(loc.num)]).reduce((s,a)=>s+a.length,0)} mahal
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ):(
-                        <div style={{
-                          background:`linear-gradient(135deg,${CAT[loc.cats[0]]?.c??"#3b82f6"},${CAT[loc.cats[0]]?.c??"#3b82f6"}88)`,
-                          borderRadius:8,padding:"14px 10px",textAlign:"center",marginBottom:8,
-                        }}>
-                          <div style={{fontSize:36,lineHeight:1}}>{loc.emoji}</div>
-                          <div style={{fontWeight:800,fontSize:15,color:"#fff",marginTop:4}}>{loc.name}</div>
-                          {ROOMS[String(loc.num)]&&(
-                            <div style={{fontSize:10,color:"rgba(255,255,255,0.75)",marginTop:3}}>
-                              {Object.values(ROOMS[String(loc.num)]).reduce((s,a)=>s+a.length,0)} mahal
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      <div style={{fontSize:12,color:"#475569",marginBottom:8,lineHeight:1.5}}>{loc.desc}</div>
-                      {ROOMS[String(loc.num)]&&(
-                        <div style={{borderTop:"1px solid #e2e8f0",paddingTop:8,marginBottom:8}}>
-                          <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",letterSpacing:"0.05em",marginBottom:6}}>MAHAL LİSTESİ</div>
-                          <div style={{maxHeight:160,overflowY:"auto",fontSize:11,lineHeight:1.4}}>
-                            {Object.entries(ROOMS[String(loc.num)]).map(([floor,rooms])=>(
-                              <div key={floor} style={{marginBottom:8}}>
-                                <div style={{fontWeight:700,color:"#1e293b",fontSize:10,
-                                  background:"#f1f5f9",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
-                                  {floor}
-                                </div>
-                                {(rooms as RoomEntry[]).map((r,i)=>(
-                                  <div key={i} style={{display:"flex",gap:4,alignItems:"baseline",
-                                    padding:"2px 4px",borderBottom:"1px solid #f8fafc"}}>
-                                    <span style={{color:"#1e293b",fontWeight:700,minWidth:44,flexShrink:0}}>{r.oda}</span>
-                                    <span style={{color:"#475569",flex:1,overflow:"hidden",
-                                      textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
-                                    {r.cap&&<span style={{color:"#94a3b8",flexShrink:0,fontSize:10}}>{r.cap}👤</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      <div style={{display:"flex",gap:8}}>
-                        <button onClick={e=>{e.stopPropagation();setFrom(loc);setFromGPS(false);setMode('pickTo');
-                          document.querySelectorAll('.leaflet-popup-close-button').forEach((b:Element)=>(b as HTMLElement).click());}}
-                          style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:12,padding:"8px 0"}}>
-                          Buradan Başla
-                        </button>
-                        <button onClick={e=>{e.stopPropagation();setTo(loc);
-                          if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],loc);}
-                          else{setMode('pickFrom');}
-                          document.querySelectorAll('.leaflet-popup-close-button').forEach((b:Element)=>(b as HTMLElement).click());}}
-                          style={{...BTN,flex:1,background:"#ef4444",color:"#fff",fontSize:12,padding:"8px 0"}}>
-                          Buraya Git
-                        </button>
-                      </div>
-                    </div>
-                  </Popup>
-                )}
               </Marker>
             );
           })}
@@ -871,6 +798,114 @@ export default function CampusMap(){
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>
       </div>
+
+      {/* ─── Bina bilgi modalı ──────────────────────────────────────────── */}
+      {selectedLoc&&(
+        <div onClick={()=>setSelectedLoc(null)}
+          style={{position:"fixed",inset:0,zIndex:30,
+            background:"rgba(0,0,0,0.55)",
+            display:"flex",alignItems:"center",justifyContent:"center",
+            padding:"20px 16px"}}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:"#fff",borderRadius:20,width:"100%",maxWidth:360,
+              maxHeight:"82vh",overflowY:"auto",
+              boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+
+            {/* Fotoğraf veya emoji başlık */}
+            {selectedLoc.photo?(
+              <div style={{position:"relative",borderRadius:"20px 20px 0 0",overflow:"hidden"}}>
+                <img src={selectedLoc.photo} alt={selectedLoc.name}
+                  style={{width:"100%",height:170,objectFit:"cover",display:"block"}}/>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,
+                  background:"linear-gradient(transparent,rgba(0,0,0,0.75))",
+                  padding:"24px 16px 14px"}}>
+                  <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{selectedLoc.name}</div>
+                  {ROOMS[String(selectedLoc.num)]&&(
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
+                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                    </div>
+                  )}
+                </div>
+                <button onClick={()=>setSelectedLoc(null)}
+                  style={{position:"absolute",top:10,right:10,width:32,height:32,
+                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
+                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",
+                    alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
+              </div>
+            ):(
+              <div style={{
+                background:`linear-gradient(135deg,${CAT[selectedLoc.cats[0]]?.c??"#3b82f6"},${CAT[selectedLoc.cats[0]]?.c??"#3b82f6"}99)`,
+                borderRadius:"20px 20px 0 0",padding:"24px 16px 20px",
+                display:"flex",alignItems:"center",gap:14,position:"relative"}}>
+                <div style={{fontSize:42}}>{selectedLoc.emoji}</div>
+                <div>
+                  <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{selectedLoc.name}</div>
+                  {ROOMS[String(selectedLoc.num)]&&(
+                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
+                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                    </div>
+                  )}
+                </div>
+                <button onClick={()=>setSelectedLoc(null)}
+                  style={{position:"absolute",top:12,right:12,width:32,height:32,
+                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.25)",
+                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",
+                    alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
+              </div>
+            )}
+
+            <div style={{padding:"14px 16px 20px"}}>
+              <p style={{margin:"0 0 12px",fontSize:13,color:"#475569",lineHeight:1.6}}>
+                {selectedLoc.desc}
+              </p>
+
+              {/* Mahal listesi */}
+              {ROOMS[String(selectedLoc.num)]&&(
+                <div style={{borderTop:"1px solid #e2e8f0",paddingTop:12,marginBottom:14}}>
+                  <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",
+                    letterSpacing:"0.06em",marginBottom:8}}>MAHAL LİSTESİ</div>
+                  <div style={{maxHeight:180,overflowY:"auto",fontSize:12,lineHeight:1.5}}>
+                    {Object.entries(ROOMS[String(selectedLoc.num)]).map(([floor,rooms])=>(
+                      <div key={floor} style={{marginBottom:10}}>
+                        <div style={{fontWeight:700,color:"#1e293b",fontSize:11,
+                          background:"#f1f5f9",padding:"3px 8px",borderRadius:6,marginBottom:4}}>
+                          {floor}
+                        </div>
+                        {(rooms as RoomEntry[]).map((r,i)=>(
+                          <div key={i} style={{display:"flex",gap:6,alignItems:"baseline",
+                            padding:"3px 6px",borderBottom:"1px solid #f8fafc"}}>
+                            <span style={{color:"#1e293b",fontWeight:700,minWidth:48,flexShrink:0,fontSize:12}}>{r.oda}</span>
+                            <span style={{color:"#475569",flex:1,overflow:"hidden",
+                              textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}>{r.label}</span>
+                            {r.cap&&<span style={{color:"#94a3b8",flexShrink:0,fontSize:11}}>{r.cap}👤</span>}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Aksiyon butonları */}
+              <div style={{display:"flex",gap:10}}>
+                <button onClick={()=>{setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
+                  style={{...BTN,flex:1,background:"#16a34a",color:"#fff",
+                    fontSize:14,padding:"12px 0",borderRadius:12}}>
+                  🟢 Buradan Başla
+                </button>
+                <button onClick={()=>{setTo(selectedLoc);
+                  if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],selectedLoc);}
+                  else{setMode('pickFrom');}
+                  setSelectedLoc(null);}}
+                  style={{...BTN,flex:1,background:"#ef4444",color:"#fff",
+                    fontSize:14,padding:"12px 0",borderRadius:12}}>
+                  🔴 Buraya Git
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Üst banner: seçim modu ──────────────────────────────────────── */}
       {(mode==='pickFrom'||mode==='pickTo')&&(

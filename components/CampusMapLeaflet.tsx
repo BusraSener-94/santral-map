@@ -551,7 +551,7 @@ export default function CampusMap(){
     localStorage.setItem("karpuza_user",JSON.stringify(profile));
     setUserProfile(profile); setShowWelcome(false);
     setShowKarpuzIntro(true);
-    if(!localStorage.getItem("karpuza_onboard"))setOnboardStep(0);
+    // Onboarding intro kapandıktan sonra başlar (dismissKarpuzIntro içinde)
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
@@ -574,6 +574,11 @@ export default function CampusMap(){
     // Diğer tüm modlarda (idle, ready, sim, nav, arrived) bina modalı aç
     setSelectedLoc(loc);
   },[mode,from,fromGPS,userPos,calcRoute]);
+
+  const dismissKarpuzIntro=useCallback(()=>{
+    setShowKarpuzIntro(false);
+    if(!localStorage.getItem("karpuza_onboard"))setOnboardStep(0);
+  },[]);
 
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
@@ -808,50 +813,47 @@ export default function CampusMap(){
         </MapContainer>
       </div>
 
-      {/* ─── Karpuz tanıtım kartı ────────────────────────────────────── */}
+      {/* ─── Karpuz tanıtım kartı – footer tooltip ──────────────────── */}
       {showKarpuzIntro&&(
-        <div onClick={()=>setShowKarpuzIntro(false)}
-          style={{position:"fixed",inset:0,zIndex:28,
-            display:"flex",alignItems:"center",justifyContent:"center",
-            padding:"20px 16px 130px",
-            background:"rgba(0,0,0,0.38)"}}>
+        <div style={{position:"fixed",bottom:108,left:0,right:0,zIndex:28,
+          display:"flex",justifyContent:"center",padding:"0 16px",
+          pointerEvents:"none",animation:"onboard-fadein 0.3s ease"}}>
+          <div style={{background:"#fff",borderRadius:20,width:"100%",maxWidth:480,
+            boxShadow:"0 8px 40px rgba(0,0,0,0.28)",
+            display:"flex",alignItems:"center",gap:16,
+            padding:"16px 20px",position:"relative",
+            pointerEvents:"auto"}}>
 
-          {/* Kart */}
-          <div onClick={e=>e.stopPropagation()}
-            style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:320,
-              boxShadow:"0 20px 60px rgba(0,0,0,0.45)",
-              display:"flex",flexDirection:"column",alignItems:"center",
-              padding:"28px 24px 24px",position:"relative",
-              animation:"onboard-fadein 0.3s ease"}}>
-
-            {/* Karpuz fotoğrafı – daire, yeşil arka plan */}
-            <div style={{width:130,height:130,borderRadius:"50%",overflow:"hidden",
-              background:"#bbf7d0",
-              boxShadow:"0 6px 24px rgba(22,163,74,0.3)",
-              marginBottom:18,flexShrink:0}}>
+            {/* Karpuz fotoğrafı – küçük daire */}
+            <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
+              background:"#bbf7d0",flexShrink:0,
+              boxShadow:"0 3px 12px rgba(22,163,74,0.3)"}}>
               <img src="/karpuz-karsilama.png" alt="Karpuz"
                 style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             </div>
 
             {/* Metin */}
-            <p style={{margin:"0 0 4px",fontSize:13.5,color:"#1e293b",lineHeight:1.75,
-              textAlign:"center",fontWeight:500}}>
-              Merhaba ben Karpuz. Kampüsün<br/>
-              maskotlarından biriyim.<br/>
-              Başlangıç noktanızı ve gitmek istediğiniz<br/>
-              yeri yazarsanız size yol gösterebilirim.<br/>
-              İsterseniz bulunduğunuz konumdan da<br/>
-              başlayabilirsiniz.
+            <p style={{margin:0,fontSize:12.5,color:"#1e293b",lineHeight:1.65,fontWeight:500,flex:1}}>
+              Merhaba ben Karpuz. Kampüsün maskotlarından biriyim.
+              Başlangıç noktanızı ve gitmek istediğiniz yeri yazarsanız
+              size yol gösterebilirim. İsterseniz bulunduğunuz konumdan da başlayabilirsiniz.
             </p>
 
-            {/* Konuşma balonu oku */}
-            <div style={{position:"absolute",bottom:-13,left:"50%",transform:"translateX(-50%)",
-              width:0,height:0,
-              borderLeft:"13px solid transparent",borderRight:"13px solid transparent",
-              borderTop:"13px solid #fff",
-              filter:"drop-shadow(0 3px 3px rgba(0,0,0,0.12))"}}/>
-          </div>
+            {/* X kapat butonu */}
+            <button onClick={dismissKarpuzIntro}
+              style={{position:"absolute",top:10,right:10,
+                width:28,height:28,borderRadius:"50%",border:"none",
+                background:"#f1f5f9",color:"#64748b",
+                fontSize:14,cursor:"pointer",display:"flex",
+                alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
 
+            {/* Konuşma balonu oku – aşağı, footer'a doğru */}
+            <div style={{position:"absolute",bottom:-11,left:"50%",transform:"translateX(-50%)",
+              width:0,height:0,
+              borderLeft:"11px solid transparent",borderRight:"11px solid transparent",
+              borderTop:"11px solid #fff",
+              filter:"drop-shadow(0 3px 3px rgba(0,0,0,0.08))"}}/>
+          </div>
         </div>
       )}
 
@@ -1150,7 +1152,9 @@ export default function CampusMap(){
       <div
         style={{position:"absolute",bottom:0,left:0,right:0,zIndex:10,
           background:"#1e293b",borderRadius:"16px 16px 0 0",
-          boxShadow:"0 -4px 24px rgba(0,0,0,0.5)",
+          boxShadow:showKarpuzIntro
+            ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
+            :"0 -4px 24px rgba(0,0,0,0.5)",
           transform:`translateY(${Math.max(0,sheetTranslate)}px)`,
           transition:sheetTranslate===0?"transform 0.25s ease":"none"}}
         onTouchStart={e=>{if(onboardStep!==null)return;touchStartY.current=e.touches[0].clientY;}}

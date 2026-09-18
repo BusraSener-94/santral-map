@@ -36,6 +36,15 @@ body {
   to   { opacity:1; transform:translateY(0); }
 }
 
+@keyframes arrow-up {
+  0%, 100% { transform: translateX(-50%) translateY(0);   opacity:1; }
+  50%       { transform: translateX(-50%) translateY(-7px); opacity:.7; }
+}
+@keyframes arrow-down {
+  0%, 100% { transform: translateX(-50%) translateY(0);  opacity:1; }
+  50%       { transform: translateX(-50%) translateY(7px); opacity:.7; }
+}
+
 /* Vercel Toolbar – kampüs kullanıcılarına gösterilmemeli */
 vercel-toolbar,
 #__vercel-toolbar,

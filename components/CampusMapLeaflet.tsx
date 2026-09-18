@@ -1415,52 +1415,98 @@ export default function CampusMap(){
       {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
       {onboardStep!==null&&(
         <>
-          {/* Highlight halkası */}
+          {/* Hedef element – pulse ring */}
           {hlRect&&(
             <div style={{position:"fixed",
               left:hlRect.left-8,top:hlRect.top-8,
               width:hlRect.width+16,height:hlRect.height+16,
-              borderRadius:14,border:"3px solid #f97316",
+              borderRadius:14,border:"2.5px solid #f97316",
               animation:"onboard-glow 1.4s ease-in-out infinite",
               zIndex:9991,pointerEvents:"none"}}/>
           )}
-          {/* Konuşma balonu – alt panel elemanlarında üste çık */}
-          {(()=>{
-            const bottomTargets=["search-input","cat-row","route-btn"];
-            const atTop=onboardStep!==null&&ONBOARD_STEPS[onboardStep].target!==null&&bottomTargets.includes(ONBOARD_STEPS[onboardStep].target!);
-            return(
-          <div style={{position:"fixed",...(atTop?{top:64,bottom:"auto",borderRadius:"0 0 20px 20px",boxShadow:"0 4px 32px rgba(0,0,0,0.7)"}:{bottom:0,borderRadius:"20px 20px 0 0",boxShadow:"0 -4px 32px rgba(0,0,0,0.7)"}),
-            left:0,right:0,zIndex:9992,
-            background:"#0c1828",
-            padding:"16px 18px 24px",
-            display:"flex",gap:14,alignItems:"flex-start",
-            animation:"onboard-fadein 0.3s ease"}}>
-            <img src="/karpuza-sor.png" alt="Karpuza"
-              style={{width:58,height:58,borderRadius:10,objectFit:"cover",flexShrink:0,
-                boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}/>
-            <div style={{flex:1}}>
-              <div style={{color:"#fff",fontSize:15,fontWeight:600,lineHeight:1.55,
-                marginBottom:14,whiteSpace:"pre-line"}}>
+
+          {/* Overlay */}
+          <div style={{position:"fixed",inset:0,zIndex:9992,
+            background:"rgba(0,0,0,0.52)",
+            display:"flex",flexDirection:"column",
+            alignItems:"center",justifyContent:"center",
+            padding:"56px 20px 130px"}}>
+
+            {/* Story progress bars */}
+            <div style={{position:"absolute",top:14,left:14,right:14,display:"flex",gap:4}}>
+              {ONBOARD_STEPS.map((_,i)=>(
+                <div key={i} style={{flex:1,height:3,borderRadius:2,
+                  background:"rgba(255,255,255,0.25)",overflow:"hidden"}}>
+                  <div style={{height:"100%",background:"#fff",
+                    width:i<onboardStep?"100%":i===onboardStep?"50%":"0%",
+                    transition:"width 0.3s ease"}}/>
+                </div>
+              ))}
+            </div>
+
+            {/* Sol/sağ tap zone */}
+            <div style={{position:"absolute",inset:0,display:"flex",zIndex:0}}>
+              <div style={{flex:1}}
+                onClick={()=>onboardStep>0&&setOnboardStep(s=>s!==null?Math.max(0,s-1):null)}/>
+              <div style={{flex:1}} onClick={advanceOnboard}/>
+            </div>
+
+            {/* Kart */}
+            <div key={`ob${onboardStep}`}
+              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:320,
+                boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
+                display:"flex",flexDirection:"column",alignItems:"center",
+                padding:"26px 22px 18px",position:"relative",zIndex:1,
+                animation:"onboard-fadein 0.22s ease"}}>
+
+              {/* Karpuz fotoğrafı */}
+              <div style={{width:84,height:84,borderRadius:"50%",overflow:"hidden",
+                background:"#bbf7d0",marginBottom:14,flexShrink:0,
+                boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
+                <img src="/karpuz-karsilama.png" alt="Karpuz"
+                  style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              </div>
+
+              {/* Metin */}
+              <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
+                textAlign:"center",marginBottom:14,whiteSpace:"pre-line"}}>
                 {ONBOARD_STEPS[onboardStep].text}
               </div>
-              <div style={{display:"flex",gap:10,alignItems:"center"}}>
-                <button onClick={advanceOnboard}
-                  style={{background:"#c41230",color:"#fff",border:"none",
-                    borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-                  {onboardStep===ONBOARD_STEPS.length-1?"Haydi Başla! 🍉":"İleri →"}
-                </button>
-                {onboardStep<ONBOARD_STEPS.length-1&&(
-                  <button onClick={()=>{localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                    style={{background:"transparent",color:"rgba(255,255,255,0.38)",border:"none",
-                      fontSize:13,cursor:"pointer",padding:"10px 0"}}>Atla</button>
-                )}
-                <div style={{marginLeft:"auto",color:"rgba(255,255,255,0.25)",fontSize:12}}>
-                  {onboardStep+1}/{ONBOARD_STEPS.length}
+
+              {/* Yön oku – hlRect'e göre */}
+              {hlRect&&(
+                <div style={{position:"absolute",
+                  ...(hlRect.top<120
+                    ? {top:-38,left:"50%",animation:"arrow-up 0.8s ease-in-out infinite"}
+                    : {bottom:-38,left:"50%",animation:"arrow-down 0.8s ease-in-out infinite"}),
+                  fontSize:26,pointerEvents:"none",lineHeight:1}}>
+                  {hlRect.top<120?"⬆️":"⬇️"}
                 </div>
+              )}
+
+              {/* Dot progress */}
+              <div style={{display:"flex",gap:5,marginBottom:14}}>
+                {ONBOARD_STEPS.map((_,i)=>(
+                  <div key={i} style={{height:6,borderRadius:3,
+                    width:i===onboardStep?20:6,
+                    background:i===onboardStep?"#0d9488":i<onboardStep?"#94a3b8":"#e2e8f0",
+                    transition:"all 0.2s ease"}}/>
+                ))}
+              </div>
+
+              {/* Atla + ipucu */}
+              <div style={{display:"flex",alignItems:"center",
+                justifyContent:"space-between",width:"100%"}}>
+                <button onClick={e=>{e.stopPropagation();
+                  localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                  style={{background:"transparent",color:"#94a3b8",border:"none",
+                    fontSize:12,cursor:"pointer",padding:"6px 0"}}>Atla</button>
+                <span style={{color:"#cbd5e1",fontSize:11}}>
+                  {onboardStep===ONBOARD_STEPS.length-1?"Dokun, başla!":"Sağa dokun →"}
+                </span>
               </div>
             </div>
           </div>
-          );})()}
         </>
       )}
     </div>

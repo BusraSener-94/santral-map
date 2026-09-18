@@ -1232,12 +1232,12 @@ export default function CampusMap(){
 
         <div style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8}}>
 
-          {/* IDLE: Tek satır horizontal – Başlangıç | Ya da | GPS btn | → | Varış | Yol Tarifi */}
+          {/* IDLE: Dikey 3 bölüm – Başlangıç | GPS satırı | Varış + Yol Tarifi */}
           {mode==='idle'&&(
-            <div style={{display:"flex",alignItems:"center",gap:6,position:"relative"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
 
               {/* Başlangıç input */}
-              <div style={{flex:1,position:"relative",minWidth:0}}>
+              <div style={{position:"relative"}}>
                 <input id="search-input" value={fromSearch}
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
                   onFocus={()=>setActiveRouteInput('from')}
@@ -1245,8 +1245,8 @@ export default function CampusMap(){
                   placeholder="Başlangıç Noktası Yazın"
                   style={{width:"100%",boxSizing:"border-box",
                     background:"#0f172a",border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
-                    borderRadius:10,padding:"11px 10px",color:"#fff",fontSize:12,
-                    outline:"none",minHeight:44}}/>
+                    borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
+                    outline:"none",minHeight:46}}/>
                 {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
                   <div style={{position:"absolute",left:0,right:0,bottom:"calc(100% + 4px)",zIndex:50,
                     background:"#1e293b",borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.7)",
@@ -1260,73 +1260,71 @@ export default function CampusMap(){
                           borderBottom:i<arr.length-1?"1px solid #334155":"none",
                           cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
                         <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
-                        <span style={{fontSize:12,flex:1}}>{loc.name}</span>
+                        <span style={{fontSize:13,flex:1}}>{loc.name}</span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Ya da + GPS butonu */}
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0}}>
-                <span style={{color:"#64748b",fontSize:10,whiteSpace:"nowrap"}}>Ya da</span>
+              {/* GPS orta satırı */}
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{flex:1,height:1,background:"#1e293b"}}/>
                 <button
                   onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);setFromSearch("📍 Konumunuz");
                     if(to&&userPos)calcRoute(userPos[0],userPos[1],to);}}
-                  style={{...BTN,background:"#0d9488",color:"#fff",fontSize:11,fontWeight:700,
-                    padding:"6px 10px",borderRadius:20,gap:4,minHeight:32,whiteSpace:"nowrap"}}>
-                  <img src="/location-icon.png" alt="" style={{width:13,height:13,objectFit:"contain"}}/>
+                  style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
+                    padding:"8px 16px",borderRadius:20,gap:5,minHeight:36,whiteSpace:"nowrap"}}>
+                  <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
                   Konumunuzdan Başlatın
+                </button>
+                <div style={{flex:1,height:1,background:"#1e293b"}}/>
+              </div>
+
+              {/* Varış input + Yol Tarifi */}
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <div style={{flex:1,position:"relative",minWidth:0}}>
+                  <input id="to-input" value={toSearch}
+                    onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
+                    onFocus={()=>setActiveRouteInput('to')}
+                    onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
+                    placeholder="Varış Noktası Yazın"
+                    style={{width:"100%",boxSizing:"border-box",
+                      background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
+                      borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
+                      outline:"none",minHeight:46}}/>
+                  {activeRouteInput==='to'&&toSearch&&(
+                    <div style={{position:"absolute",left:0,right:0,bottom:"calc(100% + 4px)",zIndex:50,
+                      background:"#1e293b",borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.7)",
+                      maxHeight:200,overflowY:"auto"}}>
+                      {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(toSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
+                        <button key={loc.num} onMouseDown={e=>e.preventDefault()}
+                          onClick={()=>{setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);
+                            const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+                            const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}
+                          style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                            background:"transparent",border:"none",
+                            borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                            cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                          <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
+                          <span style={{fontSize:13,flex:1}}>{loc.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button id="route-btn" onClick={()=>{
+                  (document.activeElement as HTMLElement)?.blur();
+                  if(gpsOn&&userPos){setFromGPS(true);setMode('pickTo');}
+                  else setMode('pickFrom');
+                }}
+                  style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 18px",
+                    fontSize:14,borderRadius:10,minHeight:46,flexShrink:0,whiteSpace:"nowrap"}}>
+                  🗺 Yol Tarifi
                 </button>
               </div>
 
-              {/* Ok ikonu */}
-              <img src="/right-arrow.png" alt="→"
-                style={{width:16,height:16,objectFit:"contain",opacity:0.6,flexShrink:0}}/>
-
-              {/* Varış input */}
-              <div style={{flex:1,position:"relative",minWidth:0}}>
-                <input id="to-input" value={toSearch}
-                  onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
-                  onFocus={()=>setActiveRouteInput('to')}
-                  onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
-                  placeholder="Varış Noktası Yazın"
-                  style={{width:"100%",boxSizing:"border-box",
-                    background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
-                    borderRadius:10,padding:"11px 10px",color:"#fff",fontSize:12,
-                    outline:"none",minHeight:44}}/>
-                {activeRouteInput==='to'&&toSearch&&(
-                  <div style={{position:"absolute",left:0,right:0,bottom:"calc(100% + 4px)",zIndex:50,
-                    background:"#1e293b",borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.7)",
-                    maxHeight:200,overflowY:"auto"}}>
-                    {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(toSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
-                      <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                        onClick={()=>{setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);
-                          const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-                          const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                          if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}
-                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
-                          background:"transparent",border:"none",
-                          borderBottom:i<arr.length-1?"1px solid #334155":"none",
-                          cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
-                        <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
-                        <span style={{fontSize:12,flex:1}}>{loc.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Yol Tarifi butonu */}
-              <button id="route-btn" onClick={()=>{
-                (document.activeElement as HTMLElement)?.blur();
-                if(gpsOn&&userPos){setFromGPS(true);setMode('pickTo');}
-                else setMode('pickFrom');
-              }}
-                style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 14px",
-                  fontSize:12,borderRadius:10,minHeight:44,flexShrink:0,whiteSpace:"nowrap"}}>
-                🗺 Yol Tarifi
-              </button>
             </div>
           )}
 

@@ -1011,6 +1011,36 @@ export default function CampusMap(){
         </div>
       )}
 
+      {/* ─── Onboarding step 6 demo nav bar (idle modda) ─────────────────── */}
+      {onboardStep===6&&mode==='idle'&&(
+        <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.5)"}}>
+          <div style={{background:"#0d9488",padding:"14px 18px",
+            display:"flex",alignItems:"center",gap:14}}>
+            <div style={{fontSize:52,lineHeight:1,minWidth:56,textAlign:"center",
+              filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>⬅️</div>
+            <div style={{flex:1}}>
+              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.2}}>GB'ye yürüyün</div>
+              <div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>~162m · 2 dk kaldı</div>
+            </div>
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <button id="speed-btn" style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
+                minHeight:36,padding:"0 11px",borderRadius:8,fontSize:13,fontWeight:800,
+                pointerEvents:"none"}}>1×</button>
+              <button style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
+                minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0,
+                pointerEvents:"none"}}>■</button>
+            </div>
+          </div>
+          <div style={{background:"#065f46",padding:"8px 18px 8px 88px",
+            display:"flex",alignItems:"center",gap:8}}>
+            <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>Ardından</span>
+            <span style={{fontSize:18,color:"rgba(255,255,255,0.85)"}}>↱</span>
+            <span style={{fontSize:13,color:"rgba(255,255,255,0.85)"}}>39m sonra sağa dön</span>
+          </div>
+        </div>
+      )}
+
       {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
       {(mode==='sim'||mode==='nav')&&activeStep&&(
         <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,

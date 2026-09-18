@@ -987,8 +987,10 @@ export default function CampusMap(){
               ✕
             </button>
           </div>
-          <div style={{color:"rgba(255,255,255,0.8)",fontSize:12,textAlign:"center"}}>
-            Haritada bir binaya dokun
+          <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,textAlign:"center",lineHeight:1.6}}>
+            {mode==='pickTo'
+              ? "Haritada bir noktayı işaretle\nya da aşağıda nereye gitmek istediğini yaz"
+              : "Haritada başlangıç noktasını işaretle\nya da aşağıda listeden seç"}
           </div>
           {mode==='pickFrom'&&gpsOn&&userPos&&(
             <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}

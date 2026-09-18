@@ -265,20 +265,7 @@ const PERSON=L.divIcon({
   className:"",iconSize:[64,64],iconAnchor:[32,32]
 });
 
-// Yön oku – şeffaf merkez (PERSON üzerine gelir), sadece ok çıkar
-function makeUserIcon(heading:number|null):L.DivIcon{
-  const rot=heading??0;
-  return L.divIcon({
-    html:`<div style="position:relative;width:48px;height:48px;">
-      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-        <div style="transform:rotate(${rot}deg);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;width:48px;height:48px;padding-top:1px;">
-          <div style="width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:22px solid #f97316;filter:drop-shadow(0 0 3px rgba(255,255,255,0.9)) drop-shadow(0 1px 3px rgba(0,0,0,0.7));"></div>
-        </div>
-      </div>
-    </div>`,
-    className:"",iconSize:[48,48],iconAnchor:[24,24],
-  });
-}
+
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
 export default function CampusMap(){

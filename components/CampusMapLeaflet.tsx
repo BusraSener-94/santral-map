@@ -642,6 +642,11 @@ export default function CampusMap(){
       fontFamily:"'Segoe UI',system-ui,sans-serif",userSelect:"none"}}>
 
 
+      {/* Haritayı giriş ekranı gelene kadar gizle */}
+      {splash!=="hidden"&&!showWelcome&&!userProfile&&(
+        <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",pointerEvents:"none"}}/>
+      )}
+
       {/* ─── Splash ekranı ─────────────────────────────────────────────── */}
       {splash!=="hidden"&&(
         <div style={{position:"fixed",inset:0,zIndex:9999,

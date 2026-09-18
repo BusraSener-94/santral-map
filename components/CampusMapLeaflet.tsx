@@ -217,7 +217,7 @@ function ZoomWatcher({setZoom}:{setZoom:(z:number)=>void}){
 const PERSON=L.divIcon({
   html:`<div style="position:relative;width:64px;height:64px;">
     <div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(249,115,22,0.20);animation:gps-pulse 2s ease-out infinite;"></div>
-    <img src="/karpuz.png" style="position:absolute;inset:0;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));"/>
+    <img src="/karpuzgif.gif" style="position:absolute;inset:0;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));"/>
   </div>`,
   className:"",iconSize:[64,64],iconAnchor:[32,32]
 });
@@ -490,18 +490,19 @@ export default function CampusMap(){
       {splash!=="hidden"&&(
         <div style={{position:"fixed",inset:0,zIndex:9999,
           background:"#0c1828",
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,
+          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
           opacity:splash==="fading"?0:1,
           transition:"opacity 0.75s ease",
           pointerEvents:splash==="fading"?"none":"auto"}}>
           <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
-            style={{height:"52vh",width:"auto",maxWidth:"82vw",
+            style={{height:"50vh",width:"auto",maxWidth:"82vw",
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
-          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:22}}>
-            <img src="/bilgi-icon.png" alt="BİLGİ" style={{height:32,width:32,objectFit:"contain",opacity:.9}}/>
-            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,letterSpacing:.5}}>
-              İstanbul Bilgi Üniversitesi
+          <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
+              style={{height:36,width:"auto",maxWidth:"72vw",objectFit:"contain",opacity:.95}}/>
+            <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
+              santralistanbul Kampüsü
             </div>
           </div>
         </div>
@@ -715,9 +716,14 @@ export default function CampusMap(){
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          {/* Sol: BİLGİ ikonu */}
-          <img src="/bilgi-icon.png" alt="İstanbul Bilgi Üniversitesi"
-            style={{height:38,width:38,objectFit:"contain",flexShrink:0,opacity:.95}}/>
+          {/* Sol: BİLGİ logotype */}
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2,flexShrink:0}}>
+            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
+              style={{height:22,width:"auto",maxWidth:110,objectFit:"contain",opacity:.95}}/>
+            <div style={{color:"rgba(255,255,255,0.60)",fontSize:9,letterSpacing:.4,lineHeight:1}}>
+              santralistanbul Kampüsü
+            </div>
+          </div>
           {/* Orta: Karpuza logo ortalı */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
             <img src="/karpuza-sor.jpg" alt="Karpuza Sor"

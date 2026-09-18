@@ -309,17 +309,12 @@ export default function CampusMap(){
   const watchRef=useRef<number|null>(null);
   const[splash,setSplash]=useState<"visible"|"fading"|"hidden">("visible");
   const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
-  const[welcomeStep,setWelcomeStep]=useState<"role"|"info"|null>(null);
+  const[showWelcome,setShowWelcome]=useState(false);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wEmail,setWEmail]=useState("");
+  const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
   const[wKvkk,setWKvkk]=useState(false);
-  const[showKvkkModal,setShowKvkkModal]=useState(false);
-  const[wStudentId,setWStudentId]=useState("");
-  const[wFaculty,setWFaculty]=useState("");
-  const[wDepartment,setWDepartment]=useState("");
-  const[wUnit,setWUnit]=useState("");
-  const[wPosition,setWPosition]=useState("");
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
   const[onboardStep,setOnboardStep]=useState<number|null>(null);
@@ -369,7 +364,7 @@ export default function CampusMap(){
         const p:UserProfile=JSON.parse(stored);
         // Eski profilde e-posta yoksa yeniden bilgi al
         if(p.role!=="Misafir"&&!p.email){
-          setWRole(p.role);setWName(p.name);setWelcomeStep("info");
+          setWRole(p.role);setWName(p.name);setShowWelcome(true);
         } else {
           setUserProfile(p);
           // Her oturumda ziyaret kaydı gönder
@@ -381,7 +376,7 @@ export default function CampusMap(){
             }).catch(()=>{});
           }
         }
-      } else {setWelcomeStep("role");}
+      } else {setShowWelcome(true);}
     },3700);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
@@ -527,41 +522,28 @@ export default function CampusMap(){
     }
   },[mode,userPos,to,route,navSteps]);
 
-  // E-posta domain doğrulama
-  const emailOk=useCallback(()=>{
-    if(wRole==="Misafir")return true;
-    const e=wEmail.trim().toLowerCase();
-    if(!e)return false;
-    if(wRole==="Öğrenci")return e.endsWith("@bilgi.edu.net");
-    return e.endsWith("@bilgi.edu.tr");
-  },[wRole,wEmail]);
-
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!emailOk()||!wKvkk)return;
+    if(!wRole||!wName.trim()||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
-      email:      wRole!=="Misafir" ? (wEmail.trim().toLowerCase()||"-") : "-",
-      studentId:  undefined,
-      faculty:    wRole==="Öğretmen"&&wFaculty.trim()    ? wFaculty.trim()    : undefined,
-      department: wRole==="Öğretmen"&&wDepartment.trim() ? wDepartment.trim() : undefined,
-      unit:       wRole==="Personel"&&wUnit.trim()       ? wUnit.trim()       : undefined,
-      position:   wRole==="Personel"&&wPosition.trim()   ? wPosition.trim()   : undefined,
+      email: wEmail.trim().toLowerCase()||"-",
+      faculty:  wRole==="Öğretmen"&&wExtra.trim() ? wExtra.trim() : undefined,
+      position: wRole==="Personel"&&wExtra.trim() ? wExtra.trim() : undefined,
       ts:Date.now()
     };
     localStorage.setItem("karpuza_user",JSON.stringify(profile));
-    setUserProfile(profile); setWelcomeStep(null);
+    setUserProfile(profile); setShowWelcome(false);
     if(!localStorage.getItem("karpuza_onboard"))setOnboardStep(0);
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),
-            name:profile.name,role:profile.role,email:profile.email||"-",
-            faculty:profile.faculty||"-",department:profile.department||"-",
-            unit:profile.unit||"-",position:profile.position||"-",token:SHEET_TOKEN})
+          name:profile.name,role:profile.role,email:profile.email||"-",
+          extra:wExtra.trim()||"-",token:SHEET_TOKEN})
       }).catch(()=>{});
     }
-  },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk,wKvkk]);
+  },[wRole,wName,wEmail,wExtra,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
@@ -674,148 +656,107 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── KVKK Metni Modal ───────────────────────────────────────────── */}
-      {showKvkkModal&&(
-        <div style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.75)",
-          display:"flex",alignItems:"flex-end",justifyContent:"center"}}
-          onClick={()=>setShowKvkkModal(false)}>
-          <div style={{background:"#0f172a",borderRadius:"20px 20px 0 0",padding:"24px 20px 40px",
-            width:"100%",maxWidth:480,maxHeight:"80vh",overflowY:"auto"}}
-            onClick={e=>e.stopPropagation()}>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-              <div style={{color:"#fff",fontWeight:700,fontSize:15}}>KVKK Aydınlatma Metni</div>
-              <button onClick={()=>setShowKvkkModal(false)}
-                style={{background:"transparent",border:"none",color:"rgba(255,255,255,0.5)",
-                  fontSize:22,cursor:"pointer",padding:"0 4px",lineHeight:1}}>✕</button>
-            </div>
-            <div style={{color:"rgba(255,255,255,0.7)",fontSize:12,lineHeight:1.8,display:"flex",flexDirection:"column",gap:12}}>
-              <p style={{margin:0}}><strong style={{color:"#fff"}}>Veri Sorumlusu:</strong> İstanbul Bilgi Üniversitesi</p>
-              <p style={{margin:0}}><strong style={{color:"#fff"}}>Toplanan Kişisel Veriler:</strong> Ad soyad, kurumsal e-posta adresi, öğrenci numarası (öğrenciler için), fakülte/bölüm/birim/görev bilgileri.</p>
-              <p style={{margin:0}}><strong style={{color:"#fff"}}>İşleme Amacı:</strong> Bu veriler yalnızca santralistanbul Kampüsü navigasyon uygulamasının kullanım istatistiklerinin analizi amacıyla toplanmaktadır.</p>
-              <p style={{margin:0}}><strong style={{color:"#fff"}}>Saklama ve Güvenlik:</strong> Veriler İstanbul Bilgi Üniversitesi bünyesinde saklanır, üçüncü taraflarla paylaşılmaz ve ticari amaçla kullanılmaz.</p>
-              <p style={{margin:0}}><strong style={{color:"#fff"}}>Haklarınız:</strong> 6698 sayılı KVKK kapsamında verilerinize erişme, düzeltme, silme ve işlemeye itiraz etme haklarına sahipsiniz. Talepleriniz için üniversite veri koruma birimi ile iletişime geçebilirsiniz.</p>
-            </div>
-            <button onClick={()=>setShowKvkkModal(false)}
-              style={{marginTop:20,width:"100%",padding:"13px",borderRadius:12,border:"none",
-                background:"#154360",color:"#fff",fontSize:14,fontWeight:700,cursor:"pointer"}}>
-              Anladım
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Hoşgeldin / Kullanıcı kaydı ──────────────────────────────── */}
-      {welcomeStep&&(
+      {/* ─── Kayıt ekranı – tek sayfa ──────────────────────────────────── */}
+      {showWelcome&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",
-          display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24}}>
+          overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
+          padding:"32px 24px 40px"}}>
+
+          {/* Karpuz logosu – büyük */}
           <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
-            style={{height:120,width:"auto",objectFit:"contain",borderRadius:16,marginBottom:20,
-              boxShadow:"0 8px 32px rgba(0,0,0,0.6)"}}/>
-          <img src="/bilgi-logotype.png" alt="BİLGİ"
-            style={{height:26,width:"auto",maxWidth:"60vw",objectFit:"contain",marginBottom:6,opacity:.9}}/>
-          <div style={{color:"rgba(255,255,255,0.5)",fontSize:11,marginBottom:28,letterSpacing:.5}}>
-            santralistanbul Kampüsü
+            style={{height:160,width:"auto",objectFit:"contain",borderRadius:20,
+              boxShadow:"0 12px 40px rgba(0,0,0,0.7)",marginBottom:16}}/>
+
+          {/* Karpuz tanıtımı */}
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{color:"#fff",fontWeight:800,fontSize:20,marginBottom:6}}>
+              Merhaba! Ben Karpuz 🐾
+            </div>
+            <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,lineHeight:1.6,maxWidth:300}}>
+              santralistanbul'da doğru yeri bulman için buradayım.
+              Birkaç bilgi gir, hemen başlayalım!
+            </div>
           </div>
 
-          {welcomeStep==="role"&&(<>
-            <div style={{color:"#fff",fontWeight:700,fontSize:18,marginBottom:6,textAlign:"center"}}>
-              Hoş Geldiniz!
-            </div>
-            <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,marginBottom:22,textAlign:"center"}}>
-              Devam etmek için rolünüzü seçin
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,width:"100%",maxWidth:300}}>
+          <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10}}>
+
+            {/* Ad Soyad */}
+            <input value={wName} onChange={e=>setWName(e.target.value)}
+              placeholder="Adınız Soyadınız"
+              style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                border:"1.5px solid rgba(255,255,255,0.2)",
+                background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+
+            {/* E-posta (opsiyonel) */}
+            <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
+              placeholder="E-posta adresiniz (opsiyonel)"
+              type="email" inputMode="email" autoCapitalize="none"
+              style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                border:"1.5px solid rgba(255,255,255,0.2)",
+                background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+
+            {/* Rol seçimi – aynı ekranda kalır */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:2}}>
               {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>(
-                <button key={r} onClick={()=>{setWRole(r);setWelcomeStep("info");}}
-                  style={{padding:"14px 10px",borderRadius:14,border:"2px solid rgba(255,255,255,0.15)",
-                    background:"rgba(255,255,255,0.07)",color:"#fff",fontSize:15,fontWeight:600,
-                    cursor:"pointer",transition:"all .15s"}}>
+                <button key={r} onClick={()=>{setWRole(r);setWExtra("");}}
+                  style={{padding:"12px 8px",borderRadius:12,
+                    border:`2px solid ${wRole===r?"#3b82f6":"rgba(255,255,255,0.12)"}`,
+                    background:wRole===r?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.06)",
+                    color:wRole===r?"#93c5fd":"rgba(255,255,255,0.7)",
+                    fontSize:14,fontWeight:wRole===r?700:500,cursor:"pointer"}}>
                   {r==="Öğrenci"?"🎓 Öğrenci":r==="Öğretmen"?"👨‍🏫 Öğretmen":r==="Personel"?"🏢 Personel":"🙋 Misafir"}
                 </button>
               ))}
             </div>
-          </>)}
 
-          {welcomeStep==="info"&&(<>
-            <div style={{color:"#fff",fontWeight:700,fontSize:17,marginBottom:4,textAlign:"center"}}>
-              {wRole==="Öğrenci"?"🎓":wRole==="Öğretmen"?"👨‍🏫":wRole==="Personel"?"🏢":"🙋"} {wRole}
-            </div>
-            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginBottom:18}}>
-              Bilgilerinizi girin, haritaya geçelim
-            </div>
-            <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:11}}>
-              {/* Herkes: Ad Soyad */}
-              <input value={wName} onChange={e=>setWName(e.target.value)}
-                placeholder="Adınız Soyadınız"
-                style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                  background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              {/* E-posta: Misafir hariç zorunlu */}
-              {wRole!=="Misafir"&&(
-                <div>
-                  <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
-                    placeholder={wRole==="Öğrenci"?"e-posta@bilgi.edu.net":"e-posta@bilgi.edu.tr"}
-                    type="email" inputMode="email" autoCapitalize="none"
-                    style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
-                      border:`1.5px solid ${wEmail&&!emailOk()?"#ef4444":"rgba(255,255,255,0.2)"}`,
-                      background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
-                  {wEmail&&!emailOk()&&(
-                    <div style={{color:"#f87171",fontSize:11,marginTop:4,paddingLeft:4}}>
-                      {wRole==="Öğrenci"?"@bilgi.edu.net":"@bilgi.edu.tr"} uzantılı e-posta giriniz
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Öğrenci: numara */}
-              {wRole==="Öğrenci"&&(
-                <input value={wStudentId} onChange={e=>setWStudentId(e.target.value)}
-                  placeholder="Öğrenci Numaranız"
-                  inputMode="numeric"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              )}
-              {/* Öğretmen: fakülte */}
-              {wRole==="Öğretmen"&&(
-                <input value={wFaculty} onChange={e=>setWFaculty(e.target.value)}
-                  placeholder="Fakülteniz (örn: Mühendislik)"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              )}
-              {/* Personel: görev */}
-              {wRole==="Personel"&&(
-                <input value={wPosition} onChange={e=>setWPosition(e.target.value)}
-                  placeholder="Göreviniz (örn: Uzman, Sekreter)"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              )}
-              {/* KVKK onay kutusu */}
-              <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:2}}>
-                <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
-                  style={{marginTop:2,width:16,height:16,accentColor:"#c41230",flexShrink:0,cursor:"pointer"}}/>
-                <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.5}}>
-                  Girdiğim bilgilerin yalnızca ziyaretçi sayısını ve en çok hangi kullanıcı tipi
-                  tarafından kullanıldığını ölçmek amacıyla İstanbul Bilgi Üniversitesi tarafından
-                  işlenmesine{" "}
-                  <span onClick={e=>{e.preventDefault();setShowKvkkModal(true);}}
-                    style={{color:"#60a5fa",textDecoration:"underline",cursor:"pointer"}}>
-                    KVKK kapsamında
-                  </span>{" "}onay veriyorum.
-                </span>
-              </label>
-              {(()=>{const ok=!!(wName.trim()&&emailOk()&&wKvkk);return(
+            {/* Ek bilgi – rol seçilince belirir */}
+            {wRole==="Öğretmen"&&(
+              <input value={wExtra} onChange={e=>setWExtra(e.target.value)}
+                placeholder="Fakülteniz (örn: Mühendislik)"
+                style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                  border:"1.5px solid rgba(255,255,255,0.2)",
+                  background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+            )}
+            {wRole==="Personel"&&(
+              <input value={wExtra} onChange={e=>setWExtra(e.target.value)}
+                placeholder="Göreviniz (örn: Uzman, Sekreter)"
+                style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
+                  border:"1.5px solid rgba(255,255,255,0.2)",
+                  background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
+            )}
+
+            {/* KVKK – inline, modal yok */}
+            <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:4}}>
+              <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
+                style={{marginTop:3,width:16,height:16,accentColor:"#3b82f6",flexShrink:0,cursor:"pointer"}}/>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.6}}>
+                Girdiğim bilgilerin yalnızca kampüs navigasyon uygulamasının kullanım
+                istatistiklerini ölçmek amacıyla İstanbul Bilgi Üniversitesi tarafından
+                işlenmesine <strong style={{color:"rgba(255,255,255,0.7)"}}>KVKK</strong> kapsamında onay veriyorum.
+              </span>
+            </label>
+
+            {/* Giriş butonu */}
+            {(()=>{const ok=!!(wName.trim()&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
-                style={{padding:"14px",borderRadius:14,border:"none",
-                  background:ok?"#154360":"rgba(255,255,255,0.1)",
-                  color:ok?"#fff":"rgba(255,255,255,0.3)",
-                  fontSize:15,fontWeight:700,cursor:ok?"pointer":"default"}}>
+                style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,
+                  background:ok?"linear-gradient(135deg,#1d4ed8,#2563eb)":"rgba(255,255,255,0.08)",
+                  color:ok?"#fff":"rgba(255,255,255,0.25)",
+                  fontSize:16,fontWeight:700,cursor:ok?"pointer":"default",
+                  boxShadow:ok?"0 4px 20px rgba(37,99,235,0.4)":"none"}}>
                 Haritaya Gir →
-              </button>);})()}
-              <button onClick={()=>setWelcomeStep("role")}
-                style={{padding:"8px",background:"transparent",border:"none",
-                  color:"rgba(255,255,255,0.4)",fontSize:13,cursor:"pointer"}}>
-                ← Geri
               </button>
+            );})()}
+          </div>
+
+          {/* BİLGİ logotype alt */}
+          <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+            <img src="/bilgi-logotype.png" alt="BİLGİ"
+              style={{height:22,width:"auto",maxWidth:"60vw",objectFit:"contain",opacity:.5}}/>
+            <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:.4}}>
+              santralistanbul Kampüsü
             </div>
-          </>)}
+          </div>
         </div>
       )}
 

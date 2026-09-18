@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-rotate";
@@ -555,16 +555,9 @@ export default function CampusMap(){
       calcRoute(fLa,fLo,loc);
       return;
     }
-    if(mode==='ready'||mode==='sim'){
-      // 3. pin → sıfırla ve yeni TO yap
-      stopSim();setFrom(null);setFromGPS(false);setTo(loc);
-      if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],loc);}
-      else{setMode('pickFrom');}
-      return;
-    }
-    // idle/ready modunda bina modalı aç
+    // Diğer tüm modlarda (idle, ready, sim, nav, arrived) bina modalı aç
     setSelectedLoc(loc);
-  },[mode,from,fromGPS,userPos,gpsOn,calcRoute,stopSim]);
+  },[mode,from,fromGPS,userPos,calcRoute]);
 
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
@@ -888,14 +881,14 @@ export default function CampusMap(){
 
               {/* Aksiyon butonları */}
               <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>{setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
+                <button onClick={()=>{stopSim();setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
                   style={{...BTN,flex:1,background:"#16a34a",color:"#fff",
                     fontSize:14,padding:"12px 0",borderRadius:12}}>
                   🟢 Buradan Başla
                 </button>
-                <button onClick={()=>{setTo(selectedLoc);
+                <button onClick={()=>{stopSim();setTo(selectedLoc);
                   if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],selectedLoc);}
-                  else{setMode('pickFrom');}
+                  else{setFrom(null);setFromGPS(false);setMode('pickFrom');}
                   setSelectedLoc(null);}}
                   style={{...BTN,flex:1,background:"#ef4444",color:"#fff",
                     fontSize:14,padding:"12px 0",borderRadius:12}}>

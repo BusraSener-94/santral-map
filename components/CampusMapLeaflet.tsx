@@ -207,10 +207,10 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
     className:"",iconSize:[90,32],iconAnchor:[45,30],
   });
 }
-function ZoomWatcher({setZoom}:{setZoom:(z:number)=>void}){
+function ZoomWatcher({setShowLabels}:{setShowLabels:(v:boolean)=>void}){
   const map=useMap();
-  useMapEvents({zoomend:()=>setZoom(map.getZoom())});
-  useEffect(()=>{setZoom(map.getZoom());},[map,setZoom]);
+  useMapEvents({zoomend:()=>setShowLabels(map.getZoom()>=17)});
+  useEffect(()=>{setShowLabels(map.getZoom()>=17);},[map,setShowLabels]);
   return null;
 }
 // Karpuz – kullanıcı konumu simgesi
@@ -258,7 +258,7 @@ export default function CampusMap(){
   // Arama & filtre
   const[search,setSearch]=useState("");
   const[cat,setCat]=useState<string|null>(null);
-  const[zoomLevel,setZoomLevel]=useState(16);
+  const[showLabels,setShowLabels]=useState(true); // başlangıç zoom 17 >= 17
 
   // GPS
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
@@ -527,7 +527,7 @@ export default function CampusMap(){
           {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
-            const showLabel=zoomLevel>=17||iF||iT;
+            const showLabel=showLabels||iF||iT;
             return(
               <Marker key={loc.num} position={loc.gps} icon={mkIcon(loc,iF,iT,showLabel)}
                 zIndexOffset={(iF||iT)?1000:0}
@@ -612,7 +612,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <ZoomCtrl/>
-          <ZoomWatcher setZoom={setZoomLevel}/>
+          <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
         </MapContainer>
@@ -717,10 +717,10 @@ export default function CampusMap(){
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
           {/* Sol: BİLGİ logotype */}
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:2,flexShrink:0}}>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0}}>
             <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
-              style={{height:22,width:"auto",maxWidth:110,objectFit:"contain",opacity:.95}}/>
-            <div style={{color:"rgba(255,255,255,0.60)",fontSize:9,letterSpacing:.4,lineHeight:1}}>
+              style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
+            <div style={{color:"rgba(255,255,255,0.70)",fontSize:9.5,letterSpacing:.5,lineHeight:1,paddingLeft:2}}>
               santralistanbul Kampüsü
             </div>
           </div>

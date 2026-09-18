@@ -367,24 +367,25 @@ export default function CampusMap(){
     else setToSearch("");
   },[to]);
 
-  // Splash ekranı: 2.8s görünür, fade başlarken login/profil göster
+  // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
   useEffect(()=>{
-    const t1=setTimeout(()=>{
-      setSplash("fading");
+    const t1=setTimeout(()=>setSplash("fading"),2800);
+    const t2=setTimeout(()=>{
+      setSplash("hidden");
       const stored=localStorage.getItem("karpuza_user");
       if(stored){
         const p:UserProfile=JSON.parse(stored);
         setUserProfile(p);
-        if(SHEET_URL){
-          fetch(SHEET_URL,{method:"POST",mode:"no-cors",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
-              name:p.name,role:p.role,token:SHEET_TOKEN})
-          }).catch(()=>{});
-        }
+          // Her oturumda ziyaret kaydı gönder
+          if(SHEET_URL){
+            fetch(SHEET_URL,{method:"POST",mode:"no-cors",
+              headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
+                name:p.name,role:p.role,token:SHEET_TOKEN})
+            }).catch(()=>{});
+          }
       } else {setShowWelcome(true);}
-    },2800);
-    const t2=setTimeout(()=>setSplash("hidden"),3600);
+    },3700);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 

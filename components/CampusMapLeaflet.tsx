@@ -361,7 +361,7 @@ export default function CampusMap(){
 
   // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
   useEffect(()=>{
-    const t1=setTimeout(()=>setSplash("fading"),1800);
+    const t1=setTimeout(()=>setSplash("fading"),2800);
     const t2=setTimeout(()=>{
       setSplash("hidden");
       const stored=localStorage.getItem("karpuza_user");
@@ -377,7 +377,7 @@ export default function CampusMap(){
           }).catch(()=>{});
         }
       } else {setWelcomeStep("role");}
-    },2600);
+    },3700);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 

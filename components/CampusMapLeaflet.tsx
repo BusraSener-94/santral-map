@@ -651,8 +651,14 @@ export default function CampusMap(){
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               santralistanbul Kampüsü
             </div>
-            <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:3,marginTop:8}}>
-              ETM
+            <div style={{marginTop:12,display:"flex",alignItems:"center",gap:10}}>
+              <div style={{height:1,width:28,background:"linear-gradient(to right,transparent,rgba(212,175,55,0.5))"}}/>
+              <div style={{
+                color:"rgba(212,175,55,0.85)",fontSize:11,letterSpacing:6,fontWeight:600,
+                textShadow:"0 0 12px rgba(212,175,55,0.6),0 0 24px rgba(212,175,55,0.3)"}}>
+                ETM
+              </div>
+              <div style={{height:1,width:28,background:"linear-gradient(to left,transparent,rgba(212,175,55,0.5))"}}/>
             </div>
           </div>
         </div>

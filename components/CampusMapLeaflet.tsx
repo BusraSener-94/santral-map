@@ -20,7 +20,14 @@ const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapm
 const SHEET_URL = "";
 
 type UserRole = "Öğrenci"|"Öğretmen"|"Personel"|"Misafir";
-interface UserProfile { name:string; role:UserRole; studentId?:string; ts:number; }
+interface UserProfile {
+  name:string; role:UserRole;
+  studentId?:string;   // Öğrenci
+  department?:string;  // Öğretmen – bölüm/ders
+  unit?:string;        // Personel – birim
+  position?:string;    // Personel – görev
+  ts:number;
+}
 
 // ── Matematik ────────────────────────────────────────────────────────────────
 function hav(a:number,b:number,c:number,d:number):number{
@@ -279,6 +286,9 @@ export default function CampusMap(){
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wStudentId,setWStudentId]=useState("");
+  const[wDepartment,setWDepartment]=useState("");
+  const[wUnit,setWUnit]=useState("");
+  const[wPosition,setWPosition]=useState("");
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
 
@@ -428,17 +438,23 @@ export default function CampusMap(){
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
     if(!wRole||!wName.trim())return;
-    const profile:UserProfile={name:wName.trim(),role:wRole,
-      studentId:wRole==="Öğrenci"&&wStudentId.trim()?wStudentId.trim():undefined,ts:Date.now()};
+    const profile:UserProfile={
+      name:wName.trim(), role:wRole,
+      studentId:  wRole==="Öğrenci"&&wStudentId.trim()  ? wStudentId.trim()  : undefined,
+      department: wRole==="Öğretmen"&&wDepartment.trim() ? wDepartment.trim() : undefined,
+      unit:       wRole==="Personel"&&wUnit.trim()       ? wUnit.trim()       : undefined,
+      position:   wRole==="Personel"&&wPosition.trim()   ? wPosition.trim()   : undefined,
+      ts:Date.now()
+    };
     localStorage.setItem("karpuza_user",JSON.stringify(profile));
-    setUserProfile(profile);setWelcomeStep(null);
+    setUserProfile(profile); setWelcomeStep(null);
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({...profile,ts:new Date(profile.ts).toLocaleString("tr-TR")})
       }).catch(()=>{});
     }
-  },[wRole,wName,wStudentId]);
+  },[wRole,wName,wStudentId,wDepartment,wUnit,wPosition]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
@@ -577,14 +593,16 @@ export default function CampusMap(){
             <div style={{color:"#fff",fontWeight:700,fontSize:17,marginBottom:4,textAlign:"center"}}>
               {wRole==="Öğrenci"?"🎓":wRole==="Öğretmen"?"👨‍🏫":wRole==="Personel"?"🏢":"🙋"} {wRole}
             </div>
-            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginBottom:22}}>
-              Adınızı girin, haritaya geçelim
+            <div style={{color:"rgba(255,255,255,0.55)",fontSize:12,marginBottom:18}}>
+              Bilgilerinizi girin, haritaya geçelim
             </div>
-            <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{width:"100%",maxWidth:320,display:"flex",flexDirection:"column",gap:11}}>
+              {/* Herkes: Ad Soyad */}
               <input value={wName} onChange={e=>setWName(e.target.value)}
                 placeholder="Adınız Soyadınız"
                 style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                   background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              {/* Öğrenci: numara */}
               {wRole==="Öğrenci"&&(
                 <input value={wStudentId} onChange={e=>setWStudentId(e.target.value)}
                   placeholder="Öğrenci Numaranız"
@@ -592,11 +610,29 @@ export default function CampusMap(){
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
               )}
+              {/* Öğretmen: bölüm / ders */}
+              {wRole==="Öğretmen"&&(
+                <input value={wDepartment} onChange={e=>setWDepartment(e.target.value)}
+                  placeholder="Bölümünüz / Verdiğiniz Ders"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              )}
+              {/* Personel: birim + görev */}
+              {wRole==="Personel"&&(<>
+                <input value={wUnit} onChange={e=>setWUnit(e.target.value)}
+                  placeholder="Biriminiz (örn: Öğrenci İşleri)"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+                <input value={wPosition} onChange={e=>setWPosition(e.target.value)}
+                  placeholder="Göreviniz (örn: Uzman, Sekreter)"
+                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
+                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              </>)}
               <button onClick={submitWelcome} disabled={!wName.trim()}
                 style={{padding:"14px",borderRadius:14,border:"none",
                   background:wName.trim()?"#154360":"rgba(255,255,255,0.1)",
                   color:wName.trim()?"#fff":"rgba(255,255,255,0.3)",
-                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default"}}>
+                  fontSize:15,fontWeight:700,cursor:wName.trim()?"pointer":"default",marginTop:4}}>
                 Haritaya Gir →
               </button>
               <button onClick={()=>setWelcomeStep("role")}

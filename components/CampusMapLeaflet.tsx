@@ -24,7 +24,7 @@ const ONBOARD_STEPS:OnboardStep[]=[
   {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
   {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
   {text:"Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor: haritada gitmek\nistediğin noktaya dokun ya da aşağıya yaz 🗺",target:"to-input"},
-  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:null},
+  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:"speed-btn"},
   {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
 ];
 
@@ -1027,7 +1027,7 @@ export default function CampusMap(){
             </div>
             {mode==='sim'&&(
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                <button onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
+                <button id="speed-btn" onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
                   style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
                     minHeight:36,padding:"0 11px",borderRadius:8,fontSize:13,fontWeight:800}}>
                   {simSpeed}×

@@ -35,7 +35,6 @@ const SHEET_TOKEN = "ks_bilgi_2526";
 type UserRole = "Öğrenci"|"Öğretmen"|"Personel"|"Misafir";
 interface UserProfile {
   name:string; role:UserRole;
-  email?:string;       // Öğrenci/Öğretmen/Personel
   studentId?:string;   // Öğrenci
   faculty?:string;     // Öğretmen – fakülte
   department?:string;  // Öğretmen – bölüm
@@ -300,7 +299,6 @@ export default function CampusMap(){
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
-  const[wEmail,setWEmail]=useState("");
   const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
   const[wKvkk,setWKvkk]=useState(false);
   const[heading,setHeading]=useState<number|null>(null);
@@ -377,20 +375,15 @@ export default function CampusMap(){
       const stored=localStorage.getItem("karpuza_user");
       if(stored){
         const p:UserProfile=JSON.parse(stored);
-        // Eski profilde e-posta yoksa yeniden bilgi al
-        if(p.role!=="Misafir"&&!p.email){
-          setWRole(p.role);setWName(p.name);setShowWelcome(true);
-        } else {
-          setUserProfile(p);
+        setUserProfile(p);
           // Her oturumda ziyaret kaydı gönder
           if(SHEET_URL){
             fetch(SHEET_URL,{method:"POST",mode:"no-cors",
               headers:{"Content-Type":"application/json"},
               body:JSON.stringify({type:"ziyaret",ts:new Date().toLocaleString("tr-TR"),
-                name:p.name,role:p.role,email:p.email||"-",token:SHEET_TOKEN})
+                name:p.name,role:p.role,token:SHEET_TOKEN})
             }).catch(()=>{});
           }
-        }
       } else {setShowWelcome(true);}
     },3700);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
@@ -539,12 +532,9 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    const emailRequired=wRole!=="Misafir";
     if(!wRole||!wName.trim()||!wKvkk)return;
-    if(emailRequired&&!/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim()))return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
-      email: wEmail.trim().toLowerCase()||"-",
       faculty:  wRole==="Öğretmen"&&wExtra.trim() ? wExtra.trim() : undefined,
       position: wRole==="Personel"&&wExtra.trim() ? wExtra.trim() : undefined,
       ts:Date.now()
@@ -557,11 +547,11 @@ export default function CampusMap(){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),
-          name:profile.name,role:profile.role,email:profile.email||"-",
+          name:profile.name,role:profile.role,
           extra:wExtra.trim()||"-",token:SHEET_TOKEN})
       }).catch(()=>{});
     }
-  },[wRole,wName,wEmail,wExtra,wKvkk]);
+  },[wRole,wName,wExtra,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
     if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
@@ -714,25 +704,6 @@ export default function CampusMap(){
                 border:"1.5px solid rgba(255,255,255,0.2)",
                 background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
 
-            {/* E-posta – Misafir dışında zorunlu */}
-            {wRole!=="Misafir"&&(()=>{
-              const emailOk=/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
-              const emailErr=wEmail.trim()&&!emailOk;
-              return(<>
-                <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
-                  placeholder="ad.soyad@bilgi.edu.tr veya @bilgiedu.net"
-                  type="email" inputMode="email" autoCapitalize="none"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
-                    border:`1.5px solid ${emailErr?"#ef4444":emailOk?"#22c55e":"rgba(255,255,255,0.2)"}`,
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
-                {emailErr&&(
-                  <div style={{color:"#f87171",fontSize:11,marginTop:-4,paddingLeft:4}}>
-                    @bilgi.edu.tr veya @bilgiedu.net adresi giriniz
-                  </div>
-                )}
-              </>);
-            })()}
-
             {/* Rol seçimi – aynı ekranda kalır */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:2}}>
               {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>(
@@ -769,8 +740,7 @@ export default function CampusMap(){
 
             {/* Giriş butonu */}
             {(()=>{
-              const emailOk=wRole==="Misafir"||/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
-              const ok=!!(wName.trim()&&emailOk&&wRole&&wKvkk);return(
+              const ok=!!(wName.trim()&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,
                   background:ok?"linear-gradient(135deg,#1d4ed8,#2563eb)":"rgba(255,255,255,0.08)",

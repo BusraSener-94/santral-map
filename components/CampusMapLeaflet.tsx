@@ -498,7 +498,7 @@ export default function CampusMap(){
   },[showSteps,reset]);
 
   const visible=useMemo(()=>LOCS.filter(l=>
-    (!search||l.name.toLowerCase().includes(search.toLowerCase()))&&
+    (!search||l.name.toLocaleLowerCase("tr-TR").includes(search.toLocaleLowerCase("tr-TR")))&&
     (!cat||l.cats.includes(cat))
   ),[search,cat]);
   const mapVisible=useMemo(()=>visible.filter(l=>!l.hidden),[visible]);

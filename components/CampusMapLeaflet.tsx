@@ -547,8 +547,8 @@ export default function CampusMap(){
     if(!wRole||!wName.trim()||!emailOk()||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
-      email:      wRole!=="Misafir"&&wEmail.trim() ? wEmail.trim().toLowerCase() : undefined,
-      studentId:  wRole==="Öğrenci"&&wStudentId.trim()  ? wStudentId.trim()  : undefined,
+      email:      wRole!=="Misafir" ? (wEmail.trim().toLowerCase()||"-") : "-",
+      studentId:  undefined,
       faculty:    wRole==="Öğretmen"&&wFaculty.trim()    ? wFaculty.trim()    : undefined,
       department: wRole==="Öğretmen"&&wDepartment.trim() ? wDepartment.trim() : undefined,
       unit:       wRole==="Personel"&&wUnit.trim()       ? wUnit.trim()       : undefined,
@@ -561,7 +561,10 @@ export default function CampusMap(){
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({...profile,email:profile.email||"-",type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),token:SHEET_TOKEN})
+        body:JSON.stringify({type:"kayıt",ts:new Date(profile.ts).toLocaleString("tr-TR"),
+            name:profile.name,role:profile.role,email:profile.email||"-",
+            faculty:profile.faculty||"-",department:profile.department||"-",
+            unit:profile.unit||"-",position:profile.position||"-",token:SHEET_TOKEN})
       }).catch(()=>{});
     }
   },[wRole,wName,wEmail,wStudentId,wFaculty,wDepartment,wUnit,wPosition,emailOk,wKvkk]);

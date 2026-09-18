@@ -1494,16 +1494,19 @@ export default function CampusMap(){
                 ))}
               </div>
 
-              {/* Atla + ipucu */}
+              {/* Atla + İleri */}
               <div style={{display:"flex",alignItems:"center",
-                justifyContent:"space-between",width:"100%"}}>
+                justifyContent:"space-between",width:"100%",gap:10}}>
                 <button onClick={e=>{e.stopPropagation();
                   localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
                   style={{background:"transparent",color:"#94a3b8",border:"none",
-                    fontSize:12,cursor:"pointer",padding:"6px 0"}}>Atla</button>
-                <span style={{color:"#cbd5e1",fontSize:11}}>
-                  {onboardStep===ONBOARD_STEPS.length-1?"Dokun, başla!":"Sağa dokun →"}
-                </span>
+                    fontSize:12,cursor:"pointer",padding:"6px 0",flexShrink:0}}>Atla</button>
+                <button onClick={e=>{e.stopPropagation();advanceOnboard();}}
+                  style={{flex:1,background:"#0d9488",color:"#fff",border:"none",
+                    borderRadius:10,padding:"11px 0",fontSize:14,fontWeight:700,cursor:"pointer",
+                    boxShadow:"0 3px 12px rgba(13,148,136,0.35)"}}>
+                  {onboardStep===ONBOARD_STEPS.length-1?"Haydi Başla! 🍉":"İleri →"}
+                </button>
               </div>
             </div>
           </div>

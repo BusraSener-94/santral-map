@@ -550,7 +550,7 @@ export default function CampusMap(){
 
   // ── Pin tıklama mantığı ──
   const submitWelcome=useCallback(()=>{
-    if(!wRole||!wName.trim()||!/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim())||!wKvkk)return;
+    if(!wRole||!wName.trim()||!/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim())||!wKvkk)return;
     const profile:UserProfile={
       name:wName.trim(), role:wRole,
       email: wEmail.trim().toLowerCase()||"-",
@@ -715,18 +715,18 @@ export default function CampusMap(){
 
             {/* E-posta – @bilgi.edu.tr veya @bilgi.edu.net zorunlu */}
             {(()=>{
-              const emailOk=/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim());
+              const emailOk=/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
               const emailErr=wEmail.trim()&&!emailOk;
               return(<>
                 <input value={wEmail} onChange={e=>setWEmail(e.target.value)}
-                  placeholder="ad.soyad@bilgi.edu.tr"
+                  placeholder="ad.soyad@bilgi.edu.tr veya @bilgiedu.net"
                   type="email" inputMode="email" autoCapitalize="none"
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
                     border:`1.5px solid ${emailErr?"#ef4444":emailOk?"#22c55e":"rgba(255,255,255,0.2)"}`,
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
                 {emailErr&&(
                   <div style={{color:"#f87171",fontSize:11,marginTop:-4,paddingLeft:4}}>
-                    @bilgi.edu.tr veya @bilgi.edu.net adresi giriniz
+                    @bilgi.edu.tr veya @bilgiedu.net adresi giriniz
                   </div>
                 )}
               </>);
@@ -768,7 +768,7 @@ export default function CampusMap(){
 
             {/* Giriş butonu */}
             {(()=>{
-              const emailOk=/bilgi\.edu\.(tr|net)$/i.test(wEmail.trim());
+              const emailOk=/(bilgi\.edu\.tr|bilgiedu\.net)$/i.test(wEmail.trim());
               const ok=!!(wName.trim()&&emailOk&&wRole&&wKvkk);return(
               <button onClick={submitWelcome} disabled={!ok}
                 style={{padding:"15px",borderRadius:14,border:"none",marginTop:4,

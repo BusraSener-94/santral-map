@@ -902,28 +902,33 @@ export default function CampusMap(){
 
       {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
       {(mode==='pickFrom'||mode==='pickTo')&&(
-        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
-          zIndex:20,display:"flex",alignItems:"center",gap:8,
+        <div style={{position:"absolute",top:"70%",left:"50%",transform:"translate(-50%,-50%)",
+          zIndex:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10,
           background:mode==='pickFrom'?"#16a34a":"#ef4444",
-          borderRadius:50,padding:"10px 14px 10px 16px",
-          boxShadow:"0 6px 24px rgba(0,0,0,0.45)",
-          whiteSpace:"nowrap",animation:"onboard-fadein 0.25s ease"}}>
-          <span style={{fontSize:18}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
-          <span style={{color:"#fff",fontWeight:700,fontSize:14}}>
-            {mode==='pickFrom'?"Başlangıç noktasını seç":"Varış noktasını seç"}
-          </span>
+          borderRadius:20,padding:"18px 24px",width:"80%",maxWidth:320,
+          boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
+          animation:"onboard-fadein 0.25s ease"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
+            <span style={{fontSize:22}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
+            <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
+              {mode==='pickFrom'?"Başlangıç noktasını seç":"Varış noktasını seç"}
+            </span>
+            <button onClick={reset}
+              style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",
+                minHeight:32,width:32,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
+              ✕
+            </button>
+          </div>
+          <div style={{color:"rgba(255,255,255,0.8)",fontSize:12,textAlign:"center"}}>
+            Haritada bir binaya dokun
+          </div>
           {mode==='pickFrom'&&gpsOn&&userPos&&(
             <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}
               style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
-                fontSize:12,padding:"4px 12px",minHeight:30,borderRadius:30}}>
-              📍 GPS
+                fontSize:13,padding:"8px 20px",minHeight:36,borderRadius:30,width:"100%"}}>
+              📍 Mevcut Konumumu Kullan
             </button>
           )}
-          <button onClick={reset}
-            style={{...BTN,background:"rgba(0,0,0,0.18)",color:"#fff",
-              minHeight:30,width:30,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
-            ✕
-          </button>
         </div>
       )}
 

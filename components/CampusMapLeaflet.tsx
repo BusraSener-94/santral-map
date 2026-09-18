@@ -1054,8 +1054,9 @@ export default function CampusMap(){
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
           boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          {/* Sol: BİLGİ logotype + kullanıcı selamı */}
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0}}>
+          {/* Sol: BİLGİ logotype + kullanıcı selamı – tıklayınca yenile */}
+          <div onClick={()=>window.location.reload()}
+            style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0,cursor:"pointer"}}>
             <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
               style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
             <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>

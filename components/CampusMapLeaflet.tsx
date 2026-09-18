@@ -334,9 +334,14 @@ export default function CampusMap(){
     if(onboardStep===null){setHlRect(null);return;}
     const t=ONBOARD_STEPS[onboardStep].target;
     if(!t){setHlRect(null);return;}
-    const el=document.getElementById(t);
-    if(el)setHlRect(el.getBoundingClientRect());
-    else setHlRect(null);
+    const update=()=>{
+      const el=document.getElementById(t);
+      if(el)setHlRect(el.getBoundingClientRect());
+      else setHlRect(null);
+    };
+    update();
+    window.addEventListener('resize',update);
+    return()=>window.removeEventListener('resize',update);
   },[onboardStep]);
 
   const handleLogoPress=useCallback(()=>{
@@ -1429,14 +1434,23 @@ export default function CampusMap(){
                 borderRadius:14,border:"2.5px solid #f97316",
                 animation:"onboard-glow 1.4s ease-in-out infinite",
                 zIndex:9991,pointerEvents:"none"}}/>
-              {/* Elementin hemen altında (üst element) veya üstünde (alt element) ok */}
+              {/* Elementin yanında: ok + yazılı badge */}
               <div style={{position:"fixed",
                 left:hlRect.left+hlRect.width/2,
-                top: hlRect.top<200 ? hlRect.bottom+18 : hlRect.top-42,
+                top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-52,
                 transform:"translateX(-50%)",
-                fontSize:26,zIndex:9993,pointerEvents:"none",lineHeight:1,
-                animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
-                {hlRect.top<200?"⬆️":"⬇️"}
+                zIndex:9993,pointerEvents:"none",
+                display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{fontSize:24,lineHeight:1,
+                  animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
+                  {hlRect.top<200?"⬆️":"⬇️"}
+                </div>
+                <div style={{background:"#fff",color:"#f97316",
+                  fontWeight:800,fontSize:13,padding:"4px 12px",
+                  borderRadius:20,boxShadow:"0 2px 12px rgba(249,115,22,0.5)",
+                  whiteSpace:"nowrap",letterSpacing:0.3}}>
+                  {ONBOARD_STEPS[onboardStep??0]?.target==="gps-btn"?"📍 Konum":""}
+                </div>
               </div>
             </>
           )}

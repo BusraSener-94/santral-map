@@ -813,48 +813,66 @@ export default function CampusMap(){
         <div onClick={()=>setShowKarpuzIntro(false)}
           style={{position:"fixed",inset:0,zIndex:28,
             display:"flex",alignItems:"center",justifyContent:"center",
-            padding:"20px 20px 120px",
-            background:"rgba(0,0,0,0.35)"}}>
+            padding:"20px 16px 130px",
+            background:"rgba(0,0,0,0.38)"}}>
+
+          {/* Sol ok – geri / kapat */}
+          <button onClick={()=>setShowKarpuzIntro(false)}
+            style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",
+              width:44,height:44,borderRadius:"50%",border:"none",
+              background:"rgba(255,255,255,0.92)",
+              boxShadow:"0 2px 12px rgba(0,0,0,0.25)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",zIndex:1,flexShrink:0}}>
+            <span style={{fontSize:20,color:"#475569",lineHeight:1}}>‹</span>
+          </button>
+
+          {/* Kart */}
           <div onClick={e=>e.stopPropagation()}
-            style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:340,
-              boxShadow:"0 20px 60px rgba(0,0,0,0.55)",
+            style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:320,
+              boxShadow:"0 20px 60px rgba(0,0,0,0.45)",
               display:"flex",flexDirection:"column",alignItems:"center",
-              padding:"28px 24px 20px",position:"relative",
+              padding:"28px 24px 24px",position:"relative",
               animation:"onboard-fadein 0.3s ease"}}>
 
-            {/* Karpuz fotoğrafı – daire */}
-            <div style={{width:110,height:110,borderRadius:"50%",overflow:"hidden",
-              border:"4px solid #16a34a",boxShadow:"0 4px 20px rgba(22,163,74,0.35)",
-              marginBottom:16,flexShrink:0}}>
-              <img src="/karpuza-sor.png" alt="Karpuz"
+            {/* Karpuz fotoğrafı – daire, yeşil arka plan */}
+            <div style={{width:130,height:130,borderRadius:"50%",overflow:"hidden",
+              background:"#bbf7d0",
+              boxShadow:"0 6px 24px rgba(22,163,74,0.3)",
+              marginBottom:18,flexShrink:0}}>
+              <img src="/karpuz-karsilama.png" alt="Karpuz"
                 style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             </div>
 
             {/* Metin */}
-            <p style={{margin:"0 0 20px",fontSize:14,color:"#1e293b",lineHeight:1.7,
+            <p style={{margin:"0 0 4px",fontSize:13.5,color:"#1e293b",lineHeight:1.75,
               textAlign:"center",fontWeight:500}}>
-              Merhaba! Ben <strong>Karpuz</strong> 🐾<br/>
-              Kampüsün maskotlarından biriyim.<br/><br/>
-              Başlangıç noktanı ve gitmek istediğin yeri yazarsan sana yol gösterebilirim.
-              İstersen bulunduğun konumdan da başlayabilirsin.
+              Merhaba ben Karpuz. Kampüsün<br/>
+              maskotlarından biriyim.<br/>
+              Başlangıç noktanızı ve gitmek istediğiniz<br/>
+              yeri yazarsanız size yol gösterebilirim.<br/>
+              İsterseniz bulunduğunuz konumdan da<br/>
+              başlayabilirsiniz.
             </p>
 
-            {/* Kapat butonu */}
-            <button onClick={()=>setShowKarpuzIntro(false)}
-              style={{width:"100%",padding:"13px",border:"none",borderRadius:12,
-                background:"linear-gradient(135deg,#16a34a,#15803d)",
-                color:"#fff",fontSize:15,fontWeight:700,cursor:"pointer",
-                boxShadow:"0 4px 16px rgba(22,163,74,0.4)"}}>
-              Anladım, Başlayalım! 🍉
-            </button>
-
             {/* Konuşma balonu oku */}
-            <div style={{position:"absolute",bottom:-14,left:"50%",transform:"translateX(-50%)",
+            <div style={{position:"absolute",bottom:-13,left:"50%",transform:"translateX(-50%)",
               width:0,height:0,
-              borderLeft:"14px solid transparent",borderRight:"14px solid transparent",
-              borderTop:"14px solid #fff",
-              filter:"drop-shadow(0 4px 4px rgba(0,0,0,0.15))"}}/>
+              borderLeft:"13px solid transparent",borderRight:"13px solid transparent",
+              borderTop:"13px solid #fff",
+              filter:"drop-shadow(0 3px 3px rgba(0,0,0,0.12))"}}/>
           </div>
+
+          {/* Sağ ok – ileri / başla */}
+          <button onClick={()=>setShowKarpuzIntro(false)}
+            style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
+              width:44,height:44,borderRadius:"50%",border:"none",
+              background:"rgba(255,255,255,0.92)",
+              boxShadow:"0 2px 12px rgba(0,0,0,0.25)",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",zIndex:1,flexShrink:0}}>
+            <img src="/right-arrow.png" alt="›" style={{width:20,height:20,objectFit:"contain"}}/>
+          </button>
         </div>
       )}
 
@@ -1217,8 +1235,11 @@ export default function CampusMap(){
                       fontSize:14,outline:"none",minHeight:44,caretColor:"#16a34a"}}/>
                   {gpsOn&&userPos&&!fromSearch&&(
                     <button onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);if(to)calcRoute(userPos[0],userPos[1],to);}}
-                      style={{background:"none",border:"none",color:"#3b82f6",cursor:"pointer",
-                        fontSize:11,padding:"0 4px",whiteSpace:"nowrap",fontWeight:700}}>📍 GPS</button>
+                      style={{background:"none",border:"none",cursor:"pointer",
+                        padding:"0 4px",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                      <img src="/location-icon.png" alt="GPS" style={{width:16,height:16,objectFit:"contain"}}/>
+                      <span style={{color:"#3b82f6",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>Konum</span>
+                    </button>
                   )}
                   {fromSearch&&(
                     <button onMouseDown={e=>{e.preventDefault();setFrom(null);setFromGPS(false);}}
@@ -1246,6 +1267,12 @@ export default function CampusMap(){
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Başlangıç → Varış ayırıcı ok */}
+              <div style={{display:"flex",justifyContent:"center",margin:"-2px 0"}}>
+                <img src="/right-arrow.png" alt="→"
+                  style={{width:18,height:18,objectFit:"contain",opacity:0.5,transform:"rotate(90deg)"}}/>
               </div>
 
               {/* Varış */}

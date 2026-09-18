@@ -120,6 +120,52 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
   return[[fLa,fLo],[tLa,tLo]];
 }
 
+// Düğüm indekslerini de döndüren Dijkstra (alternatif rotalar için)
+function dijkBase(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:number):{path:[number,number][];nodes:number[]}{
+  const{nodes:n}=g,N=n.length;
+  let fi=0,ti=0,fd=Infinity,td=Infinity;
+  for(let i=0;i<N;i++){
+    const f=hav(fLa,fLo,n[i][0],n[i][1]),t=hav(tLa,tLo,n[i][0],n[i][1]);
+    if(f<fd){fd=f;fi=i;}if(t<td){td=t;ti=i;}
+  }
+  const dist=new Float64Array(N).fill(Infinity),prev=new Int32Array(N).fill(-1),inQ=new Uint8Array(N).fill(1);
+  dist[fi]=0;
+  for(;;){
+    let u=-1,ud=Infinity;for(let i=0;i<N;i++)if(inQ[i]&&dist[i]<ud){ud=dist[i];u=i;}
+    if(u<0||dist[u]===Infinity||u===ti)break;inQ[u]=0;
+    for(const[v,w]of a[u]){if(!inQ[v])continue;const nd=dist[u]+w;if(nd<dist[v]){dist[v]=nd;prev[v]=u;}}
+  }
+  const nodeList:number[]=[],ref={c:ti};
+  while(ref.c>=0&&nodeList.length<=N){nodeList.unshift(ref.c);if(ref.c===fi)break;ref.c=prev[ref.c];}
+  if(nodeList.length>=2&&nodeList[0]===fi)
+    return{path:[[fLa,fLo],...nodeList.map(i=>n[i] as[number,number]),[tLa,tLo]],nodes:nodeList};
+  return{path:[[fLa,fLo],[tLa,tLo]],nodes:[]};
+}
+
+// Edge penalization ile K alternatif rota bul
+function findKRoutes(g:GD,aList:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:number,k:number):[number,number][][]{
+  const results:[number,number][][]=[];
+  const resultNodes:number[][]=[];
+  const penEdges=new Set<string>();
+  for(let iter=0;iter<k*3&&results.length<k;iter++){
+    const penAdj=aList.map((edges,u)=>
+      edges.map(([v,w]):[number,number]=>[v,penEdges.has(`${Math.min(u,v)}-${Math.max(u,v)}`)?w*20:w])
+    );
+    const{path,nodes}=dijkBase(g,penAdj,fLa,fLo,tLa,tLo);
+    if(path.length<2)break;
+    const setN=new Set(nodes);
+    const tooSimilar=resultNodes.some(prev=>{
+      const ov=prev.filter(x=>setN.has(x)).length;
+      return ov/Math.max(prev.length,nodes.length,1)>0.75;
+    });
+    if(!tooSimilar){results.push(path);resultNodes.push(nodes);}
+    for(let j=0;j<nodes.length-1;j++)
+      penEdges.add(`${Math.min(nodes[j],nodes[j+1])}-${Math.max(nodes[j],nodes[j+1])}`);
+  }
+  if(results.length===0)results.push([[fLa,fLo],[tLa,tLo]] as [number,number][]);
+  return results;
+}
+
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
 
 function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
@@ -423,6 +469,9 @@ export default function CampusMap(){
 
   // Aktif adım (navigasyon veya simülasyon)
   const[curStepIdx,setCurStepIdx]=useState(0);
+  // Çoklu rota seçenekleri
+  const[routes,setRoutes]=useState<[number,number][][]>([]);
+  const[selRoute,setSelRoute]=useState(0);
 
   // ── GPS izle ──
   const toggleGPS=useCallback(()=>{
@@ -442,15 +491,25 @@ export default function CampusMap(){
   useEffect(()=>()=>{if(watchRef.current!=null)navigator.geolocation.clearWatch(watchRef.current);},[]);
 
   // ── Rota hesapla ──
+  const applyRoute=useCallback((r:[number,number][])=>{
+    setRoute(r);setRouteM(distM(r));
+    const s=steps(r);setNavSteps(s);setCurStepIdx(0);
+    const cum=[0];for(let i=1;i<r.length;i++)cum.push(cum[i-1]+hav(r[i-1][0],r[i-1][1],r[i][0],r[i][1]));
+    cumRef.current=cum;
+  },[]);
+
+  const selectRoute=useCallback((idx:number,found:[number,number][][])=>{
+    const r=found[idx];if(!r)return;
+    setSelRoute(idx);applyRoute(r);
+  },[applyRoute]);
+
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
-    const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
-    setRoute(pts);setRouteM(distM(pts));
-    const s=steps(pts);setNavSteps(s);setCurStepIdx(0);
-    const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+hav(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1]));
-    cumRef.current=cum;
+    const found=gd&&adList?findKRoutes(gd,adList,fLat,fLon,tLa,tLo,3):[[[fLat,fLon],[tLa,tLo]] as [number,number][]];
+    setRoutes(found);setSelRoute(0);
+    applyRoute(found[0]);
     setMode('ready');
-  },[gd,adList]);
+  },[gd,adList,applyRoute]);
 
   // FROM veya GPS değişince rota yeniden hesapla (nav/sim modunda tekrar hesaplama)
   useEffect(()=>{
@@ -568,6 +627,7 @@ export default function CampusMap(){
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
+    setRoutes([]);setSelRoute(0);
   },[stopSim]);
 
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
@@ -802,12 +862,20 @@ export default function CampusMap(){
           {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
-          {route&&<>
+          {routes.length>0&&<>
+            {/* Seçilmemiş alternatif rotalar */}
+            {routes.map((r,i)=>i===selRoute?null:(
+              <Polyline key={`alt-${i}`} positions={r}
+                pathOptions={{color:"#94a3b8",weight:3,opacity:0.45,lineCap:"round",lineJoin:"round"}}/>
+            ))}
+            {/* Seçili rota – gölge + renk */}
+            <Polyline positions={routes[selRoute]??routes[0]}
+              pathOptions={{color:"#000",weight:9,opacity:0.12,lineCap:"round",lineJoin:"round"}}/>
+            <Polyline positions={routes[selRoute]??routes[0]}
+              pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
             {/* Geçilen yol – gri */}
-            {passedRoute.length>1&&<Polyline positions={passedRoute} pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round"}}/>}
-            {/* Kalan yol gölge + renk */}
-            <Polyline positions={route} pathOptions={{color:"#000",weight:9,opacity:0.12,lineCap:"round",lineJoin:"round"}}/>
-            <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
+            {passedRoute.length>1&&<Polyline positions={passedRoute}
+              pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round"}}/>}
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {/* Gerçek GPS – simülasyonda gizle */}
@@ -1139,6 +1207,29 @@ export default function CampusMap(){
                 <div style={{height:4,background:"#0f172a",borderRadius:2,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${simPct}%`,background:"#0d9488",
                     borderRadius:2,transition:"width 0.1s linear"}}/>
+                </div>
+              )}
+
+              {/* Rota seçim kartları – birden fazla rota varsa göster */}
+              {mode==='ready'&&routes.length>1&&(
+                <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:2}}>
+                  {routes.map((r,i)=>{
+                    const m=distM(r),mn=Math.max(1,Math.round(m/83));
+                    return(
+                      <button key={i} onClick={()=>selectRoute(i,routes)}
+                        style={{flexShrink:0,padding:"8px 12px",borderRadius:10,cursor:"pointer",
+                          border:`2px solid ${i===selRoute?"#3b82f6":"#334155"}`,
+                          background:i===selRoute?"rgba(59,130,246,0.18)":"transparent",
+                          color:"#fff",textAlign:"left",minWidth:110}}>
+                        <div style={{fontSize:12,fontWeight:700,color:i===selRoute?"#60a5fa":"#94a3b8"}}>
+                          {i===0?"🏃 En Kısa":`🔀 Alternatif ${i}`}
+                        </div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,0.55)",marginTop:2}}>
+                          ~{mn} dk · {m}m
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 

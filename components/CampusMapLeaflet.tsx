@@ -1117,7 +1117,10 @@ export default function CampusMap(){
             <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
               background:gpsError?"rgba(239,68,68,0.35)":gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
               border:`1px solid ${gpsError?"#ef4444":gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
-              color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4}}>
+              color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4,
+              ...(ONBOARD_STEPS[onboardStep??-1]?.target==="gps-btn"
+                ?{animation:"onboard-glow 1.4s ease-in-out infinite",boxShadow:"0 0 0 3px #f97316,0 0 18px rgba(249,115,22,0.7)"}
+                :{})}}>
               {gpsError?"⚠️ Hata":gpsOn?"📍 Aktif":"📍 Konum"}
             </button>
             {gpsError&&(
@@ -1415,14 +1418,25 @@ export default function CampusMap(){
       {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
       {onboardStep!==null&&(
         <>
-          {/* Hedef element – pulse ring */}
+          {/* Hedef element – pulse ring + elementin yanında yön oku */}
           {hlRect&&(
-            <div style={{position:"fixed",
-              left:hlRect.left-8,top:hlRect.top-8,
-              width:hlRect.width+16,height:hlRect.height+16,
-              borderRadius:14,border:"2.5px solid #f97316",
-              animation:"onboard-glow 1.4s ease-in-out infinite",
-              zIndex:9991,pointerEvents:"none"}}/>
+            <>
+              <div style={{position:"fixed",
+                left:hlRect.left-8,top:hlRect.top-8,
+                width:hlRect.width+16,height:hlRect.height+16,
+                borderRadius:14,border:"2.5px solid #f97316",
+                animation:"onboard-glow 1.4s ease-in-out infinite",
+                zIndex:9991,pointerEvents:"none"}}/>
+              {/* Elementin hemen altında (üst element) veya üstünde (alt element) ok */}
+              <div style={{position:"fixed",
+                left:hlRect.left+hlRect.width/2,
+                top: hlRect.top<200 ? hlRect.bottom+6 : hlRect.top-38,
+                transform:"translateX(-50%)",
+                fontSize:26,zIndex:9993,pointerEvents:"none",lineHeight:1,
+                animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
+                {hlRect.top<200?"⬆️":"⬇️"}
+              </div>
+            </>
           )}
 
           {/* Overlay */}
@@ -1473,16 +1487,6 @@ export default function CampusMap(){
                 {ONBOARD_STEPS[onboardStep].text}
               </div>
 
-              {/* Yön oku – hlRect'e göre */}
-              {hlRect&&(
-                <div style={{position:"absolute",
-                  ...(hlRect.top<120
-                    ? {top:-38,left:"50%",animation:"arrow-up 0.8s ease-in-out infinite"}
-                    : {bottom:-38,left:"50%",animation:"arrow-down 0.8s ease-in-out infinite"}),
-                  fontSize:26,pointerEvents:"none",lineHeight:1}}>
-                  {hlRect.top<120?"⬆️":"⬇️"}
-                </div>
-              )}
 
               {/* Dot progress */}
               <div style={{display:"flex",gap:5,marginBottom:14}}>

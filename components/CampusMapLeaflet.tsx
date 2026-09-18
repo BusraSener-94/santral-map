@@ -278,7 +278,9 @@ export default function CampusMap(){
   const[showSteps,setShowSteps]=useState(false);
   // Swipe-to-close bottom sheet
   const[sheetTranslate,setSheetTranslate]=useState(0);
+  const[sheetExpanded,setSheetExpanded]=useState(false);
   const touchStartY=useRef(0);
+  const sheetBaseY=useRef(0);
 
   // Uygulama modu
   type Mode='idle'|'pickFrom'|'pickTo'|'ready'|'sim'|'nav'|'arrived';
@@ -1182,20 +1184,33 @@ export default function CampusMap(){
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
-          transform:`translateY(${Math.max(0,sheetTranslate)}px)`,
-          transition:sheetTranslate===0?"transform 0.25s ease":"none"}}
-        onTouchStart={e=>{if(onboardStep!==null)return;touchStartY.current=e.touches[0].clientY;}}
+          transform:`translateY(${sheetExpanded?Math.min(0,sheetTranslate):Math.max(0,sheetTranslate)}px)`,
+          transition:sheetTranslate===0?"transform 0.25s ease":"none",
+          maxHeight:sheetExpanded?"70vh":"auto",
+          overflowY:sheetExpanded?"auto":"visible"}}
+        onTouchStart={e=>{
+          if(onboardStep!==null)return;
+          touchStartY.current=e.touches[0].clientY;
+          sheetBaseY.current=0;
+        }}
         onTouchMove={e=>{
           if(onboardStep!==null)return;
           const dy=e.touches[0].clientY-touchStartY.current;
-          if(dy>0)setSheetTranslate(dy);
+          setSheetTranslate(dy);
         }}
         onTouchEnd={()=>{
           if(onboardStep!==null)return;
           if(sheetTranslate>80){
             setSheetTranslate(0);
-            if(mode!=='idle')reset();
+            if(sheetExpanded){setSheetExpanded(false);}
+            else if(mode!=='idle')reset();
             else if(showSteps)setShowSteps(false);
+          } else if(sheetTranslate<-60&&!sheetExpanded){
+            setSheetExpanded(true);
+            setSheetTranslate(0);
+          } else if(sheetTranslate>40&&sheetExpanded){
+            setSheetExpanded(false);
+            setSheetTranslate(0);
           } else {
             setSheetTranslate(0);
           }

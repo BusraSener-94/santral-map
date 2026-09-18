@@ -633,7 +633,7 @@ export default function CampusMap(){
           opacity:splash==="fading"?0:1,
           transition:"opacity 0.75s ease",
           pointerEvents:splash==="fading"?"none":"auto"}}>
-          <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+          <img src="/karpuza-sor.png" alt="Karpuza Sor"
             style={{height:"50vh",width:"auto",maxWidth:"82vw",
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
@@ -663,7 +663,7 @@ export default function CampusMap(){
           padding:"32px 24px 40px"}}>
 
           {/* Karpuz logosu – büyük */}
-          <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+          <img src="/karpuza-sor.png" alt="Karpuza Sor"
             style={{height:160,width:"auto",objectFit:"contain",borderRadius:20,
               boxShadow:"0 12px 40px rgba(0,0,0,0.7)",marginBottom:16}}/>
 
@@ -993,7 +993,7 @@ export default function CampusMap(){
           </div>
           {/* Orta: Karpuza logo ortalı — uzun basış turu yeniden başlatır */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <img src="/karpuza-sor.jpg" alt="Karpuza Sor"
+            <img src="/karpuza-sor.png" alt="Karpuza Sor"
               style={{height:58,width:"auto",objectFit:"contain",borderRadius:8,
                 boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}
               onTouchStart={handleLogoPress}
@@ -1243,7 +1243,7 @@ export default function CampusMap(){
             padding:"16px 18px 24px",
             display:"flex",gap:14,alignItems:"flex-start",
             animation:"onboard-fadein 0.3s ease"}}>
-            <img src="/karpuza-sor.jpg" alt="Karpuza"
+            <img src="/karpuza-sor.png" alt="Karpuza"
               style={{width:58,height:58,borderRadius:10,objectFit:"cover",flexShrink:0,
                 boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}/>
             <div style={{flex:1}}>

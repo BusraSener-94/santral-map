@@ -902,7 +902,7 @@ export default function CampusMap(){
 
       {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
       {(mode==='pickFrom'||mode==='pickTo')&&(
-        <div style={{position:"absolute",top:16,left:"50%",transform:"translateX(-50%)",
+        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
           zIndex:20,display:"flex",alignItems:"center",gap:8,
           background:mode==='pickFrom'?"#16a34a":"#ef4444",
           borderRadius:50,padding:"10px 14px 10px 16px",

@@ -16,6 +16,16 @@ const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
+interface OnboardStep{text:string;target:string|null;}
+const ONBOARD_STEPS:OnboardStep[]=[
+  {text:"Merhaba! Ben Karpuza 🐾\nSana kampüsü tanıtayım!",target:null},
+  {text:"Konumunu açmak için\nbu düğmeye dokun 📍",target:"gps-btn"},
+  {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
+  {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
+  {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
+  {text:"Hazırım! Haydi kampüsü\nkeşfedelim 🍉",target:null},
+];
+
 // Google Sheets Web App URL
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbx-wzOfRVu_1CIQZzde3r8f1wdsHpSE1MIkxT-PxR3UVLl758OySrZO_P7ZBrlUGFFd/exec";
 const SHEET_TOKEN = "ks_bilgi_2526";
@@ -292,6 +302,28 @@ export default function CampusMap(){
   const[wPosition,setWPosition]=useState("");
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
+  const[onboardStep,setOnboardStep]=useState<number|null>(null);
+  const[hlRect,setHlRect]=useState<DOMRect|null>(null);
+  const[simSpeed,setSimSpeed]=useState(1);
+  const simSpeedRef=useRef(1);
+
+  // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
+  useEffect(()=>{
+    if(onboardStep===null){setHlRect(null);return;}
+    const t=ONBOARD_STEPS[onboardStep].target;
+    if(!t){setHlRect(null);return;}
+    const el=document.getElementById(t);
+    if(el)setHlRect(el.getBoundingClientRect());
+    else setHlRect(null);
+  },[onboardStep]);
+
+  const advanceOnboard=useCallback(()=>{
+    setOnboardStep(s=>{
+      if(s===null)return null;
+      if(s>=ONBOARD_STEPS.length-1){localStorage.setItem("karpuza_onboard","1");return null;}
+      return s+1;
+    });
+  },[]);
 
   // Splash ekranı: 1.8s görünür, sonra fade-out; kapanınca kullanıcı kaydı kontrol edilir
   useEffect(()=>{
@@ -394,10 +426,11 @@ export default function CampusMap(){
     if(!route||route.length<2)return;
     stopSim();
     const cum=cumRef.current,r=route,total=cum[cum.length-1]??0;
-    const TICK=50,step=(83/60)*(TICK/1000)*8;
+    const TICK=50;
     let trav=0;
     setSimPos(r[0]);setSimPct(0);setMode('sim');
     simRef.current=setInterval(()=>{
+      const step=(83/60)*(TICK/1000)*8*simSpeedRef.current;
       trav+=step;
       if(trav>=total){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('arrived');return;}
       setSimPct(Math.round((trav/total)*100));
@@ -449,6 +482,7 @@ export default function CampusMap(){
     };
     localStorage.setItem("karpuza_user",JSON.stringify(profile));
     setUserProfile(profile); setWelcomeStep(null);
+    if(!localStorage.getItem("karpuza_onboard"))setOnboardStep(0);
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
         headers:{"Content-Type":"application/json"},
@@ -666,8 +700,8 @@ export default function CampusMap(){
             <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
-          {/* PERSON (turuncu, puls) */}
-          {userPos&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
+          {/* Gerçek GPS – simülasyonda gizle */}
+          {userPos&&mode!=='sim'&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             const showLabel=showLabels||iF||iT;
@@ -801,9 +835,16 @@ export default function CampusMap(){
               </div>}
             </div>
             {mode==='sim'&&(
-              <button onClick={()=>{stopSim();setMode('ready');}}
-                style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
-                  minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>■</button>
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                <button onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
+                  style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
+                    minHeight:36,padding:"0 11px",borderRadius:8,fontSize:13,fontWeight:800}}>
+                  {simSpeed}×
+                </button>
+                <button onClick={()=>{stopSim();setMode('ready');}}
+                  style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
+                    minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>■</button>
+              </div>
             )}
           </div>
           {/* Sonraki adım */}
@@ -879,7 +920,7 @@ export default function CampusMap(){
                 boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}/>
           </div>
           {/* Sağ: Konum butonu */}
-          <button onClick={toggleGPS} style={{...BTN,
+          <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
             background:gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
             border:`1px solid ${gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
             color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4}}>
@@ -936,11 +977,11 @@ export default function CampusMap(){
           {/* IDLE: Arama + yol tarifi butonu */}
           {mode==='idle'&&(
             <div style={{display:"flex",gap:8}}>
-              <input value={search} onChange={e=>setSearch(e.target.value)}
+              <input id="search-input" value={search} onChange={e=>setSearch(e.target.value)}
                 placeholder="Bina ara…"
                 style={{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:10,
                   padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
-              <button onClick={()=>setMode('pickFrom')}
+              <button id="route-btn" onClick={()=>setMode('pickFrom')}
                 style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 16px",fontSize:13,borderRadius:10}}>
                 🗺 Yol Tarifi
               </button>
@@ -1039,7 +1080,7 @@ export default function CampusMap(){
 
           {/* Kategori filtreleri – sadece idle modda */}
           {mode==='idle'&&(
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4} as React.CSSProperties}>
+            <div id="cat-row" style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:4} as React.CSSProperties}>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
                   border:"1px solid #475569",background:cat===null?"#3b82f6":"transparent",color:"#fff"}}>Tümü</button>
@@ -1055,6 +1096,53 @@ export default function CampusMap(){
 
         </div>
       </div>
+
+      {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
+      {onboardStep!==null&&(
+        <>
+          {/* Highlight halkası */}
+          {hlRect&&(
+            <div style={{position:"fixed",
+              left:hlRect.left-8,top:hlRect.top-8,
+              width:hlRect.width+16,height:hlRect.height+16,
+              borderRadius:14,border:"3px solid #f97316",
+              animation:"onboard-glow 1.4s ease-in-out infinite",
+              zIndex:9991,pointerEvents:"none"}}/>
+          )}
+          {/* Konuşma balonu */}
+          <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:9992,
+            background:"#0c1828",borderRadius:"20px 20px 0 0",
+            padding:"16px 18px 32px",
+            display:"flex",gap:14,alignItems:"flex-start",
+            animation:"onboard-fadein 0.3s ease",
+            boxShadow:"0 -4px 32px rgba(0,0,0,0.7)"}}>
+            <img src="/karpuza-sor.jpg" alt="Karpuza"
+              style={{width:58,height:58,borderRadius:10,objectFit:"cover",flexShrink:0,
+                boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}/>
+            <div style={{flex:1}}>
+              <div style={{color:"#fff",fontSize:15,fontWeight:600,lineHeight:1.55,
+                marginBottom:14,whiteSpace:"pre-line"}}>
+                {ONBOARD_STEPS[onboardStep].text}
+              </div>
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <button onClick={advanceOnboard}
+                  style={{background:"#c41230",color:"#fff",border:"none",
+                    borderRadius:10,padding:"10px 22px",fontSize:14,fontWeight:700,cursor:"pointer"}}>
+                  {onboardStep===ONBOARD_STEPS.length-1?"Haydi Başla! 🍉":"İleri →"}
+                </button>
+                {onboardStep<ONBOARD_STEPS.length-1&&(
+                  <button onClick={()=>{localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                    style={{background:"transparent",color:"rgba(255,255,255,0.38)",border:"none",
+                      fontSize:13,cursor:"pointer",padding:"10px 0"}}>Atla</button>
+                )}
+                <div style={{marginLeft:"auto",color:"rgba(255,255,255,0.25)",fontSize:12}}>
+                  {onboardStep+1}/{ONBOARD_STEPS.length}
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

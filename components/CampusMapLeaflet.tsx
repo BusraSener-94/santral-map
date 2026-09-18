@@ -1425,39 +1425,32 @@ export default function CampusMap(){
       {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
       {onboardStep!==null&&(
         <>
-          {/* Hedef element – pulse ring + elementin yanında yön oku */}
+          {/* Spotlight: hedef alanı aydınlatır, etrafı karartır — butonu overlay arkasında bırakmaz */}
           {hlRect&&(
-            <>
-              <div style={{position:"fixed",
-                left:hlRect.left-8,top:hlRect.top-8,
-                width:hlRect.width+16,height:hlRect.height+16,
-                borderRadius:14,border:"2.5px solid #f97316",
-                animation:"onboard-glow 1.4s ease-in-out infinite",
-                zIndex:9991,pointerEvents:"none"}}/>
-              {/* Elementin yanında: ok + yazılı badge */}
-              <div style={{position:"fixed",
-                left:hlRect.left+hlRect.width/2,
-                top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-52,
-                transform:"translateX(-50%)",
-                zIndex:9993,pointerEvents:"none",
-                display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{fontSize:24,lineHeight:1,
-                  animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
-                  {hlRect.top<200?"⬆️":"⬇️"}
-                </div>
-                <div style={{background:"#fff",color:"#f97316",
-                  fontWeight:800,fontSize:13,padding:"4px 12px",
-                  borderRadius:20,boxShadow:"0 2px 12px rgba(249,115,22,0.5)",
-                  whiteSpace:"nowrap",letterSpacing:0.3}}>
-                  {ONBOARD_STEPS[onboardStep??0]?.target==="gps-btn"?"📍 Konum":""}
-                </div>
-              </div>
-            </>
+            <div style={{position:"fixed",
+              left:hlRect.left-10,top:hlRect.top-10,
+              width:hlRect.width+20,height:hlRect.height+20,
+              borderRadius:16,border:"2.5px solid #f97316",
+              animation:"onboard-glow 1.4s ease-in-out infinite",
+              boxShadow:"0 0 0 9999px rgba(0,0,0,0.55)",
+              zIndex:9991,pointerEvents:"none"}}/>
           )}
 
-          {/* Overlay */}
+          {/* Yön oku */}
+          {hlRect&&(
+            <div style={{position:"fixed",
+              left:hlRect.left+hlRect.width/2,
+              top: hlRect.top<200 ? hlRect.bottom+14 : hlRect.top-42,
+              transform:"translateX(-50%)",
+              fontSize:26,zIndex:9993,pointerEvents:"none",lineHeight:1,
+              animation: hlRect.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
+              {hlRect.top<200?"⬆️":"⬇️"}
+            </div>
+          )}
+
+          {/* Overlay – hlRect varken arka plan şeffaf (spotlight karartıyor) */}
           <div style={{position:"fixed",inset:0,zIndex:9992,
-            background:"rgba(0,0,0,0.52)",
+            background: hlRect ? "transparent" : "rgba(0,0,0,0.52)",
             display:"flex",flexDirection:"column",
             alignItems:"center",justifyContent:"center",
             padding:"56px 20px 130px"}}>
@@ -1483,7 +1476,7 @@ export default function CampusMap(){
 
             {/* Kart */}
             <div key={`ob${onboardStep}`}
-              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:320,
+              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:380,
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
                 display:"flex",flexDirection:"column",alignItems:"center",
                 padding:"26px 22px 18px",position:"relative",zIndex:1,

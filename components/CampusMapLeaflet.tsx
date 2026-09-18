@@ -725,28 +725,20 @@ export default function CampusMap(){
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
               )}
-              {/* Öğretmen: fakülte + bölüm */}
-              {wRole==="Öğretmen"&&(<>
+              {/* Öğretmen: fakülte */}
+              {wRole==="Öğretmen"&&(
                 <input value={wFaculty} onChange={e=>setWFaculty(e.target.value)}
                   placeholder="Fakülteniz (örn: Mühendislik)"
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-                <input value={wDepartment} onChange={e=>setWDepartment(e.target.value)}
-                  placeholder="Bölümünüz / Verdiğiniz Ders"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              </>)}
-              {/* Personel: birim + görev */}
-              {wRole==="Personel"&&(<>
-                <input value={wUnit} onChange={e=>setWUnit(e.target.value)}
-                  placeholder="Biriminiz (örn: Öğrenci İşleri)"
-                  style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
-                    background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
+              )}
+              {/* Personel: görev */}
+              {wRole==="Personel"&&(
                 <input value={wPosition} onChange={e=>setWPosition(e.target.value)}
                   placeholder="Göreviniz (örn: Uzman, Sekreter)"
                   style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1.5px solid rgba(255,255,255,0.2)",
                     background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none",boxSizing:"border-box"}}/>
-              </>)}
+              )}
               {/* KVKK onay kutusu */}
               <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:2}}>
                 <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
@@ -1206,13 +1198,17 @@ export default function CampusMap(){
               animation:"onboard-glow 1.4s ease-in-out infinite",
               zIndex:9991,pointerEvents:"none"}}/>
           )}
-          {/* Konuşma balonu */}
-          <div style={{position:"fixed",bottom:0,left:0,right:0,zIndex:9992,
-            background:"#0c1828",borderRadius:"20px 20px 0 0",
-            padding:"16px 18px 32px",
+          {/* Konuşma balonu – alt panel elemanlarında üste çık */}
+          {(()=>{
+            const bottomTargets=["search-input","cat-row","route-btn"];
+            const atTop=onboardStep!==null&&ONBOARD_STEPS[onboardStep].target!==null&&bottomTargets.includes(ONBOARD_STEPS[onboardStep].target!);
+            return(
+          <div style={{position:"fixed",...(atTop?{top:64,bottom:"auto",borderRadius:"0 0 20px 20px",boxShadow:"0 4px 32px rgba(0,0,0,0.7)"}:{bottom:0,borderRadius:"20px 20px 0 0",boxShadow:"0 -4px 32px rgba(0,0,0,0.7)"}),
+            left:0,right:0,zIndex:9992,
+            background:"#0c1828",
+            padding:"16px 18px 24px",
             display:"flex",gap:14,alignItems:"flex-start",
-            animation:"onboard-fadein 0.3s ease",
-            boxShadow:"0 -4px 32px rgba(0,0,0,0.7)"}}>
+            animation:"onboard-fadein 0.3s ease"}}>
             <img src="/karpuza-sor.jpg" alt="Karpuza"
               style={{width:58,height:58,borderRadius:10,objectFit:"cover",flexShrink:0,
                 boxShadow:"0 2px 8px rgba(0,0,0,0.5)"}}/>
@@ -1238,6 +1234,7 @@ export default function CampusMap(){
               </div>
             </div>
           </div>
+          );})()}
         </>
       )}
     </div>

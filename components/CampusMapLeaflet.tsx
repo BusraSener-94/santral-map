@@ -604,6 +604,9 @@ export default function CampusMap(){
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               santralistanbul Kampüsü
             </div>
+            <div style={{color:"rgba(255,255,255,0.15)",fontSize:10,letterSpacing:2,marginTop:8}}>
+              L&amp;B
+            </div>
           </div>
         </div>
       )}

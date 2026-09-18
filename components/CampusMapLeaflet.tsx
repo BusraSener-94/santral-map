@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
 
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
@@ -13,7 +14,7 @@ const ROOMS=ROOMS_RAW as RoomsData;
 // ── Sabitler ─────────────────────────────────────────────────────────────────
 const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
-const ARRIVE_M = 25; // metre – bu kadar yaklaşınca "ulaştınız"
+const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
 // ── Matematik ────────────────────────────────────────────────────────────────
 function hav(a:number,b:number,c:number,d:number):number{
@@ -514,7 +515,8 @@ export default function CampusMap(){
       <div style={{position:"absolute",inset:0,zIndex:1}}>
         <MapContainer center={CAMPUS_CENTER} zoom={17}
           style={{height:"100%",width:"100%"}} minZoom={15} maxZoom={19}
-          maxBounds={[[41.055,28.925],[41.085,28.965]]} maxBoundsViscosity={0.8} zoomControl={false}>
+          maxBounds={[[41.055,28.925],[41.085,28.965]]} maxBoundsViscosity={0.8} zoomControl={false}
+          {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
           {route&&<>

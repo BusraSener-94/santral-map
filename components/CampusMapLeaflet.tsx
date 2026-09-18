@@ -328,6 +328,12 @@ export default function CampusMap(){
   const simSpeedRef=useRef(1);
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const[gpsError,setGpsError]=useState<string|null>(null);
+  const[showUpdate,setShowUpdate]=useState(false);
+
+  useEffect(()=>{
+    if(!('serviceWorker' in navigator))return;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>setShowUpdate(true));
+  },[]);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -633,6 +639,22 @@ export default function CampusMap(){
   return(
     <div style={{position:"relative",height:"100dvh",width:"100%",overflow:"hidden",
       fontFamily:"'Segoe UI',system-ui,sans-serif",userSelect:"none"}}>
+
+      {/* ─── Güncelleme bildirimi ──────────────────────────────────────── */}
+      {showUpdate&&(
+        <div onClick={()=>window.location.reload()}
+          style={{position:"fixed",top:0,left:0,right:0,zIndex:20000,
+            background:"linear-gradient(135deg,#16a34a,#15803d)",
+            padding:"13px 20px",display:"flex",alignItems:"center",gap:10,
+            cursor:"pointer",boxShadow:"0 3px 16px rgba(0,0,0,0.5)",
+            animation:"onboard-fadein 0.4s ease"}}>
+          <span style={{fontSize:22}}>🎉</span>
+          <span style={{color:"#fff",fontSize:14,fontWeight:700,flex:1}}>
+            Yeni sürüm hazır! Güncellemek için dokun.
+          </span>
+          <span style={{color:"rgba(255,255,255,0.8)",fontSize:20}}>↻</span>
+        </div>
+      )}
 
       {/* ─── Splash ekranı ─────────────────────────────────────────────── */}
       {splash!=="hidden"&&(

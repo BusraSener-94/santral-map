@@ -1229,7 +1229,7 @@ export default function CampusMap(){
               {/* Ya da + GPS butonu */}
               <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,flexShrink:0}}>
                 <span style={{color:"#64748b",fontSize:10,whiteSpace:"nowrap"}}>Ya da</span>
-                <button id="route-btn"
+                <button
                   onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);setFromSearch("📍 Konumunuz");
                     if(to&&userPos)calcRoute(userPos[0],userPos[1],to);}}
                   style={{...BTN,background:"#0d9488",color:"#fff",fontSize:11,fontWeight:700,
@@ -1277,7 +1277,7 @@ export default function CampusMap(){
               </div>
 
               {/* Yol Tarifi butonu */}
-              <button onClick={()=>{
+              <button id="route-btn" onClick={()=>{
                 (document.activeElement as HTMLElement)?.blur();
                 if(gpsOn&&userPos){setFromGPS(true);setMode('pickTo');}
                 else setMode('pickFrom');

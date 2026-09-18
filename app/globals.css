@@ -35,3 +35,10 @@ body {
   from { opacity:0; transform:translateY(12px); }
   to   { opacity:1; transform:translateY(0); }
 }
+
+/* Vercel Toolbar – kampüs kullanıcılarına gösterilmemeli */
+vercel-toolbar,
+#__vercel-toolbar,
+[data-vercel-toolbar] {
+  display: none !important;
+}

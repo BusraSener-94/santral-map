@@ -299,6 +299,7 @@ export default function CampusMap(){
   const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
   const[showWelcome,setShowWelcome]=useState(false);
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
+  const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
@@ -646,14 +647,14 @@ export default function CampusMap(){
     };
   },[]);
 
-  // Input focus olunca panel aç
+  // Input focus veya panelLoc seçilince panel aç
   useEffect(()=>{
     if(!sheetRef.current)return;
-    if(activeRouteInput){
+    if(activeRouteInput||panelLoc){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     }
-  },[activeRouteInput]);
+  },[activeRouteInput,panelLoc]);
 
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
   useEffect(()=>{
@@ -1298,7 +1299,7 @@ export default function CampusMap(){
                     maxHeight:200,overflowY:"auto"}}>
                     {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(fromSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
                       <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                        onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(loc.name);setActiveRouteInput(null);
+                        onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(loc.name);setActiveRouteInput(null);setPanelLoc(loc);
                           if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}}}
                         style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
                           background:"transparent",border:"none",
@@ -1344,10 +1345,10 @@ export default function CampusMap(){
                       maxHeight:200,overflowY:"auto"}}>
                       {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(toSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
                         <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                          onClick={()=>{setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);
+                          onClick={()=>{setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);setPanelLoc(loc);
                             const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
                             const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}
+                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');setPanelLoc(null);}}}
                           style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
                             background:"transparent",border:"none",
                             borderBottom:i<arr.length-1?"1px solid #334155":"none",
@@ -1500,6 +1501,65 @@ export default function CampusMap(){
                   {v.l}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Panel içi bina detay kartı – arama seçiminden */}
+          {mode==='idle'&&panelLoc&&(
+            <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
+              {panelLoc.photo&&(
+                <img src={panelLoc.photo} alt={panelLoc.name}
+                  style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:10,display:"block"}}/>
+              )}
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                {!panelLoc.photo&&<span style={{fontSize:28}}>{panelLoc.emoji}</span>}
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:700,color:"#fff",fontSize:15}}>{panelLoc.name}</div>
+                  {ROOMS[String(panelLoc.num)]&&(
+                    <div style={{fontSize:11,color:"#94a3b8"}}>
+                      {Object.values(ROOMS[String(panelLoc.num)]).reduce((s:number,a)=>s+(a as RoomEntry[]).length,0)} mahal
+                    </div>
+                  )}
+                </div>
+                <button onClick={()=>setPanelLoc(null)}
+                  style={{...BTN,width:28,height:28,borderRadius:"50%",padding:0,
+                    background:"#334155",color:"#fff",fontSize:14,flexShrink:0}}>✕</button>
+              </div>
+              <p style={{margin:"0 0 8px",fontSize:12,color:"#94a3b8",lineHeight:1.5}}>{panelLoc.desc}</p>
+              {ROOMS[String(panelLoc.num)]&&(
+                <div style={{maxHeight:130,overflowY:"auto",fontSize:12,marginBottom:10}}>
+                  {Object.entries(ROOMS[String(panelLoc.num)]).map(([floor,rooms])=>(
+                    <div key={floor} style={{marginBottom:6}}>
+                      <div style={{fontWeight:700,color:"#64748b",fontSize:10,
+                        background:"#0f172a",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
+                        {floor}
+                      </div>
+                      {(rooms as RoomEntry[]).map((r,i)=>(
+                        <div key={i} style={{display:"flex",gap:6,padding:"2px 4px",
+                          borderBottom:"1px solid #1e293b",alignItems:"baseline"}}>
+                          <span style={{color:"#e2e8f0",fontWeight:700,minWidth:42,flexShrink:0,fontSize:11}}>{r.oda}</span>
+                          <span style={{color:"#94a3b8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{r.label}</span>
+                          {r.cap&&<span style={{color:"#475569",flexShrink:0,fontSize:10}}>{r.cap}👤</span>}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{setFrom(panelLoc);setFromGPS(false);setMode('pickTo');setPanelLoc(null);}}
+                  style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
+                  🟢 Buradan Başla
+                </button>
+                <button onClick={()=>{
+                  setTo(panelLoc);setPanelLoc(null);
+                  if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],panelLoc);}
+                  else if(from){calcRoute(from.gps[0],from.gps[1],panelLoc);}
+                  else setMode('pickFrom');}}
+                  style={{...BTN,flex:1,background:"#dc2626",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
+                  🔴 Buraya Git
+                </button>
+              </div>
             </div>
           )}
 

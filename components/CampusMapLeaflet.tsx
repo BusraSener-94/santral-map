@@ -146,6 +146,16 @@ function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
   return null;
 }
 
+// leaflet-rotate'nin CompassBearing handler'ını kapat – telefon sallandığında harita dönmesin
+function DisableCompassAutoRotate(){
+  const m=useMap();
+  useEffect(()=>{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (m as any).compassBearing?.disable();
+  },[m]);
+  return null;
+}
+
 function ZoomCtrl(){
   const m=useMap();
   useEffect(()=>{
@@ -315,9 +325,10 @@ export default function CampusMap(){
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
-  const[splash,setSplash]=useState<"visible"|"fading"|"hidden">("visible");
+  const hasProfile=typeof window!=="undefined"&&!!localStorage.getItem("karpuza_user");
+  const[splash,setSplash]=useState<"visible"|"fading"|"hidden">(hasProfile?"visible":"hidden");
   const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
-  const[showWelcome,setShowWelcome]=useState(false);
+  const[showWelcome,setShowWelcome]=useState(!hasProfile);
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
@@ -976,6 +987,7 @@ export default function CampusMap(){
           zoomControl={false} zoomSnap={0.1}
           fadeAnimation={false}
           {...({rotate:true,touchRotate:true} as object)}>
+          <DisableCompassAutoRotate/>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19} keepBuffer={6}/>
           {route&&<>

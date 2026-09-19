@@ -912,7 +912,7 @@ export default function CampusMap(){
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
           zoomControl={false} zoomSnap={0.1}
           fadeAnimation={false} markerZoomAnimation={false}
-          {...({rotate:false,touchRotate:false} as object)}>
+          {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
           {route&&<>
@@ -1653,7 +1653,7 @@ export default function CampusMap(){
                 </div>
               )}
               <div style={{display:"flex",gap:8}}>
-                {panelLoc?.num!==from?.num&&(
+                {panelLoc?.num!==from?.num&&panelLoc?.num!==to?.num&&(
                   <button onClick={()=>{setPanelLoc(loc=>loc);setFrom(panelLoc);setFromGPS(false);setMode('pickTo');}}
                     style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
                     🟢 Buradan Başla

@@ -1,9 +1,11 @@
-const CACHE = 'santral-v217';
+const CACHE = 'santral-v218';
 const PRECACHE = ['/', '/campus_graph.json'];
 
 self.addEventListener('install', e => {
+  // skipWaiting her zaman çalışır, cache hatasına bağlı değil
+  self.skipWaiting();
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(PRECACHE)).catch(() => {})
   );
 });
 

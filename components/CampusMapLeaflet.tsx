@@ -776,7 +776,7 @@ export default function CampusMap(){
     fontFamily:"inherit",fontWeight:700,touchAction:"manipulation",minHeight:44};
 
   return(
-    <div style={{position:"relative",height:"100dvh",width:"100%",overflow:"hidden",
+    <div style={{position:"relative",height:"100dvh",width:"100vw",maxWidth:"100vw",maxHeight:"100dvh",overflow:"hidden",
       fontFamily:"'Segoe UI',system-ui,sans-serif",userSelect:"none"}}>
 
 

@@ -1158,9 +1158,6 @@ export default function CampusMap(){
                     style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
                       minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>⏸</button>
                 )}
-                <button onClick={()=>{stopSim();setMode('ready');}}
-                  style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
-                    minHeight:40,width:40,borderRadius:"50%",fontSize:14,padding:0}}>■</button>
               </div>
             )}
           </div>

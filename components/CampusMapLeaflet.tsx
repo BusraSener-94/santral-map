@@ -353,7 +353,7 @@ export default function CampusMap(){
       if(s>=ONBOARD_STEPS.length-1){localStorage.setItem("karpuza_onboard","1");return null;}
       return s+1;
     });
-    setSheetTranslate(0); // alt panel açık kalsın
+    if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
   },[]);
 
   // fromSearch / toSearch senkronizasyonu

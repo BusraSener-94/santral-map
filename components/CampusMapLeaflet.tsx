@@ -427,8 +427,10 @@ export default function CampusMap(){
   // Simülasyon
   const[simPos,setSimPos]=useState<[number,number]|null>(null);
   const[simPct,setSimPct]=useState(0);
+  const[simPaused,setSimPaused]=useState(false);
   const simRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const cumRef=useRef<number[]>([]);
+  const simTravRef=useRef(0);
 
   // Graf
   const[gd,setGd]=useState<GD|null>(null);
@@ -484,20 +486,15 @@ export default function CampusMap(){
   // ── Simülasyon ──
   const stopSim=useCallback(()=>{
     if(simRef.current){clearInterval(simRef.current);simRef.current=null;}
-    setSimPos(null);setSimPct(0);
+    setSimPos(null);setSimPct(0);setSimPaused(false);simTravRef.current=0;
   },[]);
 
-  const startSim=useCallback(()=>{
-    if(!route||route.length<2)return;
-    stopSim();
-    const cum=cumRef.current,r=route,total=cum[cum.length-1]??0;
+  const runSimInterval=useCallback((cum:number[],r:[number,number][],total:number)=>{
     const TICK=50;
-    let trav=0;
-    setSimSpeed(1);simSpeedRef.current=1;
-    setSimPos(r[0]);setSimPct(0);setMode('sim');
     simRef.current=setInterval(()=>{
       const step=(83/60)*(TICK/1000)*8*simSpeedRef.current;
-      trav+=step;
+      simTravRef.current+=step;
+      const trav=simTravRef.current;
       if(trav>=total){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('arrived');return;}
       setSimPct(Math.round((trav/total)*100));
       for(let i=1;i<cum.length;i++){
@@ -508,7 +505,28 @@ export default function CampusMap(){
         }
       }
     },TICK);
-  },[route,stopSim]);
+  },[]);
+
+  const startSim=useCallback(()=>{
+    if(!route||route.length<2)return;
+    stopSim();
+    const cum=cumRef.current,r=route as [number,number][],total=cum[cum.length-1]??0;
+    setSimSpeed(1);simSpeedRef.current=1;
+    setSimPos(r[0]);setSimPct(0);setSimPaused(false);simTravRef.current=0;setMode('sim');
+    runSimInterval(cum,r,total);
+  },[route,stopSim,runSimInterval]);
+
+  const pauseSim=useCallback(()=>{
+    if(simRef.current){clearInterval(simRef.current);simRef.current=null;}
+    setSimPaused(true);
+  },[]);
+
+  const resumeSim=useCallback(()=>{
+    if(!route||route.length<2)return;
+    const cum=cumRef.current,r=route as [number,number][],total=cum[cum.length-1]??0;
+    setSimPaused(false);
+    runSimInterval(cum,r,total);
+  },[route,runSimInterval]);
   useEffect(()=>()=>{if(simRef.current)clearInterval(simRef.current);},[]);
 
   // ── Gerçek GPS navigasyon – konuma göre adım ilerlet & varış tespiti ──
@@ -1131,9 +1149,18 @@ export default function CampusMap(){
                     minHeight:36,padding:"0 11px",borderRadius:8,fontSize:13,fontWeight:800}}>
                   {simSpeed}×
                 </button>
+                {simPaused?(
+                  <button onClick={resumeSim}
+                    style={{...BTN,background:"#16a34a",color:"#fff",
+                      minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>▶</button>
+                ):(
+                  <button onClick={pauseSim}
+                    style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
+                      minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>⏸</button>
+                )}
                 <button onClick={()=>{stopSim();setMode('ready');}}
                   style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
-                    minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>■</button>
+                    minHeight:40,width:40,borderRadius:"50%",fontSize:14,padding:0}}>■</button>
               </div>
             )}
           </div>

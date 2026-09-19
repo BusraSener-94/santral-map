@@ -842,6 +842,21 @@ export default function CampusMap(){
           overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
           padding:"32px 24px 40px"}}>
 
+          {/* Dil toggle – sağ üst */}
+          <div style={{position:"absolute",top:14,right:14,display:"flex",alignItems:"center",
+            gap:2,background:"rgba(255,255,255,0.08)",borderRadius:6,padding:"2px 3px",
+            border:"1px solid rgba(255,255,255,0.12)"}}>
+            {(["TR","EN"] as const).map(l=>(
+              <button key={l} onClick={()=>setLang(l.toLowerCase() as "tr"|"en")}
+                style={{padding:"2px 8px",borderRadius:4,border:"none",cursor:"pointer",
+                  fontSize:11,fontWeight:700,letterSpacing:.4,lineHeight:1.5,
+                  background:isEN()===(l==="EN")?"rgba(255,255,255,0.22)":"transparent",
+                  color:isEN()===(l==="EN")?"#fff":"rgba(255,255,255,0.4)"}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
           {/* Karpuz logosu – büyük */}
           <img src="/karpuza-sor.png" alt="Karpuza Sor"
             style={{height:220,width:"auto",objectFit:"contain",borderRadius:24,

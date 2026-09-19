@@ -1543,6 +1543,10 @@ export default function CampusMap(){
                   <div style={{color:"#86efac",fontWeight:800,fontSize:14}}>~{mins} dk</div>
                   <div style={{color:"#64748b",fontSize:11}}>{routeM} m</div>
                 </div>
+                {mode==='ready'&&(
+                  <button onClick={swapFromTo}
+                    style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>⇅</button>
+                )}
                 <button onClick={reset}
                   style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>✕</button>
               </div>

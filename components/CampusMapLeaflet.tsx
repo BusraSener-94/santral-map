@@ -617,6 +617,15 @@ export default function CampusMap(){
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
   },[stopSim]);
 
+  const swapFromTo=useCallback(()=>{
+    const newFrom=to;
+    const newTo=fromGPS?null:from;
+    setFrom(newFrom??null);setFromGPS(false);setFromSearch(newFrom?newFrom.name:"");
+    setTo(newTo??null);setToSearch(newTo?newTo.name:"");
+    if(newFrom&&newTo){calcRoute(newFrom.gps[0],newFrom.gps[1],newTo);setMode('ready');}
+    else if(newFrom){setMode('pickTo');}
+  },[from,to,fromGPS,calcRoute]);
+
   // sheetDismiss her render'da güncellenir — stale closure olmadan reset/showSteps kullanır
   sheetDismiss.current=()=>{setShowSteps(false);};
 
@@ -1389,6 +1398,15 @@ export default function CampusMap(){
                   Konumunuzdan Başlatın
                 </button>
                 <div style={{flex:1,height:1,background:"#1e293b"}}/>
+                {(from||to)&&(
+                  <button onClick={swapFromTo}
+                    style={{...BTN,background:"#1e293b",border:"1px solid #334155",
+                      borderRadius:8,width:36,height:36,padding:0,flexShrink:0,
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      color:"#94a3b8",fontSize:19}}>
+                    ⇅
+                  </button>
+                )}
               </div>
 
               {/* Varış input + Yol Tarifi */}

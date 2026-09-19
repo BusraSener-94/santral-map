@@ -173,6 +173,12 @@ function CenterCtrl({userPos}:{userPos:[number,number]|null}){
   return null;
 }
 
+function MapRefCapture({mapRef}:{mapRef:React.MutableRefObject<L.Map|null>}){
+  const m=useMap();
+  useEffect(()=>{mapRef.current=m;},[m,mapRef]);
+  return null;
+}
+
 // ── Veri ─────────────────────────────────────────────────────────────────────
 interface Loc{num:number;name:string;gps:[number,number];cats:string[];desc:string;emoji:string;photo?:string;hidden?:boolean;logo?:string;logoSize?:number;}
 const CAT:Record<string,{c:string;l:string}>={
@@ -287,6 +293,7 @@ export default function CampusMap(){
   const[routeM,setRouteM]=useState(0);
   const[navSteps,setNavSteps]=useState<Step[]>([]);
   const[showSteps,setShowSteps]=useState(false);
+  const mapInstanceRef=useRef<L.Map|null>(null);
   const sheetRef=useRef<HTMLDivElement>(null);
   const handleRef=useRef<HTMLDivElement>(null);
   const dragY=useRef(0);
@@ -636,10 +643,13 @@ export default function CampusMap(){
       sheet.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       if((dragStartH.current<=PEEK+10&&dy>40)||(curH<PEEK+35&&dy>20)){
         sheet.style.height=`${PEEK}px`;
-        sheetDismiss.current();return;
+        sheetDismiss.current();
+        setTimeout(()=>mapInstanceRef.current?.invalidateSize({animate:false}),260);
+        return;
       }
       const snap=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
       sheet.style.height=`${snap}px`;
+      setTimeout(()=>mapInstanceRef.current?.invalidateSize({animate:false}),260);
     };
     const onMouseStart=(e:MouseEvent)=>{
       sheet.style.transition="none";
@@ -900,7 +910,7 @@ export default function CampusMap(){
       <div style={{position:"absolute",inset:0,zIndex:1}}>
         <MapContainer center={CAMPUS_CENTER} zoom={17}
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
-          zoomControl={false}
+          zoomControl={false} zoomSnap={0.1}
           fadeAnimation={false} markerZoomAnimation={false}
           {...({rotate:false,touchRotate:false} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -926,6 +936,7 @@ export default function CampusMap(){
             );
           })}
           <FitMap/>
+          <MapRefCapture mapRef={mapInstanceRef}/>
           <FitOnCat cat={cat} locs={LOCS}/>
           <FitOnRoute route={route} fromPos={fromGPS&&userPos?userPos:from?.gps??null} toPos={to?.gps??null}/>
           <ZoomCtrl/>

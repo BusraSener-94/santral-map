@@ -720,6 +720,8 @@ export default function CampusMap(){
     return route.slice(0,idx+1) as[number,number][];
   },[route,simPct]);
 
+  const canvasRenderer=useMemo(()=>L.canvas({padding:0.5}),[]);
+
   // Simülasyonda yakındaki bina
   const nearbyBldg=useMemo(()=>{
     if(!simPos||mode!=='sim')return null;
@@ -886,10 +888,10 @@ export default function CampusMap(){
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
           {route&&<>
             {/* Geçilen yol – gri */}
-            {passedRoute.length>1&&<Polyline positions={passedRoute} pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round"}}/>}
+            {passedRoute.length>1&&<Polyline renderer={canvasRenderer} positions={passedRoute} pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>}
             {/* Kalan yol gölge + renk */}
-            <Polyline positions={route} pathOptions={{color:"#000",weight:9,opacity:0.12,lineCap:"round",lineJoin:"round"}}/>
-            <Polyline positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round"}}/>
+            <Polyline renderer={canvasRenderer} positions={route} pathOptions={{color:"#1d4ed8",weight:9,opacity:0.18,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>
+            <Polyline renderer={canvasRenderer} positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {/* Gerçek GPS – simülasyonda gizle */}

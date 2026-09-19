@@ -582,7 +582,7 @@ export default function CampusMap(){
   },[stopSim]);
 
   // sheetDismiss her render'da güncellenir — stale closure olmadan reset/showSteps kullanır
-  sheetDismiss.current=()=>{reset();setShowSteps(false);};
+  sheetDismiss.current=()=>{setShowSteps(false);};
 
   // ── Bottom sheet non-passive drag listener ──
   useEffect(()=>{

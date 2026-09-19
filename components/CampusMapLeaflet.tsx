@@ -121,6 +121,17 @@ function dijk(g:GD,a:[number,number][][],fLa:number,fLo:number,tLa:number,tLo:nu
 
 function FitMap(){const m=useMap();useEffect(()=>{m.fitBounds(CAMPUS_BOUNDS,{padding:[20,20],animate:false});},[m]);return null;}
 
+function FitOnRoute({route,fromPos,toPos}:{route:[number,number][]|null;fromPos:[number,number]|null;toPos:[number,number]|null}){
+  const m=useMap();
+  useEffect(()=>{
+    if(!route||!fromPos||!toPos)return;
+    const lats=[fromPos[0],toPos[0]],lons=[fromPos[1],toPos[1]];
+    m.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]],
+      {padding:[80,100],animate:true,duration:0.7,maxZoom:18});
+  },[route]); // eslint-disable-line
+  return null;
+}
+
 function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
   const m=useMap();
   useEffect(()=>{
@@ -720,10 +731,14 @@ export default function CampusMap(){
     return route.slice(0,idx+1) as[number,number][];
   },[route,simPct]);
 
-  // staticCanvas: route hiç değişmeyince yeniden çizilmez (zoom+sim jitter önlenir)
-  // dynCanvas: sadece geçilen gri nokta her simPct'de değişir
-  const staticCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
-  const dynCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
+  // Zoom animasyonu sırasında canvas gizlenir → tile smooth zoom yapar, noktalar titremiyor
+  // _update çağrıldığında (zoomend sonrası) opacity geri gelir
+  const NoJitterCanvas=useMemo(()=>(L.Canvas as any).extend({
+    _onZoom(this:any){(L.Canvas as any).prototype._onZoom.call(this);this._container.style.opacity='0';},
+    _update(this:any){(L.Canvas as any).prototype._update.call(this);this._container.style.opacity='1';}
+  }),[]);
+  const staticCanvas=useMemo(()=>new NoJitterCanvas({padding:0.5}),[NoJitterCanvas]);
+  const dynCanvas=useMemo(()=>new NoJitterCanvas({padding:0.5}),[NoJitterCanvas]);
 
   // Simülasyonda yakındaki bina
   const nearbyBldg=useMemo(()=>{
@@ -886,7 +901,7 @@ export default function CampusMap(){
         <MapContainer center={CAMPUS_CENTER} zoom={17}
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
           zoomControl={false}
-          zoomAnimation={false} fadeAnimation={false} markerZoomAnimation={false}
+          fadeAnimation={false} markerZoomAnimation={false}
           {...({rotate:false,touchRotate:false} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
@@ -912,6 +927,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <FitOnCat cat={cat} locs={LOCS}/>
+          <FitOnRoute route={route} fromPos={fromGPS&&userPos?userPos:from?.gps??null} toPos={to?.gps??null}/>
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>

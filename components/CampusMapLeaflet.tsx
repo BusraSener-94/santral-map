@@ -559,9 +559,9 @@ export default function CampusMap(){
   },[wRole,wName,wExtra,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
-    if(mode==='pickFrom'){setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
+    if(mode==='pickFrom'){setPanelLoc(loc);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
     if(mode==='pickTo'){
-      setTo(loc);
+      setPanelLoc(loc);setTo(loc);
       const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
       const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
       calcRoute(fLa,fLo,loc);
@@ -1548,7 +1548,7 @@ export default function CampusMap(){
           )}
 
           {/* Panel içi bina detay kartı – arama seçiminden */}
-          {panelLoc&&(mode==='idle'||mode==='ready')&&(
+          {panelLoc&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               {panelLoc.photo&&(
                 <img src={panelLoc.photo} alt={panelLoc.name}

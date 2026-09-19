@@ -1428,7 +1428,7 @@ export default function CampusMap(){
                           {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(editToSearch.toLocaleLowerCase("tr-TR"))).slice(0,6).map((loc,i,arr)=>(
                             <button key={loc.num} onMouseDown={e=>e.preventDefault()}
                               onClick={()=>{
-                                setTo(loc);setToSearch(loc.name);setEditingTo(false);setEditToSearch("");
+                                setTo(loc);setToSearch(loc.name);setEditingTo(false);setEditToSearch("");setPanelLoc(loc);
                                 const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
                                 const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
                                 calcRoute(fLa,fLo,loc);setMode('ready');

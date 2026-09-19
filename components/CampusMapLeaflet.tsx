@@ -1020,13 +1020,13 @@ export default function CampusMap(){
 
               {/* Aksiyon butonları */}
               <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>{stopSim();setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
+                <button onClick={()=>{stopSim();setPanelLoc(selectedLoc);setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
                   style={{...BTN,flex:1,background:"#16a34a",color:"#fff",
                     fontSize:14,padding:"12px 0",borderRadius:12}}>
                   🟢 Buradan Başla
                 </button>
                 {(from||fromGPS||(gpsOn&&userPos))&&(
-                  <button onClick={()=>{stopSim();setTo(selectedLoc);
+                  <button onClick={()=>{stopSim();setPanelLoc(selectedLoc);setTo(selectedLoc);
                     if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],selectedLoc);}
                     else if(from){calcRoute(from.gps[0],from.gps[1],selectedLoc);}
                     setSelectedLoc(null);}}

@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
-import { t, greetUser } from "../lib/i18n";
+import { t, greetUser, tFloor, tCat } from "../lib/i18n";
 
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
 type RoomsData=Record<string,Record<string,RoomEntry[]>>;
@@ -1073,14 +1073,14 @@ export default function CampusMap(){
                       <div key={floor} style={{marginBottom:10}}>
                         <div style={{fontWeight:700,color:"#1e293b",fontSize:11,
                           background:"#f1f5f9",padding:"3px 8px",borderRadius:6,marginBottom:4}}>
-                          {floor}
+                          {tFloor(floor)}
                         </div>
                         {(rooms as RoomEntry[]).map((r,i)=>(
                           <div key={i} style={{display:"flex",gap:6,alignItems:"baseline",
                             padding:"3px 6px",borderBottom:"1px solid #f8fafc"}}>
                             <span style={{color:"#1e293b",fontWeight:700,minWidth:48,flexShrink:0,fontSize:12}}>{r.oda}</span>
                             <span style={{color:"#475569",flex:1,overflow:"hidden",
-                              textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}>{r.label}</span>
+                              textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}>{r.label===r.cat?tCat(r.label):r.label}</span>
                             {r.cap&&<span style={{color:"#94a3b8",flexShrink:0,fontSize:11}}>{r.cap}👤</span>}
                           </div>
                         ))}
@@ -1662,13 +1662,13 @@ export default function CampusMap(){
                     <div key={floor} style={{marginBottom:6}}>
                       <div style={{fontWeight:700,color:"#64748b",fontSize:10,
                         background:"#0f172a",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
-                        {floor}
+                        {tFloor(floor)}
                       </div>
                       {(rooms as RoomEntry[]).map((r,i)=>(
                         <div key={i} style={{display:"flex",gap:6,padding:"2px 4px",
                           borderBottom:"1px solid #1e293b",alignItems:"baseline"}}>
                           <span style={{color:"#e2e8f0",fontWeight:700,minWidth:42,flexShrink:0,fontSize:11}}>{r.oda}</span>
-                          <span style={{color:"#94a3b8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{r.label}</span>
+                          <span style={{color:"#94a3b8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{r.label===r.cat?tCat(r.label):r.label}</span>
                           {r.cap&&<span style={{color:"#475569",flexShrink:0,fontSize:10}}>{r.cap}👤</span>}
                         </div>
                       ))}

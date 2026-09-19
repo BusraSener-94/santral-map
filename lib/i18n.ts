@@ -247,3 +247,42 @@ export const isEN = process.env.NEXT_PUBLIC_LANG === "en";
 /** Personalised greeting, e.g. "Merhaba, Ayşe! 👋" / "Hello, Ayşe! 👋" */
 export const greetUser = (firstName: string): string =>
   isEN ? `Hello, ${firstName}! 👋` : `Merhaba, ${firstName}! 👋`;
+
+const FLOOR_EN: Record<string, string> = {
+  "ZEMİN KAT": "Ground Floor",
+  "ALT KAT": "Basement",
+  "ASMA KAT": "Mezzanine",
+  "ÜST KAT": "Top Floor",
+  "1. KAT": "1st Floor",
+  "2. KAT": "2nd Floor",
+  "2.KAT": "2nd Floor",
+  "3. KAT": "3rd Floor",
+  "4. KAT": "4th Floor",
+  "5. KAT": "5th Floor",
+};
+
+const CAT_EN: Record<string, string> = {
+  "DERSLİK": "Classroom",
+  "LAB": "Lab",
+  "LAB.": "Lab",
+  "ATÖLYE": "Workshop",
+  "AKADEMİK OFİS": "Academic Office",
+  "İDARİ OFİS": "Administrative Office",
+  "TOPLANTI ODASI": "Meeting Room",
+  "KONFERANS SALONU": "Conference Hall",
+  "OKUMA SALONU": "Reading Room",
+  "KÜTÜPHANE": "Library",
+  "KİTAP EVİ": "Bookstore",
+  "KAFETERYA İÇ MEKAN": "Cafeteria",
+  "DİĞER SOSYAL ALAN": "Social Area",
+  "REVİR": "Health Center",
+  "WC": "WC",
+};
+
+/** Translate a floor label from Turkish data */
+export const tFloor = (floor: string): string =>
+  isEN ? (FLOOR_EN[floor] ?? floor) : floor;
+
+/** Translate a room category from Turkish data */
+export const tCat = (cat: string): string =>
+  isEN ? (CAT_EN[cat] ?? cat) : cat;

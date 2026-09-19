@@ -319,6 +319,8 @@ export default function CampusMap(){
   const[fromSearch,setFromSearch]=useState("");
   const[toSearch,setToSearch]=useState("");
   const[activeRouteInput,setActiveRouteInput]=useState<'from'|'to'|null>(null);
+  const[editingTo,setEditingTo]=useState(false);
+  const[editToSearch,setEditToSearch]=useState("");
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -1411,14 +1413,51 @@ export default function CampusMap(){
                       {fromGPS?"📍 Konumunuz":from?.name??"—"}
                     </span>
                   </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}
-                    onClick={()=>{if(mode==='ready'){setTo(null);setToSearch("");setMode('idle');setRoute(null);setRouteM(0);setNavSteps([]);}}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
-                    <span style={{fontSize:12,color:"#f1f5f9",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                      textDecoration:mode==='ready'?"underline dotted":"none",cursor:mode==='ready'?"pointer":"default"}}>
-                      {to?.name??"—"}
-                    </span>
-                  </div>
+                  {editingTo?(
+                    <div style={{position:"relative",marginTop:2}}>
+                      <input autoFocus value={editToSearch}
+                        onChange={e=>setEditToSearch(e.target.value)}
+                        onBlur={()=>setTimeout(()=>setEditingTo(false),160)}
+                        placeholder="Varış noktası ara..."
+                        style={{width:"100%",boxSizing:"border-box",background:"#1e293b",
+                          border:"1px solid #ef4444",borderRadius:8,padding:"6px 10px",
+                          color:"#fff",fontSize:12,outline:"none"}}/>
+                      {editToSearch&&(
+                        <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 2px)",zIndex:60,
+                          background:"#1e293b",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.7)",maxHeight:160,overflowY:"auto"}}>
+                          {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(editToSearch.toLocaleLowerCase("tr-TR"))).slice(0,6).map((loc,i,arr)=>(
+                            <button key={loc.num} onMouseDown={e=>e.preventDefault()}
+                              onClick={()=>{
+                                setTo(loc);setToSearch(loc.name);setEditingTo(false);setEditToSearch("");
+                                const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+                                const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+                                calcRoute(fLa,fLo,loc);setMode('ready');
+                              }}
+                              style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
+                                background:"transparent",border:"none",
+                                borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                                cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                              <span style={{fontSize:14,flexShrink:0}}>{loc.emoji}</span>
+                              <span style={{fontSize:12,flex:1}}>{loc.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ):(
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
+                      <span style={{fontSize:12,color:"#f1f5f9",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
+                        {to?.name??"—"}
+                      </span>
+                      {mode==='ready'&&(
+                        <button onMouseDown={e=>e.preventDefault()}
+                          onClick={()=>{setEditToSearch("");setEditingTo(true);}}
+                          style={{...BTN,padding:"2px 6px",fontSize:11,background:"#334155",
+                            color:"#94a3b8",borderRadius:6,flexShrink:0,minHeight:24}}>✏️ Değiştir</button>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
                   <div style={{color:"#86efac",fontWeight:800,fontSize:14}}>~{mins} dk</div>

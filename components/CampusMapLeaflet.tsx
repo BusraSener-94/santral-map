@@ -1403,15 +1403,19 @@ export default function CampusMap(){
               {/* Kimden - Kime */}
               <div style={{display:"flex",alignItems:"center",gap:8,background:"#0f172a",borderRadius:10,padding:"10px 12px"}}>
                 <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}
+                    onClick={()=>{if(mode==='ready'){setFrom(null);setFromGPS(false);setFromSearch("");setMode('idle');setRoute(null);setRouteM(0);setNavSteps([]);}}}>
                     <span style={{width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>
-                    <span style={{fontSize:12,color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <span style={{fontSize:12,color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                      textDecoration:mode==='ready'?"underline dotted":"none",cursor:mode==='ready'?"pointer":"default"}}>
                       {fromGPS?"📍 Konumunuz":from?.name??"—"}
                     </span>
                   </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}
+                    onClick={()=>{if(mode==='ready'){setTo(null);setToSearch("");setMode('idle');setRoute(null);setRouteM(0);setNavSteps([]);}}}>
                     <span style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
-                    <span style={{fontSize:12,color:"#f1f5f9",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    <span style={{fontSize:12,color:"#f1f5f9",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                      textDecoration:mode==='ready'?"underline dotted":"none",cursor:mode==='ready'?"pointer":"default"}}>
                       {to?.name??"—"}
                     </span>
                   </div>

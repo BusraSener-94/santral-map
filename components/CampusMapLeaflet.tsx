@@ -609,13 +609,40 @@ export default function CampusMap(){
       const snap=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
       sheet.style.height=`${snap}px`;
     };
+    const onMouseStart=(e:MouseEvent)=>{
+      sheet.style.transition="none";
+      dragY.current=e.clientY;
+      dragStartH.current=sheet.getBoundingClientRect().height;
+      const onMouseMove=(e:MouseEvent)=>{
+        const dy=e.clientY-dragY.current;
+        const maxH=window.innerHeight*0.72;
+        sheet.style.height=`${Math.max(52,Math.min(maxH,dragStartH.current-dy))}px`;
+      };
+      const onMouseUp=(e:MouseEvent)=>{
+        window.removeEventListener('mousemove',onMouseMove);
+        window.removeEventListener('mouseup',onMouseUp);
+        const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
+        const curH=sheet.getBoundingClientRect().height;
+        const dy=e.clientY-dragY.current;
+        sheet.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
+        if((dragStartH.current<=PEEK+10&&dy>40)||(curH<PEEK+35&&dy>20)){
+          sheet.style.height=`${PEEK}px`;sheetDismiss.current();return;
+        }
+        const snap=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
+        sheet.style.height=`${snap}px`;
+      };
+      window.addEventListener('mousemove',onMouseMove);
+      window.addEventListener('mouseup',onMouseUp);
+    };
     handle.addEventListener('touchstart',onStart,{passive:true});
     handle.addEventListener('touchmove',onMove,{passive:false});
     handle.addEventListener('touchend',onEnd,{passive:true});
+    handle.addEventListener('mousedown',onMouseStart);
     return()=>{
       handle.removeEventListener('touchstart',onStart);
       handle.removeEventListener('touchmove',onMove);
       handle.removeEventListener('touchend',onEnd);
+      handle.removeEventListener('mousedown',onMouseStart);
     };
   },[]);
 

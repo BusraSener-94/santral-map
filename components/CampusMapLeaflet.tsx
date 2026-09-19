@@ -559,7 +559,7 @@ export default function CampusMap(){
   },[wRole,wName,wExtra,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
-    if(mode==='pickFrom'){setPanelLoc(loc);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
+    if(mode==='pickFrom'){setPanelLoc(null);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
     if(mode==='pickTo'){
       setPanelLoc(loc);setTo(loc);
       const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
@@ -1020,7 +1020,7 @@ export default function CampusMap(){
 
               {/* Aksiyon butonları */}
               <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>{stopSim();setPanelLoc(selectedLoc);setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
+                <button onClick={()=>{stopSim();setPanelLoc(null);setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
                   style={{...BTN,flex:1,background:"#16a34a",color:"#fff",
                     fontSize:14,padding:"12px 0",borderRadius:12}}>
                   🟢 Buradan Başla
@@ -1588,7 +1588,7 @@ export default function CampusMap(){
                 </div>
               )}
               <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>{setFrom(panelLoc);setFromGPS(false);setMode('pickTo');setPanelLoc(null);}}
+                <button onClick={()=>{setPanelLoc(null);setFrom(panelLoc);setFromGPS(false);setMode('pickTo');}}
                   style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
                   🟢 Buradan Başla
                 </button>

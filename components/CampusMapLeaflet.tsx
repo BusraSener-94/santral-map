@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, type MutableRefObject } from "react";
 import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -173,7 +173,7 @@ function CenterCtrl({userPos}:{userPos:[number,number]|null}){
   return null;
 }
 
-function MapRefCapture({mapRef}:{mapRef:React.MutableRefObject<L.Map|null>}){
+function MapRefCapture({mapRef}:{mapRef:MutableRefObject<L.Map|null>}){
   const m=useMap();
   useEffect(()=>{mapRef.current=m;},[m,mapRef]);
   return null;

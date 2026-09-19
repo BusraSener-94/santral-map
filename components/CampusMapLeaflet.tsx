@@ -276,11 +276,10 @@ export default function CampusMap(){
   const[routeM,setRouteM]=useState(0);
   const[navSteps,setNavSteps]=useState<Step[]>([]);
   const[showSteps,setShowSteps]=useState(false);
-  // Swipe-to-close bottom sheet
-  const[sheetTranslate,setSheetTranslate]=useState(0);
   const[sheetExpanded,setSheetExpanded]=useState(false);
-  const touchStartY=useRef(0);
-  const sheetBaseY=useRef(0);
+  const sheetRef=useRef<HTMLDivElement>(null);
+  const dragY=useRef(0);
+  const dragExpanded=useRef(false);
 
   // Uygulama modu
   type Mode='idle'|'pickFrom'|'pickTo'|'ready'|'sim'|'nav'|'arrived';
@@ -1184,34 +1183,44 @@ export default function CampusMap(){
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
-          transform:`translateY(${(sheetExpanded?-140:0)+sheetTranslate}px)`,
-          transition:sheetTranslate===0?"transform 0.25s ease":"none",
+          transition:"transform 0.25s ease",
           maxHeight:sheetExpanded?"70vh":"auto",
           overflowY:sheetExpanded?"auto":"visible"}}
-        onTouchStart={e=>{
-          if(onboardStep!==null)return;
-          touchStartY.current=e.touches[0].clientY;
-          setSheetTranslate(0);
-        }}
-        onTouchMove={e=>{
-          if(onboardStep!==null)return;
-          setSheetTranslate(e.touches[0].clientY-touchStartY.current);
-        }}
-        onTouchEnd={()=>{
-          if(onboardStep!==null)return;
-          if(!sheetExpanded&&sheetTranslate<-60){
-            setSheetExpanded(true);
-          } else if(sheetExpanded&&sheetTranslate>60){
-            setSheetExpanded(false);
-          } else if(!sheetExpanded&&sheetTranslate>80){
-            if(mode!=='idle')reset();
-            else if(showSteps)setShowSteps(false);
-          }
-          setSheetTranslate(0);
-        }}>
+        ref={sheetRef}>
 
         {/* Drag handle */}
-        <div style={{display:"flex",justifyContent:"center",padding:"8px 0 2px",touchAction:"none",cursor:"grab"}}>
+        <div style={{display:"flex",justifyContent:"center",padding:"14px 0 6px",touchAction:"none",cursor:"grab"}}
+          onTouchStart={e=>{
+            if(onboardStep!==null)return;
+            dragY.current=e.touches[0].clientY;
+            dragExpanded.current=sheetExpanded;
+            if(sheetRef.current)sheetRef.current.style.transition="none";
+          }}
+          onTouchMove={e=>{
+            if(onboardStep!==null)return;
+            const dy=e.touches[0].clientY-dragY.current;
+            const base=dragExpanded.current?-140:0;
+            if(sheetRef.current)sheetRef.current.style.transform=`translateY(${base+dy}px)`;
+          }}
+          onTouchEnd={e=>{
+            if(onboardStep!==null)return;
+            const dy=e.changedTouches[0].clientY-dragY.current;
+            if(sheetRef.current)sheetRef.current.style.transition="transform 0.25s ease";
+            if(!dragExpanded.current&&dy<-60){
+              setSheetExpanded(true);
+              if(sheetRef.current)sheetRef.current.style.transform="translateY(-140px)";
+            } else if(dragExpanded.current&&dy>60){
+              setSheetExpanded(false);
+              if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
+            } else if(!dragExpanded.current&&dy>80){
+              if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
+              if(mode!=='idle')reset();
+              else if(showSteps)setShowSteps(false);
+            } else {
+              const base=dragExpanded.current?-140:0;
+              if(sheetRef.current)sheetRef.current.style.transform=`translateY(${base}px)`;
+            }
+          }}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
         </div>
 

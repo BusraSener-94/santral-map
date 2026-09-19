@@ -676,6 +676,14 @@ export default function CampusMap(){
     }
   },[activeRouteInput,panelLoc]);
 
+  // Sim başlayınca panel default'a dönsün
+  useEffect(()=>{
+    if(mode==='sim'&&sheetRef.current){
+      sheetRef.current.style.transition="height 0.4s cubic-bezier(0.32,0.72,0,1)";
+      sheetRef.current.style.height="230px";
+    }
+  },[mode]);
+
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
   useEffect(()=>{
     if(mode!=='idle') history.pushState({santral:true},'');

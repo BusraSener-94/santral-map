@@ -278,7 +278,7 @@ export default function CampusMap(){
   const[showSteps,setShowSteps]=useState(false);
   const sheetRef=useRef<HTMLDivElement>(null);
   const dragY=useRef(0);
-  const dragExpanded=useRef(false);
+  const dragStartH=useRef(230);
 
   // Uygulama modu
   type Mode='idle'|'pickFrom'|'pickTo'|'ready'|'sim'|'nav'|'arrived';
@@ -1182,9 +1182,9 @@ export default function CampusMap(){
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
-          transition:"transform 0.25s ease",
-          maxHeight:"70vh",
-          overflowY:"auto"}}
+          height:"230px",
+          overflowY:"auto",
+          transition:"height 0.3s ease"}}
         ref={sheetRef}>
 
         {/* Drag handle */}
@@ -1192,31 +1192,37 @@ export default function CampusMap(){
           onTouchStart={e=>{
             if(onboardStep!==null)return;
             dragY.current=e.touches[0].clientY;
+            dragStartH.current=sheetRef.current?.offsetHeight??230;
             if(sheetRef.current)sheetRef.current.style.transition="none";
           }}
           onTouchMove={e=>{
             if(onboardStep!==null)return;
-            const dy=e.touches[0].clientY-dragY.current;
-            const base=dragExpanded.current?-140:0;
-            if(sheetRef.current)sheetRef.current.style.transform=`translateY(${base+dy}px)`;
+            const dy=dragY.current-e.touches[0].clientY;
+            const fullH=Math.round(window.innerHeight*0.72);
+            const newH=Math.max(52,Math.min(fullH,dragStartH.current+dy));
+            if(sheetRef.current)sheetRef.current.style.height=`${newH}px`;
           }}
           onTouchEnd={e=>{
             if(onboardStep!==null)return;
-            const dy=e.changedTouches[0].clientY-dragY.current;
-            if(sheetRef.current)sheetRef.current.style.transition="transform 0.25s ease";
-            if(!dragExpanded.current&&dy<-60){
-              dragExpanded.current=true;
-              if(sheetRef.current)sheetRef.current.style.transform="translateY(-140px)";
-            } else if(dragExpanded.current&&dy>60){
-              dragExpanded.current=false;
-              if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
-            } else if(!dragExpanded.current&&dy>80){
-              if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
+            if(!sheetRef.current)return;
+            const PEEK=52,MID=230,fullH=Math.round(window.innerHeight*0.72);
+            const dy=dragY.current-e.changedTouches[0].clientY;
+            const curH=sheetRef.current.offsetHeight;
+            sheetRef.current.style.transition="height 0.3s ease";
+            if(dy<-80&&curH>PEEK+20){
+              sheetRef.current.style.height=`${PEEK}px`;
+            } else if(dy<-40&&curH<=PEEK+20){
+              sheetRef.current.style.height=`${PEEK}px`;
               if(mode!=='idle')reset();
               else if(showSteps)setShowSteps(false);
+            } else if(dy>60){
+              sheetRef.current.style.height=`${fullH}px`;
             } else {
-              const base=dragExpanded.current?-140:0;
-              if(sheetRef.current)sheetRef.current.style.transform=`translateY(${base}px)`;
+              const mid1=(PEEK+MID)/2;
+              const mid2=(MID+fullH)/2;
+              if(curH<mid1)sheetRef.current.style.height=`${PEEK}px`;
+              else if(curH<mid2)sheetRef.current.style.height=`${MID}px`;
+              else sheetRef.current.style.height=`${fullH}px`;
             }
           }}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>

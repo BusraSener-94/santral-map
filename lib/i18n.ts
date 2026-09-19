@@ -204,8 +204,8 @@ const EN: { [K in keyof typeof TR]: string } = {
   welcomeDesc:
     "I'm here to help you navigate santralistanbul.\nEnter a few details and let's get started!",
   kvkkText:
-    "I consent to my information being processed solely to measure usage statistics of the campus navigation application by Istanbul Bilgi University under ",
-  kvkkBold: "KVKK",
+    "I consent to my information being processed solely to measure campus navigation app usage statistics by Istanbul Bilgi University under Turkey's ",
+  kvkkBold: "Personal Data Protection Law (KVKK)",
   kvkkTextEnd: ".",
 
   roleStudent: "🎓 Student",

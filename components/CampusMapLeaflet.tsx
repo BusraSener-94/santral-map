@@ -1184,46 +1184,45 @@ export default function CampusMap(){
             :"0 -4px 24px rgba(0,0,0,0.5)",
           height:"230px",
           overflowY:"auto",
-          transition:"height 0.3s ease"}}
+          touchAction:"none",
+          willChange:"height",
+          transition:"height 0.25s cubic-bezier(0.32,0.72,0,1)"}}
         ref={sheetRef}>
 
         {/* Drag handle */}
-        <div style={{display:"flex",justifyContent:"center",padding:"14px 0 6px",touchAction:"none",cursor:"grab"}}
+        <div style={{display:"flex",justifyContent:"center",alignItems:"center",padding:"14px 0 8px",cursor:"grab",width:"100%"}}
           onTouchStart={e=>{
             if(onboardStep!==null)return;
+            const s=sheetRef.current;if(!s)return;
+            s.style.transition="none";
             dragY.current=e.touches[0].clientY;
-            dragStartH.current=sheetRef.current?.offsetHeight??230;
-            if(sheetRef.current)sheetRef.current.style.transition="none";
+            dragStartH.current=s.getBoundingClientRect().height;
           }}
           onTouchMove={e=>{
             if(onboardStep!==null)return;
-            const dy=dragY.current-e.touches[0].clientY;
-            const fullH=Math.round(window.innerHeight*0.72);
-            const newH=Math.max(52,Math.min(fullH,dragStartH.current+dy));
-            if(sheetRef.current)sheetRef.current.style.height=`${newH}px`;
+            const s=sheetRef.current;if(!s)return;
+            const deltaY=e.touches[0].clientY-dragY.current;
+            const maxH=window.innerHeight*0.72;
+            const newH=Math.max(52,Math.min(maxH,dragStartH.current-deltaY));
+            s.style.height=`${newH}px`;
           }}
           onTouchEnd={e=>{
             if(onboardStep!==null)return;
-            if(!sheetRef.current)return;
-            const PEEK=52,MID=230,fullH=Math.round(window.innerHeight*0.72);
-            const dy=dragY.current-e.changedTouches[0].clientY;
-            const curH=sheetRef.current.offsetHeight;
-            sheetRef.current.style.transition="height 0.3s ease";
-            if(dy<-80&&curH>PEEK+20){
-              sheetRef.current.style.height=`${PEEK}px`;
-            } else if(dy<-40&&curH<=PEEK+20){
-              sheetRef.current.style.height=`${PEEK}px`;
-              if(mode!=='idle')reset();
-              else if(showSteps)setShowSteps(false);
-            } else if(dy>60){
-              sheetRef.current.style.height=`${fullH}px`;
-            } else {
-              const mid1=(PEEK+MID)/2;
-              const mid2=(MID+fullH)/2;
-              if(curH<mid1)sheetRef.current.style.height=`${PEEK}px`;
-              else if(curH<mid2)sheetRef.current.style.height=`${MID}px`;
-              else sheetRef.current.style.height=`${fullH}px`;
+            const s=sheetRef.current;if(!s)return;
+            s.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
+            const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
+            const curH=s.getBoundingClientRect().height;
+            const finalDY=e.changedTouches[0].clientY-dragY.current;
+            if(dragStartH.current<=PEEK+10&&finalDY>40){
+              reset();setShowSteps(false);
+              s.style.height=`${PEEK}px`;return;
             }
+            if(curH<PEEK+35&&finalDY>20){
+              reset();setShowSteps(false);
+              s.style.height=`${PEEK}px`;return;
+            }
+            const nearest=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
+            s.style.height=`${nearest}px`;
           }}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
         </div>

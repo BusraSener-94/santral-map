@@ -46,7 +46,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{__html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js').catch(() => {});
+              navigator.serviceWorker.register('/sw.js').then(reg => {
+                reg.update();
+              }).catch(() => {});
               navigator.serviceWorker.addEventListener('controllerchange', () => {
                 window.location.reload();
               });

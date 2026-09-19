@@ -324,6 +324,7 @@ export default function CampusMap(){
   const[wName,setWName]=useState("");
   const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
   const[wKvkk,setWKvkk]=useState(false);
+  const[kvkkModal,setKvkkModal]=useState(false);
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
   const[onboardStep,setOnboardStep]=useState<number|null>(null);
@@ -904,14 +905,44 @@ export default function CampusMap(){
                   background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
             )}
 
-            {/* KVKK – inline, modal yok */}
+            {/* KVKK */}
             <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:4}}>
               <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
                 style={{marginTop:3,width:16,height:16,accentColor:"#3b82f6",flexShrink:0,cursor:"pointer"}}/>
               <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.6}}>
-                {t('kvkkText')}<strong style={{color:"rgba(255,255,255,0.7)"}}>{t('kvkkBold')}</strong>{t('kvkkTextEnd')}
+                {t('kvkkText')}
+                <strong onClick={e=>{e.preventDefault();e.stopPropagation();setKvkkModal(true);}}
+                  style={{color:"#60a5fa",textDecoration:"underline",cursor:"pointer"}}>
+                  {t('kvkkBold')}
+                </strong>
+                {t('kvkkTextEnd')}
               </span>
             </label>
+
+            {/* KVKK Modal */}
+            {kvkkModal&&(
+              <div onClick={()=>setKvkkModal(false)}
+                style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.7)",
+                  display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 20px"}}>
+                <div onClick={e=>e.stopPropagation()}
+                  style={{background:"#1e293b",borderRadius:"20px 20px 12px 12px",
+                    padding:"24px 20px",maxWidth:480,width:"100%",maxHeight:"75vh",overflowY:"auto",
+                    boxShadow:"0 -4px 32px rgba(0,0,0,0.5)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+                    <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{t('kvkkBold')}</div>
+                    <button onClick={()=>setKvkkModal(false)}
+                      style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#94a3b8",
+                        width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+                  </div>
+                  <p style={{color:"rgba(255,255,255,0.7)",fontSize:12,lineHeight:1.8,margin:0}}>
+                    {isEN()
+                      ? "Istanbul Bilgi University collects your name and role information solely to measure anonymous usage statistics of the Karpuza Sor campus navigation application. Your data is not shared with third parties and is processed in accordance with Turkey's Personal Data Protection Law No. 6698 (KVKK). By checking this box, you give your explicit consent to this data processing."
+                      : "İstanbul Bilgi Üniversitesi, Karpuza Sor kampüs navigasyon uygulamasının anonim kullanım istatistiklerini ölçmek amacıyla adınızı ve rolünüzü toplamaktadır. Verileriniz üçüncü taraflarla paylaşılmaz ve 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında işlenir. Bu kutucuğu işaretleyerek söz konusu veri işlemeye açık rızanızı veriyorsunuz."
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Giriş butonu */}
             {(()=>{

@@ -720,7 +720,10 @@ export default function CampusMap(){
     return route.slice(0,idx+1) as[number,number][];
   },[route,simPct]);
 
-  const canvasRenderer=useMemo(()=>L.canvas({padding:0.5}),[]);
+  // staticCanvas: route hiç değişmeyince yeniden çizilmez (zoom+sim jitter önlenir)
+  // dynCanvas: sadece geçilen gri nokta her simPct'de değişir
+  const staticCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
+  const dynCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
 
   // Simülasyonda yakındaki bina
   const nearbyBldg=useMemo(()=>{
@@ -887,11 +890,11 @@ export default function CampusMap(){
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>
           {route&&<>
-            {/* Geçilen yol – gri */}
-            {passedRoute.length>1&&<Polyline renderer={canvasRenderer} positions={passedRoute} pathOptions={{color:"#94a3b8",weight:5,opacity:0.6,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>}
-            {/* Kalan yol gölge + renk */}
-            <Polyline renderer={canvasRenderer} positions={route} pathOptions={{color:"#1d4ed8",weight:9,opacity:0.18,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>
-            <Polyline renderer={canvasRenderer} positions={route} pathOptions={{color:"#3b82f6",weight:5,opacity:0.95,lineCap:"round",lineJoin:"round",dashArray:"12 8"}}/>
+            {/* Kalan yol: gölge + mavi nokta – staticCanvas'ta, sadece route değişince yeniden çizilir */}
+            <Polyline renderer={staticCanvas} positions={route} interactive={false} smoothFactor={0} pathOptions={{color:"#1d4ed8",weight:14,opacity:0.15,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>
+            <Polyline renderer={staticCanvas} positions={route} interactive={false} smoothFactor={0} pathOptions={{color:"#3b82f6",weight:8,opacity:0.95,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>
+            {/* Geçilen yol – dynCanvas'ta, simPct değişince sadece bu canvas yeniden çizilir */}
+            {passedRoute.length>1&&<Polyline renderer={dynCanvas} positions={passedRoute} interactive={false} smoothFactor={0} pathOptions={{color:"#94a3b8",weight:8,opacity:0.55,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>}
           </>}
           {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
           {/* Gerçek GPS – simülasyonda gizle */}

@@ -277,8 +277,10 @@ export default function CampusMap(){
   const[navSteps,setNavSteps]=useState<Step[]>([]);
   const[showSteps,setShowSteps]=useState(false);
   const sheetRef=useRef<HTMLDivElement>(null);
+  const handleRef=useRef<HTMLDivElement>(null);
   const dragY=useRef(0);
   const dragStartH=useRef(230);
+  const sheetDismiss=useRef(()=>{});
 
   // Uygulama modu
   type Mode='idle'|'pickFrom'|'pickTo'|'ready'|'sim'|'nav'|'arrived';
@@ -575,6 +577,47 @@ export default function CampusMap(){
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
   },[stopSim]);
+
+  // sheetDismiss her render'da güncellenir — stale closure olmadan reset/showSteps kullanır
+  sheetDismiss.current=()=>{reset();setShowSteps(false);};
+
+  // ── Bottom sheet non-passive drag listener ──
+  useEffect(()=>{
+    const handle=handleRef.current;
+    const sheet=sheetRef.current;
+    if(!handle||!sheet)return;
+    const onStart=(e:TouchEvent)=>{
+      sheet.style.transition="none";
+      dragY.current=e.touches[0].clientY;
+      dragStartH.current=sheet.getBoundingClientRect().height;
+    };
+    const onMove=(e:TouchEvent)=>{
+      e.preventDefault();
+      const dy=e.touches[0].clientY-dragY.current;
+      const maxH=window.innerHeight*0.72;
+      sheet.style.height=`${Math.max(52,Math.min(maxH,dragStartH.current-dy))}px`;
+    };
+    const onEnd=(e:TouchEvent)=>{
+      const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
+      const curH=sheet.getBoundingClientRect().height;
+      const dy=e.changedTouches[0].clientY-dragY.current;
+      sheet.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
+      if((dragStartH.current<=PEEK+10&&dy>40)||(curH<PEEK+35&&dy>20)){
+        sheet.style.height=`${PEEK}px`;
+        sheetDismiss.current();return;
+      }
+      const snap=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
+      sheet.style.height=`${snap}px`;
+    };
+    handle.addEventListener('touchstart',onStart,{passive:true});
+    handle.addEventListener('touchmove',onMove,{passive:false});
+    handle.addEventListener('touchend',onEnd,{passive:true});
+    return()=>{
+      handle.removeEventListener('touchstart',onStart);
+      handle.removeEventListener('touchmove',onMove);
+      handle.removeEventListener('touchend',onEnd);
+    };
+  },[]);
 
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
   useEffect(()=>{
@@ -1190,40 +1233,9 @@ export default function CampusMap(){
         ref={sheetRef}>
 
         {/* Drag handle */}
-        <div style={{display:"flex",justifyContent:"center",alignItems:"center",padding:"14px 0 8px",cursor:"grab",width:"100%"}}
-          onTouchStart={e=>{
-            if(onboardStep!==null)return;
-            const s=sheetRef.current;if(!s)return;
-            s.style.transition="none";
-            dragY.current=e.touches[0].clientY;
-            dragStartH.current=s.getBoundingClientRect().height;
-          }}
-          onTouchMove={e=>{
-            if(onboardStep!==null)return;
-            const s=sheetRef.current;if(!s)return;
-            const deltaY=e.touches[0].clientY-dragY.current;
-            const maxH=window.innerHeight*0.72;
-            const newH=Math.max(52,Math.min(maxH,dragStartH.current-deltaY));
-            s.style.height=`${newH}px`;
-          }}
-          onTouchEnd={e=>{
-            if(onboardStep!==null)return;
-            const s=sheetRef.current;if(!s)return;
-            s.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-            const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
-            const curH=s.getBoundingClientRect().height;
-            const finalDY=e.changedTouches[0].clientY-dragY.current;
-            if(dragStartH.current<=PEEK+10&&finalDY>40){
-              reset();setShowSteps(false);
-              s.style.height=`${PEEK}px`;return;
-            }
-            if(curH<PEEK+35&&finalDY>20){
-              reset();setShowSteps(false);
-              s.style.height=`${PEEK}px`;return;
-            }
-            const nearest=[PEEK,MID,maxH].reduce((a,b)=>Math.abs(b-curH)<Math.abs(a-curH)?b:a);
-            s.style.height=`${nearest}px`;
-          }}>
+        <div ref={handleRef}
+          style={{display:"flex",justifyContent:"center",alignItems:"center",
+            padding:"16px 0",cursor:"grab",width:"100%",touchAction:"none"}}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
         </div>
 

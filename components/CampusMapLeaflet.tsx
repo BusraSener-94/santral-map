@@ -1350,7 +1350,7 @@ export default function CampusMap(){
                           onClick={()=>{setTo(loc);setToSearch(loc.name);setActiveRouteInput(null);setPanelLoc(loc);
                             const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
                             const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');setPanelLoc(null);}}}
+                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}
                           style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
                             background:"transparent",border:"none",
                             borderBottom:i<arr.length-1?"1px solid #334155":"none",
@@ -1595,7 +1595,7 @@ export default function CampusMap(){
                   🟢 Buradan Başla
                 </button>
                 <button onClick={()=>{
-                  setTo(panelLoc);setPanelLoc(null);
+                  setTo(panelLoc);
                   if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],panelLoc);}
                   else if(from){calcRoute(from.gps[0],from.gps[1],panelLoc);}
                   else setMode('pickFrom');}}

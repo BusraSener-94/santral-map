@@ -646,6 +646,15 @@ export default function CampusMap(){
     };
   },[]);
 
+  // Input focus olunca panel aç
+  useEffect(()=>{
+    if(!sheetRef.current)return;
+    if(activeRouteInput){
+      sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
+      sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
+    }
+  },[activeRouteInput]);
+
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
   useEffect(()=>{
     if(mode!=='idle') history.pushState({santral:true},'');
@@ -1284,8 +1293,8 @@ export default function CampusMap(){
                     borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
                     outline:"none",minHeight:46}}/>
                 {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
-                  <div style={{position:"absolute",left:0,right:0,bottom:"calc(100% + 4px)",zIndex:50,
-                    background:"#1e293b",borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.7)",
+                  <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
+                    background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
                     maxHeight:200,overflowY:"auto"}}>
                     {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(fromSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
                       <button key={loc.num} onMouseDown={e=>e.preventDefault()}
@@ -1330,8 +1339,8 @@ export default function CampusMap(){
                       borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
                       outline:"none",minHeight:46}}/>
                   {activeRouteInput==='to'&&toSearch&&(
-                    <div style={{position:"absolute",left:0,right:0,bottom:"calc(100% + 4px)",zIndex:50,
-                      background:"#1e293b",borderRadius:10,boxShadow:"0 -4px 20px rgba(0,0,0,0.7)",
+                    <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
+                      background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
                       maxHeight:200,overflowY:"auto"}}>
                       {LOCS.filter(l=>l.name.toLocaleLowerCase("tr-TR").includes(toSearch.toLocaleLowerCase("tr-TR"))).slice(0,8).map((loc,i,arr)=>(
                         <button key={loc.num} onMouseDown={e=>e.preventDefault()}

@@ -1570,7 +1570,7 @@ export default function CampusMap(){
           )}
 
           {/* Panel içi bina detay kartı – arama seçiminden */}
-          {panelLoc&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom')&&(
+          {panelLoc&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom'||mode==='sim'||mode==='nav')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               {panelLoc.photo&&(
                 <img src={panelLoc.photo} alt={panelLoc.name}

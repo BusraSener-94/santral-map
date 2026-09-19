@@ -963,10 +963,10 @@ export default function CampusMap(){
 
       {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
       {(mode==='pickFrom'||mode==='pickTo')&&(
-        <div style={{position:"absolute",top:"70%",left:"50%",transform:"translate(-50%,-50%)",
+        <div style={{position:"absolute",top:68,left:"50%",transform:"translateX(-50%)",
           zIndex:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10,
           background:mode==='pickFrom'?"#16a34a":"#ef4444",
-          borderRadius:20,padding:"18px 24px",width:"80%",maxWidth:320,
+          borderRadius:20,padding:"14px 20px",width:"80%",maxWidth:320,
           boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
           animation:"onboard-fadein 0.25s ease"}}>
           <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
@@ -974,7 +974,7 @@ export default function CampusMap(){
             <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
               {mode==='pickFrom'?"Başlangıç noktasını seç":"Varış noktasını seç"}
             </span>
-            <button onClick={reset}
+            <button onClick={mode==='pickTo'?()=>setMode('idle'):reset}
               style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",
                 minHeight:32,width:32,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
               ✕

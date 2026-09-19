@@ -1548,7 +1548,7 @@ export default function CampusMap(){
           )}
 
           {/* Panel içi bina detay kartı – arama seçiminden */}
-          {mode==='idle'&&panelLoc&&(
+          {panelLoc&&(mode==='idle'||mode==='ready')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               {panelLoc.photo&&(
                 <img src={panelLoc.photo} alt={panelLoc.name}

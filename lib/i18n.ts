@@ -235,18 +235,33 @@ const EN: { [K in keyof typeof TR]: string } = {
 
 type TKeys = keyof typeof TR;
 
-const lang: { [K in keyof typeof TR]: string } =
-  process.env.NEXT_PUBLIC_LANG === "en" ? EN : TR;
+const LANG_KEY = "karpuz_lang";
 
-/** Type-safe translation lookup */
-export const t = (key: TKeys): string => lang[key];
+/** Runtime language: localStorage overrides build-time env var */
+const getLang = (): "tr" | "en" => {
+  if (typeof window !== "undefined") {
+    const s = localStorage.getItem(LANG_KEY);
+    if (s === "en" || s === "tr") return s;
+  }
+  return process.env.NEXT_PUBLIC_LANG === "en" ? "en" : "tr";
+};
 
-/** True when the app is built in English mode */
-export const isEN = process.env.NEXT_PUBLIC_LANG === "en";
+/** Type-safe translation lookup (runtime-aware) */
+export const t = (key: TKeys): string =>
+  getLang() === "en" ? EN[key] : (TR as Record<string, string>)[key];
+
+/** True when the current language is English */
+export const isEN = (): boolean => getLang() === "en";
+
+/** Switch language and reload */
+export const setLang = (l: "tr" | "en"): void => {
+  localStorage.setItem(LANG_KEY, l);
+  window.location.reload();
+};
 
 /** Personalised greeting, e.g. "Merhaba, Ayşe! 👋" / "Hello, Ayşe! 👋" */
 export const greetUser = (firstName: string): string =>
-  isEN ? `Hello, ${firstName}! 👋` : `Merhaba, ${firstName}! 👋`;
+  isEN() ? `Hello, ${firstName}! 👋` : `Merhaba, ${firstName}! 👋`;
 
 const FLOOR_EN: Record<string, string> = {
   "ZEMİN KAT": "Ground Floor",
@@ -281,8 +296,8 @@ const CAT_EN: Record<string, string> = {
 
 /** Translate a floor label from Turkish data */
 export const tFloor = (floor: string): string =>
-  isEN ? (FLOOR_EN[floor] ?? floor) : floor;
+  isEN() ? (FLOOR_EN[floor] ?? floor) : floor;
 
 /** Translate a room category from Turkish data */
 export const tCat = (cat: string): string =>
-  isEN ? (CAT_EN[cat] ?? cat) : cat;
+  isEN() ? (CAT_EN[cat] ?? cat) : cat;

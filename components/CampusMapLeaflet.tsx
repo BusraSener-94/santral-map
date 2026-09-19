@@ -6,7 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
-import { t, greetUser, tFloor, tCat } from "../lib/i18n";
+import { t, greetUser, tFloor, tCat, isEN, setLang } from "../lib/i18n";
 
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
 type RoomsData=Record<string,Record<string,RoomEntry[]>>;
@@ -18,16 +18,6 @@ const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
 interface OnboardStep{text:string;target:string|null;ring?:string;}
-const ONBOARD_STEPS:OnboardStep[]=[
-  {text:t('onboard0'),target:null},
-  {text:t('onboard1'),target:"gps-btn"},
-  {text:t('onboard2'),target:"search-input"},
-  {text:t('onboard3'),target:"cat-row"},
-  {text:t('onboard4'),target:"route-btn"},
-  {text:t('onboard5'),target:"to-input"},
-  {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
-  {text:t('onboard7'),target:null},
-];
 
 // Google Sheets Web App URL
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbx-wzOfRVu_1CIQZzde3r8f1wdsHpSE1MIkxT-PxR3UVLl758OySrZO_P7ZBrlUGFFd/exec";
@@ -335,6 +325,16 @@ export default function CampusMap(){
   const[heading,setHeading]=useState<number|null>(null);
   const prevPosRef=useRef<[number,number]|null>(null);
   const[onboardStep,setOnboardStep]=useState<number|null>(null);
+  const ONBOARD_STEPS=useMemo<OnboardStep[]>(()=>[
+    {text:t('onboard0'),target:null},
+    {text:t('onboard1'),target:"gps-btn"},
+    {text:t('onboard2'),target:"search-input"},
+    {text:t('onboard3'),target:"cat-row"},
+    {text:t('onboard4'),target:"route-btn"},
+    {text:t('onboard5'),target:"to-input"},
+    {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
+    {text:t('onboard7'),target:null},
+  ],[]);
   const[hlRect,setHlRect]=useState<DOMRect|null>(null);
   const[ringRect,setRingRect]=useState<DOMRect|null>(null);
   const[simSpeed,setSimSpeed]=useState(1);
@@ -1292,8 +1292,20 @@ export default function CampusMap(){
               onContextMenu={e=>e.preventDefault()}
               draggable={false}/>
           </div>
-          {/* Sağ: Konum butonu */}
+          {/* Sağ: Dil toggle + konum butonu */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
+            <div style={{display:"flex",alignItems:"center",gap:2,background:"rgba(0,0,0,0.25)",
+              borderRadius:6,padding:"2px 3px",border:"1px solid rgba(255,255,255,0.12)"}}>
+              {(["TR","EN"] as const).map(l=>(
+                <button key={l} onClick={()=>setLang(l.toLowerCase() as "tr"|"en")}
+                  style={{padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
+                    fontSize:10,fontWeight:700,letterSpacing:.4,lineHeight:1.5,
+                    background:isEN()===(l==="EN")?"rgba(255,255,255,0.22)":"transparent",
+                    color:isEN()===(l==="EN")?"#fff":"rgba(255,255,255,0.45)"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
             <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
               background:gpsError?"rgba(239,68,68,0.35)":gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
               border:`1px solid ${gpsError?"#ef4444":gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,

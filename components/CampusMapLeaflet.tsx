@@ -908,7 +908,7 @@ export default function CampusMap(){
           zoomAnimation={false} fadeAnimation={false} markerZoomAnimation={false}
           {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap" maxZoom={19}/>
+            attribution="&copy; OpenStreetMap" maxZoom={19} keepBuffer={6}/>
           {route&&<>
             {/* Kalan yol: gölge + mavi nokta – staticCanvas'ta, sadece route değişince yeniden çizilir */}
             <Polyline renderer={staticCanvas} positions={route} interactive={false} smoothFactor={0} pathOptions={{color:"#1d4ed8",weight:14,opacity:0.15,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>

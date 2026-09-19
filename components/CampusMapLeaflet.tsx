@@ -741,14 +741,8 @@ export default function CampusMap(){
     return route.slice(0,idx+1) as[number,number][];
   },[route,simPct]);
 
-  // Zoom animasyonu sırasında canvas gizlenir → tile smooth zoom yapar, noktalar titremiyor
-  // _update çağrıldığında (zoomend sonrası) opacity geri gelir
-  const NoJitterCanvas=useMemo(()=>(L.Canvas as any).extend({
-    _onZoom(this:any){(L.Canvas as any).prototype._onZoom.call(this);this._container.style.opacity='0';},
-    _update(this:any){(L.Canvas as any).prototype._update.call(this);this._container.style.opacity='1';}
-  }),[]);
-  const staticCanvas=useMemo(()=>new NoJitterCanvas({padding:0.5}),[NoJitterCanvas]);
-  const dynCanvas=useMemo(()=>new NoJitterCanvas({padding:0.5}),[NoJitterCanvas]);
+  const staticCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
+  const dynCanvas=useMemo(()=>L.canvas({padding:0.5}),[]);
 
   // Simülasyonda yakındaki bina
   const nearbyBldg=useMemo(()=>{
@@ -911,7 +905,7 @@ export default function CampusMap(){
         <MapContainer center={CAMPUS_CENTER} zoom={17}
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
           zoomControl={false} zoomSnap={0.1}
-          fadeAnimation={false} markerZoomAnimation={false}
+          zoomAnimation={false} fadeAnimation={false} markerZoomAnimation={false}
           {...({rotate:true,touchRotate:true} as object)}>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; OpenStreetMap" maxZoom={19}/>

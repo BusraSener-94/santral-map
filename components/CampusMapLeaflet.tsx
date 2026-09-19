@@ -276,7 +276,6 @@ export default function CampusMap(){
   const[routeM,setRouteM]=useState(0);
   const[navSteps,setNavSteps]=useState<Step[]>([]);
   const[showSteps,setShowSteps]=useState(false);
-  const[sheetExpanded,setSheetExpanded]=useState(false);
   const sheetRef=useRef<HTMLDivElement>(null);
   const dragY=useRef(0);
   const dragExpanded=useRef(false);
@@ -1184,8 +1183,8 @@ export default function CampusMap(){
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
           transition:"transform 0.25s ease",
-          maxHeight:sheetExpanded?"70vh":"auto",
-          overflowY:sheetExpanded?"auto":"visible"}}
+          maxHeight:"70vh",
+          overflowY:"auto"}}
         ref={sheetRef}>
 
         {/* Drag handle */}
@@ -1193,7 +1192,6 @@ export default function CampusMap(){
           onTouchStart={e=>{
             if(onboardStep!==null)return;
             dragY.current=e.touches[0].clientY;
-            dragExpanded.current=sheetExpanded;
             if(sheetRef.current)sheetRef.current.style.transition="none";
           }}
           onTouchMove={e=>{
@@ -1207,10 +1205,10 @@ export default function CampusMap(){
             const dy=e.changedTouches[0].clientY-dragY.current;
             if(sheetRef.current)sheetRef.current.style.transition="transform 0.25s ease";
             if(!dragExpanded.current&&dy<-60){
-              setSheetExpanded(true);
+              dragExpanded.current=true;
               if(sheetRef.current)sheetRef.current.style.transform="translateY(-140px)";
             } else if(dragExpanded.current&&dy>60){
-              setSheetExpanded(false);
+              dragExpanded.current=false;
               if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";
             } else if(!dragExpanded.current&&dy>80){
               if(sheetRef.current)sheetRef.current.style.transform="translateY(0px)";

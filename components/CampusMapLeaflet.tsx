@@ -6,6 +6,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
+import { t, greetUser } from "../lib/i18n";
 
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
 type RoomsData=Record<string,Record<string,RoomEntry[]>>;
@@ -18,14 +19,14 @@ const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapm
 
 interface OnboardStep{text:string;target:string|null;ring?:string;}
 const ONBOARD_STEPS:OnboardStep[]=[
-  {text:"Hazır mısın? 🐾\nKampüsü birlikte keşfedelim!",target:null},
-  {text:"Konumunu açmak için\nbu düğmeye dokun 📍",target:"gps-btn"},
-  {text:"Gitmek istediğin binayı\nburaya yaz 🔍",target:"search-input"},
-  {text:"Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",target:"cat-row"},
-  {text:"Yol tarifi almak için\nburaya dokun 🗺",target:"route-btn"},
-  {text:"Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor: haritada gitmek\nistediğin noktaya dokun ya da aşağıya yaz 🗺",target:"to-input"},
-  {text:"Biraz tombulum 🐾😅 Simüle ederken\nyavaş yürürüm. Sağ üstteki '1×' butonuna\nbasarak hızlandırabilirsin: 2× → 4× → 1×",target:"nav-card",ring:"speed-btn"},
-  {text:"Hazırım! İyi kampüs gezileri 🍉",target:null},
+  {text:t('onboard0'),target:null},
+  {text:t('onboard1'),target:"gps-btn"},
+  {text:t('onboard2'),target:"search-input"},
+  {text:t('onboard3'),target:"cat-row"},
+  {text:t('onboard4'),target:"route-btn"},
+  {text:t('onboard5'),target:"to-input"},
+  {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
+  {text:t('onboard7'),target:null},
 ];
 
 // Google Sheets Web App URL
@@ -79,16 +80,16 @@ function steps(route:[number,number][]):Step[]{
   const s=rdp(route,8);if(s.length<2)return[];
   const out:Step[]=[];
   const b0=brng(s[0][0],s[0][1],s[1][0],s[1][1]);
-  const dirs=["Kuzeye","KD'ya","Doğuya","GD'ye","Güneye","GB'ye","Batıya","KB'ye"];
-  out.push({text:`${dirs[Math.round(b0/45)%8]} yürüyün`,arrow:arrow(b0),dist:0});
+  const dirs=[t('dirNorth'),t('dirNE'),t('dirEast'),t('dirSE'),t('dirSouth'),t('dirSW'),t('dirWest'),t('dirNW')];
+  out.push({text:`${dirs[Math.round(b0/45)%8]} ${t('stepWalk')}`,arrow:arrow(b0),dist:0});
   let pb=b0;
   for(let i=1;i<s.length-1;i++){
     const nb=brng(s[i][0],s[i][1],s[i+1][0],s[i+1][1]);
     const d=Math.round(hav(s[i-1][0],s[i-1][1],s[i][0],s[i][1]));
     let df=nb-pb;while(df>180)df-=360;while(df<-180)df+=360;
-    if(Math.abs(df)>35){out.push({text:`${d}m sonra ${df<0?"sola dön":"sağa dön"}`,arrow:df<0?"↰":"↱",dist:d});pb=nb;}
+    if(Math.abs(df)>35){out.push({text:`${d}m ${t('stepAfter')} ${df<0?t('stepTurnLeft'):t('stepTurnRight')}`,arrow:df<0?"↰":"↱",dist:d});pb=nb;}
   }
-  out.push({text:"Hedefe ulaştınız",arrow:"🏁",dist:0});
+  out.push({text:t('stepArrived'),arrow:"🏁",dist:0});
   return out;
 }
 
@@ -186,6 +187,15 @@ const CAT:Record<string,{c:string;l:string}>={
   idari:{c:"#8b5cf6",l:"İdari"},işlevsel:{c:"#10b981",l:"İşlevsel"},
   otopark:{c:"#6b7280",l:"Otopark"},giriş:{c:"#ef4444",l:"Giriş"},
 };
+// Çevrilmiş kategori etiketleri – CAT anahtarlarıyla eşleşir
+const CAT_LABELS = {
+  eğitsel: t('catEgitsel'),
+  sosyal:  t('catSosyal'),
+  idari:   t('catIdari'),
+  işlevsel:t('catIslevsel'),
+  otopark: t('catOtopark'),
+  giriş:   t('catGiris'),
+} as const;
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
   {num:1, name:"Cami Tarafı Giriş",  gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",photo:"/buildings/cami-giris.jpg"},
@@ -381,7 +391,7 @@ export default function CampusMap(){
 
   // fromSearch / toSearch senkronizasyonu
   useEffect(()=>{
-    if(fromGPS)setFromSearch("📍 Konumunuz");
+    if(fromGPS)setFromSearch(t('yourLocation'));
     else if(from)setFromSearch(from.name);
     else setFromSearch("");
   },[from,fromGPS]);
@@ -464,18 +474,18 @@ export default function CampusMap(){
       if(watchRef.current!=null){navigator.geolocation.clearWatch(watchRef.current);watchRef.current=null;}
       setGpsOn(false);setUserPos(null);setGpsError(null);
     } else {
-      if(!navigator.geolocation){setGpsError("Bu tarayıcı konum desteklemiyor.");return;}
+      if(!navigator.geolocation){setGpsError(t('gpsNotSupported'));return;}
       setGpsOn(true);setGpsError(null);
       watchRef.current=navigator.geolocation.watchPosition(
         p=>{setUserPos([p.coords.latitude,p.coords.longitude]);setGpsError(null);},
         (err)=>{
           setGpsOn(false);
           if(err.code===1)
-            setGpsError("Konum izni verilmedi. iPhone'da: Ayarlar → Safari → Konum → İzin Ver");
+            setGpsError(t('gpsDenied'));
           else if(err.code===2)
-            setGpsError("Konum alınamadı. Açık alanda tekrar deneyin.");
+            setGpsError(t('gpsUnavailable'));
           else
-            setGpsError("Konum zaman aşımına uğradı. Tekrar deneyin.");
+            setGpsError(t('gpsTimeout'));
         },
         {enableHighAccuracy:true,maximumAge:5000,timeout:15000}
       );
@@ -809,7 +819,7 @@ export default function CampusMap(){
             <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
               style={{height:36,width:"auto",maxWidth:"72vw",objectFit:"contain",opacity:.95}}/>
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
-              santralistanbul Kampüsü
+              {t('campusName')}
             </div>
             <div style={{marginTop:12,display:"flex",alignItems:"center",gap:10}}>
               <div style={{height:1,width:28,background:"linear-gradient(to right,transparent,rgba(212,175,55,0.5))"}}/>
@@ -838,11 +848,10 @@ export default function CampusMap(){
           {/* Karpuz tanıtımı */}
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{color:"#fff",fontWeight:800,fontSize:20,marginBottom:6}}>
-              Merhaba! Ben Karpuz 🐾
+              {t('welcomeTitle')}
             </div>
-            <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,lineHeight:1.6,maxWidth:300}}>
-              santralistanbul'da doğru yeri bulman için buradayım.
-              Birkaç bilgi gir, hemen başlayalım!
+            <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,lineHeight:1.6,maxWidth:300,whiteSpace:"pre-line"}}>
+              {t('welcomeDesc')}
             </div>
           </div>
 
@@ -850,7 +859,7 @@ export default function CampusMap(){
 
             {/* Ad Soyad */}
             <input value={wName} onChange={e=>setWName(e.target.value)}
-              placeholder="Adınız Soyadınız"
+              placeholder={t('namePlaceholder')}
               style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
                 border:"1.5px solid rgba(255,255,255,0.2)",
                 background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
@@ -864,7 +873,7 @@ export default function CampusMap(){
                     background:wRole===r?"rgba(59,130,246,0.2)":"rgba(255,255,255,0.06)",
                     color:wRole===r?"#93c5fd":"rgba(255,255,255,0.7)",
                     fontSize:14,fontWeight:wRole===r?700:500,cursor:"pointer"}}>
-                  {r==="Öğrenci"?"🎓 Öğrenci":r==="Öğretmen"?"👨‍🏫 Öğretmen":r==="Personel"?"🏢 Personel":"🙋 Misafir"}
+                  {r==="Öğrenci"?t('roleStudent'):r==="Öğretmen"?t('roleTeacher'):r==="Personel"?t('roleStaff'):t('roleGuest')}
                 </button>
               ))}
             </div>
@@ -872,7 +881,7 @@ export default function CampusMap(){
             {/* Ek bilgi – sadece Öğretmen için fakülte (opsiyonel) */}
             {wRole==="Öğretmen"&&(
               <input value={wExtra} onChange={e=>setWExtra(e.target.value)}
-                placeholder="Fakülteniz (opsiyonel)"
+                placeholder={t('facultyPlaceholder')}
                 style={{width:"100%",padding:"13px 16px",borderRadius:12,boxSizing:"border-box",
                   border:"1.5px solid rgba(255,255,255,0.2)",
                   background:"rgba(255,255,255,0.08)",color:"#fff",fontSize:15,outline:"none"}}/>
@@ -883,9 +892,7 @@ export default function CampusMap(){
               <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
                 style={{marginTop:3,width:16,height:16,accentColor:"#3b82f6",flexShrink:0,cursor:"pointer"}}/>
               <span style={{color:"rgba(255,255,255,0.5)",fontSize:10,lineHeight:1.6}}>
-                Girdiğim bilgilerin yalnızca kampüs navigasyon uygulamasının kullanım
-                istatistiklerini ölçmek amacıyla İstanbul Bilgi Üniversitesi tarafından
-                işlenmesine <strong style={{color:"rgba(255,255,255,0.7)"}}>KVKK</strong> kapsamında onay veriyorum.
+                {t('kvkkText')}<strong style={{color:"rgba(255,255,255,0.7)"}}>{t('kvkkBold')}</strong>{t('kvkkTextEnd')}
               </span>
             </label>
 
@@ -898,7 +905,7 @@ export default function CampusMap(){
                   color:ok?"#fff":"rgba(255,255,255,0.25)",
                   fontSize:16,fontWeight:700,cursor:ok?"pointer":"default",
                   boxShadow:ok?"0 4px 20px rgba(37,99,235,0.4)":"none"}}>
-                Haritaya Gir →
+                {t('btnEnterMap')}
               </button>
             );})()}
           </div>
@@ -908,7 +915,7 @@ export default function CampusMap(){
             <img src="/bilgi-logotype.png" alt="BİLGİ"
               style={{height:22,width:"auto",maxWidth:"60vw",objectFit:"contain",opacity:.5}}/>
             <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:.4}}>
-              santralistanbul Kampüsü
+              {t('campusName')}
             </div>
           </div>
         </div>
@@ -975,9 +982,7 @@ export default function CampusMap(){
 
             {/* Metin */}
             <p style={{margin:0,fontSize:12.5,color:"#1e293b",lineHeight:1.65,fontWeight:500,flex:1}}>
-              Merhaba ben Karpuz. Kampüsün maskotlarından biriyim.
-              Başlangıç noktanızı ve gitmek istediğiniz yeri yazarsanız
-              size yol gösterebilirim. İsterseniz bulunduğunuz konumdan da başlayabilirsiniz.
+              {t('karpuzIntroText')}
             </p>
 
             {/* X kapat butonu */}
@@ -1021,7 +1026,7 @@ export default function CampusMap(){
                   <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{selectedLoc.name}</div>
                   {ROOMS[String(selectedLoc.num)]&&(
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
-                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} {t('mahalUnit')}
                     </div>
                   )}
                 </div>
@@ -1041,7 +1046,7 @@ export default function CampusMap(){
                   <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{selectedLoc.name}</div>
                   {ROOMS[String(selectedLoc.num)]&&(
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
-                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} mahal
+                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} {t('mahalUnit')}
                     </div>
                   )}
                 </div>
@@ -1062,7 +1067,7 @@ export default function CampusMap(){
               {ROOMS[String(selectedLoc.num)]&&(
                 <div style={{borderTop:"1px solid #e2e8f0",paddingTop:12,marginBottom:14}}>
                   <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",
-                    letterSpacing:"0.06em",marginBottom:8}}>MAHAL LİSTESİ</div>
+                    letterSpacing:"0.06em",marginBottom:8}}>{t('roomListTitle')}</div>
                   <div style={{maxHeight:180,overflowY:"auto",fontSize:12,lineHeight:1.5}}>
                     {Object.entries(ROOMS[String(selectedLoc.num)]).map(([floor,rooms])=>(
                       <div key={floor} style={{marginBottom:10}}>
@@ -1090,7 +1095,7 @@ export default function CampusMap(){
                 <button onClick={()=>{stopSim();setPanelLoc(selectedLoc);setFrom(selectedLoc);setFromGPS(false);setMode('pickTo');setSelectedLoc(null);}}
                   style={{...BTN,flex:1,background:"#16a34a",color:"#fff",
                     fontSize:14,padding:"12px 0",borderRadius:12}}>
-                  🟢 Buradan Başla
+                  {t('btnStartHere')}
                 </button>
                 {(from||fromGPS||(gpsOn&&userPos))&&(
                   <button onClick={()=>{stopSim();setPanelLoc(selectedLoc);setTo(selectedLoc);
@@ -1099,7 +1104,7 @@ export default function CampusMap(){
                     setSelectedLoc(null);}}
                     style={{...BTN,flex:1,background:"#ef4444",color:"#fff",
                       fontSize:14,padding:"12px 0",borderRadius:12}}>
-                    🔴 Buraya Git
+                    {t('btnGoHere')}
                   </button>
                 )}
               </div>
@@ -1119,7 +1124,7 @@ export default function CampusMap(){
           <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
             <span style={{fontSize:22}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
             <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
-              {mode==='pickFrom'?"Başlangıç noktasını seç":"Varış noktasını seç"}
+              {mode==='pickFrom'?t('pickFromTitle'):t('pickToTitle')}
             </span>
             <button onClick={mode==='pickTo'?()=>setMode('idle'):reset}
               style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",
@@ -1127,16 +1132,14 @@ export default function CampusMap(){
               ✕
             </button>
           </div>
-          <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,textAlign:"center",lineHeight:1.6}}>
-            {mode==='pickTo'
-              ? "Haritada bir noktayı işaretle\nya da aşağıda nereye gitmek istediğini yaz"
-              : "Haritada başlangıç noktasını işaretle\nya da aşağıda listeden seç"}
+          <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,textAlign:"center",lineHeight:1.6,whiteSpace:"pre-line"}}>
+            {mode==='pickTo'?t('pickToDesc'):t('pickFromDesc')}
           </div>
           {mode==='pickFrom'&&gpsOn&&userPos&&(
             <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}
               style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
                 fontSize:13,padding:"8px 20px",minHeight:36,borderRadius:30,width:"100%"}}>
-              📍 Mevcut Konumumu Kullan
+              {t('useMyLocation')}
             </button>
           )}
         </div>
@@ -1151,8 +1154,8 @@ export default function CampusMap(){
             <div style={{fontSize:52,lineHeight:1,minWidth:56,textAlign:"center",
               filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>⬅️</div>
             <div style={{flex:1}}>
-              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.2}}>GB'ye yürüyün</div>
-              <div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>~162m · 2 dk kaldı</div>
+              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.2}}>{`${t('dirSW')} ${t('stepWalk')}`}</div>
+              <div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>~162m · 2 {t('minRemaining')}</div>
             </div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
               <button id="speed-btn" style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
@@ -1165,9 +1168,9 @@ export default function CampusMap(){
           </div>
           <div style={{background:"#065f46",padding:"8px 18px 8px 88px",
             display:"flex",alignItems:"center",gap:8}}>
-            <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>Ardından</span>
+            <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>{t('thenLabel')}</span>
             <span style={{fontSize:18,color:"rgba(255,255,255,0.85)"}}>↱</span>
-            <span style={{fontSize:13,color:"rgba(255,255,255,0.85)"}}>39m sonra sağa dön</span>
+            <span style={{fontSize:13,color:"rgba(255,255,255,0.85)"}}>{`39m ${t('stepAfter')} ${t('stepTurnRight')}`}</span>
           </div>
         </div>
       )}
@@ -1188,7 +1191,7 @@ export default function CampusMap(){
                 {activeStep.text}
               </div>
               {remM>0&&<div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>
-                ~{remM}m · {remMins} dk kaldı
+                ~{remM}m · {remMins} {t('minRemaining')}
               </div>}
             </div>
             {mode==='sim'&&(
@@ -1214,7 +1217,7 @@ export default function CampusMap(){
           {nextStep&&(
             <div style={{background:"#065f46",padding:"8px 18px 8px 88px",
               display:"flex",alignItems:"center",gap:8}}>
-              <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>Ardından</span>
+              <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>{t('thenLabel')}</span>
               <span style={{fontSize:18,color:"rgba(255,255,255,0.85)"}}>{nextStep.arrow}</span>
               <span style={{fontSize:13,color:"rgba(255,255,255,0.85)",flex:1,
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nextStep.text}</span>
@@ -1256,9 +1259,9 @@ export default function CampusMap(){
           boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
           <div style={{fontSize:48}}>🎉</div>
           <div style={{color:"#fff",fontWeight:800,fontSize:18,marginTop:8}}>{to?.name}</div>
-          <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,marginTop:4}}>Hedefe ulaştınız!</div>
+          <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,marginTop:4}}>{t('arrivedMsg')}</div>
           <button onClick={reset} style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
-            marginTop:16,padding:"10px 24px",width:"100%",fontSize:14}}>Tamam</button>
+            marginTop:16,padding:"10px 24px",width:"100%",fontSize:14}}>{t('btnOk')}</button>
         </div>
       )}
 
@@ -1274,7 +1277,7 @@ export default function CampusMap(){
             <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
               style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
             <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>
-              {userProfile?`Merhaba, ${userProfile.name.split(" ")[0]}! 👋`:"santralistanbul Kampüsü"}
+              {userProfile?greetUser(userProfile.name.split(" ")[0]):t('campusName')}
             </div>
           </div>
           {/* Orta: Karpuza logo ortalı — uzun basış turu yeniden başlatır */}
@@ -1300,7 +1303,7 @@ export default function CampusMap(){
                    animation:"onboard-glow 1.4s ease-in-out infinite",
                    boxShadow:"0 0 0 4px #f97316,0 0 28px rgba(249,115,22,0.9),0 0 0 8px rgba(249,115,22,0.25)"}
                 :{})}}>
-              {gpsError?"⚠️ Hata":gpsOn?"📍 Aktif":"📍 Konum"}
+              {gpsError?t('gpsError'):gpsOn?t('gpsActive'):t('gpsOff')}
             </button>
             {gpsError&&(
               <div style={{background:"rgba(239,68,68,0.92)",color:"#fff",fontSize:10,
@@ -1361,7 +1364,7 @@ export default function CampusMap(){
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
                   onFocus={()=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();}}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
-                  placeholder="Başlangıç Noktası Yazın"
+                  placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
                     background:"#0f172a",border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
                     borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
@@ -1390,12 +1393,12 @@ export default function CampusMap(){
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{flex:1,height:1,background:"#1e293b"}}/>
                 <button
-                  onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);setFromSearch("📍 Konumunuz");
+                  onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);setFromSearch(t('yourLocation'));
                     if(to&&userPos)calcRoute(userPos[0],userPos[1],to);}}
                   style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
                     padding:"8px 16px",borderRadius:20,gap:5,minHeight:36,whiteSpace:"nowrap"}}>
                   <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
-                  Konumunuzdan Başlatın
+                  {t('startFromLocation')}
                 </button>
                 <div style={{flex:1,height:1,background:"#1e293b"}}/>
                 {(from||to)&&(
@@ -1416,7 +1419,7 @@ export default function CampusMap(){
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
                     onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
-                    placeholder="Varış Noktası Yazın"
+                    placeholder={t('toPlaceholder')}
                     style={{width:"100%",boxSizing:"border-box",
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
                       borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
@@ -1449,7 +1452,7 @@ export default function CampusMap(){
                 }}
                   style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 18px",
                     fontSize:14,borderRadius:10,minHeight:46,flexShrink:0,whiteSpace:"nowrap"}}>
-                  🗺 Yol Tarifi
+                  {t('btnRoute')}
                 </button>
               </div>
 
@@ -1460,7 +1463,7 @@ export default function CampusMap(){
           {mode==='pickTo'&&(
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               <input value={search} onChange={e=>setSearch(e.target.value)}
-                placeholder="Nereye gitmek istiyorsun?"
+                placeholder={t('searchDestPlaceholder')}
                 autoFocus
                 style={{flex:1,background:"#0f172a",border:"1px solid #ef4444",borderRadius:10,
                   padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
@@ -1472,7 +1475,7 @@ export default function CampusMap(){
                       color:"#fff",textAlign:"left",width:"100%"}}>
                     <span style={{fontSize:18,flexShrink:0}}>{loc.emoji}</span>
                     <span style={{fontSize:14,fontWeight:600,flex:1}}>{loc.name}</span>
-                    <span style={{color:"#ef4444",fontSize:12,flexShrink:0}}>Buraya Git →</span>
+                    <span style={{color:"#ef4444",fontSize:12,flexShrink:0}}>{t('btnGoHereArrow')}</span>
                   </button>
                 ))}
               </div>
@@ -1490,7 +1493,7 @@ export default function CampusMap(){
                     <span style={{width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>
                     <span style={{fontSize:12,color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
                       textDecoration:mode==='ready'?"underline dotted":"none",cursor:mode==='ready'?"pointer":"default"}}>
-                      {fromGPS?"📍 Konumunuz":from?.name??"—"}
+                      {fromGPS?t('yourLocation'):from?.name??"—"}
                     </span>
                   </div>
                   {editingTo?(
@@ -1498,7 +1501,7 @@ export default function CampusMap(){
                       <input autoFocus value={editToSearch}
                         onChange={e=>setEditToSearch(e.target.value)}
                         onBlur={()=>setTimeout(()=>setEditingTo(false),160)}
-                        placeholder="Varış noktası ara..."
+                        placeholder={t('editToPlaceholder')}
                         style={{width:"100%",boxSizing:"border-box",background:"#1e293b",
                           border:"1px solid #ef4444",borderRadius:8,padding:"6px 10px",
                           color:"#fff",fontSize:12,outline:"none"}}/>
@@ -1534,13 +1537,13 @@ export default function CampusMap(){
                         <button onMouseDown={e=>e.preventDefault()}
                           onClick={()=>{setEditToSearch("");setEditingTo(true);}}
                           style={{...BTN,padding:"2px 6px",fontSize:11,background:"#334155",
-                            color:"#94a3b8",borderRadius:6,flexShrink:0,minHeight:24}}>✏️ Değiştir</button>
+                            color:"#94a3b8",borderRadius:6,flexShrink:0,minHeight:24}}>{t('btnChange')}</button>
                       )}
                     </div>
                   )}
                 </div>
                 <div style={{textAlign:"right",flexShrink:0}}>
-                  <div style={{color:"#86efac",fontWeight:800,fontSize:14}}>~{mins} dk</div>
+                  <div style={{color:"#86efac",fontWeight:800,fontSize:14}}>~{mins} {t('minLabel')}</div>
                   <div style={{color:"#64748b",fontSize:11}}>{routeM} m</div>
                 </div>
                 {mode==='ready'&&(
@@ -1568,7 +1571,7 @@ export default function CampusMap(){
                       style={{...BTN,flex:1,background:"#f97316",color:"#fff",fontSize:13,
                         padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
                       <span style={{fontSize:18}}>▶</span>
-                      <span style={{fontSize:11}}>Önizle</span>
+                      <span style={{fontSize:11}}>{t('btnPreview')}</span>
                     </button>
                     {/* Gerçek GPS navigasyon */}
                     {gpsOn&&userPos?(
@@ -1576,21 +1579,21 @@ export default function CampusMap(){
                         style={{...BTN,flex:1,background:"#3b82f6",color:"#fff",fontSize:13,
                           padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
                         <span style={{fontSize:18}}>🚶</span>
-                        <span style={{fontSize:11}}>Git (GPS)</span>
+                        <span style={{fontSize:11}}>{t('btnGpsNav')}</span>
                       </button>
                     ):(
                       <button onClick={toggleGPS}
                         style={{...BTN,flex:1,background:"#334155",color:"#94a3b8",fontSize:11,
                           padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
                         <span style={{fontSize:18}}>📍</span>
-                        <span>Konum Aç</span>
+                        <span>{t('btnOpenGps')}</span>
                       </button>
                     )}
                     <button onClick={()=>setShowSteps(p=>!p)}
                       style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
                         fontSize:11,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:50}}>
                       <span style={{fontSize:18}}>≡</span>
-                      <span>{showSteps?"Gizle":"Adım"}</span>
+                      <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
                     </button>
                   </div>
                 </div>
@@ -1617,15 +1620,15 @@ export default function CampusMap(){
           {/* Kategori filtreleri – sadece idle modda */}
           {mode==='idle'&&(
             <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4}}>
-              <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>Binaları Filtreleyin:</span>
+              <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border:"1px solid #475569",background:cat===null?"#3b82f6":"transparent",color:"#fff"}}>Tümü</button>
-              {Object.entries(CAT).map(([k,v])=>(
+                  border:"1px solid #475569",background:cat===null?"#3b82f6":"transparent",color:"#fff"}}>{t('catAll')}</button>
+              {(Object.entries(CAT) as [keyof typeof CAT_LABELS,{c:string;l:string}][]).map(([k,v])=>(
                 <button key={k} onClick={()=>setCat(p=>p===k?null:k)}
                   style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
                     border:`1px solid ${v.c}55`,background:cat===k?v.c:"transparent",color:cat===k?"#fff":v.c}}>
-                  {v.l}
+                  {CAT_LABELS[k]}
                 </button>
               ))}
             </div>
@@ -1644,7 +1647,7 @@ export default function CampusMap(){
                   <div style={{fontWeight:700,color:"#fff",fontSize:15}}>{panelLoc.name}</div>
                   {ROOMS[String(panelLoc.num)]&&(
                     <div style={{fontSize:11,color:"#94a3b8"}}>
-                      {Object.values(ROOMS[String(panelLoc.num)]).reduce((s:number,a)=>s+(a as RoomEntry[]).length,0)} mahal
+                      {Object.values(ROOMS[String(panelLoc.num)]).reduce((s:number,a)=>s+(a as RoomEntry[]).length,0)} {t('mahalUnit')}
                     </div>
                   )}
                 </div>
@@ -1677,7 +1680,7 @@ export default function CampusMap(){
                 {panelLoc?.num!==from?.num&&panelLoc?.num!==to?.num&&(
                   <button onClick={()=>{setPanelLoc(loc=>loc);setFrom(panelLoc);setFromGPS(false);setMode('pickTo');}}
                     style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
-                    🟢 Buradan Başla
+                    {t('btnStartHere')}
                   </button>
                 )}
                 {panelLoc?.num!==from?.num&&panelLoc?.num!==to?.num&&(
@@ -1687,12 +1690,12 @@ export default function CampusMap(){
                     else if(from){calcRoute(from.gps[0],from.gps[1],panelLoc);}
                     else setMode('pickFrom');}}
                     style={{...BTN,flex:1,background:"#dc2626",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
-                    🔴 Buraya Git
+                    {t('btnGoHere')}
                   </button>
                 )}
                 {(panelLoc?.num===from?.num||panelLoc?.num===to?.num)&&(
                   <div style={{flex:1,textAlign:"center",color:"#64748b",fontSize:12,padding:"10px 0"}}>
-                    {panelLoc?.num===from?.num?"🟢 Başlangıç noktanız":"🔴 Varış noktanız"}
+                    {panelLoc?.num===from?.num?t('startPointLabel'):t('destPointLabel')}
                   </div>
                 )}
               </div>
@@ -1809,9 +1812,9 @@ export default function CampusMap(){
                 <button onClick={e=>{e.stopPropagation();
                   localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
                   style={{background:"transparent",color:"#94a3b8",border:"none",
-                    fontSize:12,cursor:"pointer",padding:"6px 0"}}>Atla</button>
+                    fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
                 <span style={{color:"#cbd5e1",fontSize:11}}>
-                  {onboardStep===ONBOARD_STEPS.length-1?"Dokun, başla!":"Sağa dokun →"}
+                  {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
                 </span>
               </div>
             </div>

@@ -186,6 +186,7 @@ interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:str
 function PhotoGallery({loc,height}:{loc:Loc;height:number}){
   const imgs=loc.photos||(loc.photo?[loc.photo]:null);
   const[idx,setIdx]=useState(0);
+  useEffect(()=>{setIdx(0);},[loc.num]);
   if(!imgs)return null;
   return(
     <div style={{position:"relative",marginBottom:10}}>

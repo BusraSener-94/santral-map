@@ -244,7 +244,7 @@ function PhotoGallery({loc,height,mb=10}:{loc:Loc;height:number;mb?:number}){
 
   return(
     <div ref={galleryRef} onPointerDown={onPDown} onPointerUp={onPUp} onPointerCancel={onPCancel}
-      style={{position:"relative",marginBottom:mb,touchAction:"pan-y",userSelect:"none",
+      style={{position:"relative",marginBottom:mb,touchAction:"none",userSelect:"none",
         cursor:imgs.length>1?"grab":"default"}}>
       <img src={imgs[idx]} alt={loc.nameEN||loc.name} draggable={false}
         style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block",pointerEvents:"none"}}/>

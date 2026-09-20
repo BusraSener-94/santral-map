@@ -186,12 +186,29 @@ interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:str
 function PhotoGallery({loc,height}:{loc:Loc;height:number}){
   const imgs=loc.photos||(loc.photo?[loc.photo]:null);
   const[idx,setIdx]=useState(0);
+  const touchStartX=useRef<number|null>(null);
+
   useEffect(()=>{setIdx(0);},[loc.num]);
   if(!imgs)return null;
+
+  const onTouchStart=(e:React.TouchEvent)=>{
+    touchStartX.current=e.touches[0].clientX;
+  };
+
+  const onTouchEnd=(e:React.TouchEvent)=>{
+    if(touchStartX.current===null||imgs.length<=1)return;
+    const diffX=touchStartX.current-e.changedTouches[0].clientX;
+    const THRESHOLD=45;
+    if(diffX>THRESHOLD){setIdx(i=>(i+1)%imgs.length);}
+    else if(diffX<-THRESHOLD){setIdx(i=>(i-1+imgs.length)%imgs.length);}
+    touchStartX.current=null;
+  };
+
   return(
-    <div style={{position:"relative",marginBottom:10}}>
-      <img src={imgs[idx]} alt={loc.nameEN||loc.name}
-        style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block"}}/>
+    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
+      style={{position:"relative",marginBottom:10,touchAction:"pan-y",userSelect:"none"}}>
+      <img src={imgs[idx]} alt={loc.nameEN||loc.name} draggable={false}
+        style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block",pointerEvents:"none"}}/>
       {imgs.length>1&&(
         <>
           <button onMouseDown={e=>e.preventDefault()}

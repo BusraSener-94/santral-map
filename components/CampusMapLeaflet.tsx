@@ -1666,7 +1666,8 @@ export default function CampusMap(){
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
           height:"230px",
-          overflowY:"auto",
+          width:"100%",maxWidth:"100%",boxSizing:"border-box",
+          overflowY:"auto",overflowX:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1)"}}
         ref={sheetRef}>
 
@@ -1710,7 +1711,7 @@ export default function CampusMap(){
                   placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
                     background:"#0f172a",border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
-                    borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:14,
+                    borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:16,
                     outline:"none",minHeight:46}}/>
                 {/* Mikrofon butonu – başlangıç */}
                 <button onClick={()=>startVoiceSearch('from')}
@@ -1785,7 +1786,7 @@ export default function CampusMap(){
                     placeholder={t('toPlaceholder')}
                     style={{width:"100%",boxSizing:"border-box",
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
-                      borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:14,
+                      borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:16,
                       outline:"none",minHeight:46}}/>
                   {/* Mikrofon butonu – varış */}
                   <button onClick={()=>startVoiceSearch('to')}
@@ -1835,8 +1836,8 @@ export default function CampusMap(){
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 placeholder={t('fromPlaceholder')}
                 autoFocus
-                style={{flex:1,background:"#0f172a",border:"1px solid #16a34a",borderRadius:10,
-                  padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
+                style={{width:"100%",boxSizing:"border-box",background:"#0f172a",border:"1px solid #16a34a",borderRadius:10,
+                  padding:"11px 14px",color:"#fff",fontSize:16,outline:"none",minHeight:44}}/>
               <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
                 {visible.slice(0,10).map(loc=>(
                   <button key={loc.num} onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setMode('pickTo');}}
@@ -1858,8 +1859,8 @@ export default function CampusMap(){
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 placeholder={t('searchDestPlaceholder')}
                 autoFocus
-                style={{flex:1,background:"#0f172a",border:"1px solid #ef4444",borderRadius:10,
-                  padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
+                style={{width:"100%",boxSizing:"border-box",background:"#0f172a",border:"1px solid #ef4444",borderRadius:10,
+                  padding:"11px 14px",color:"#fff",fontSize:16,outline:"none",minHeight:44}}/>
               <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
                 {visible.slice(0,10).map(loc=>(
                   <button key={loc.num} onClick={()=>handlePinClick(loc)}
@@ -2015,8 +2016,8 @@ export default function CampusMap(){
             </div>
           )}
 
-          {/* Kategori filtreleri – sadece idle modda */}
-          {mode==='idle'&&(
+          {/* Kategori filtreleri – sadece idle modda ve klavye kapalıyken */}
+          {mode==='idle'&&!activeRouteInput&&(
             <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4}}>
               <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
               <button onClick={()=>setCat(null)}
@@ -2032,8 +2033,8 @@ export default function CampusMap(){
             </div>
           )}
 
-          {/* Panel içi bina detay kartı – arama seçiminden */}
-          {panelLoc&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom'||mode==='sim'||mode==='nav')&&(
+          {/* Panel içi bina detay kartı – klavye kapalıyken */}
+          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom'||mode==='sim'||mode==='nav')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               <PhotoGallery loc={panelLoc} height={110}/>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>

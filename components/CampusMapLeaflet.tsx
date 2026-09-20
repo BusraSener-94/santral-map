@@ -361,6 +361,8 @@ export default function CampusMap(){
   const[fromSearch,setFromSearch]=useState("");
   const[toSearch,setToSearch]=useState("");
   const[activeRouteInput,setActiveRouteInput]=useState<'from'|'to'|null>(null);
+  const[isMuted,setIsMuted]=useState(false);
+  const[listening,setListening]=useState(false);
   const[editingTo,setEditingTo]=useState(false);
   const[editToSearch,setEditToSearch]=useState("");
 
@@ -454,6 +456,39 @@ export default function CampusMap(){
       window.removeEventListener('deviceorientationabsolute',handler as EventListener,true);
       window.removeEventListener('deviceorientation',handler as EventListener,true);
     };
+  },[]);
+
+  // ── Sesli Arama (STT) ──────────────────────────────────────────────────────
+  const startVoiceSearch=useCallback(()=>{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+    if(!SR){alert(isEN()?"Voice search not supported in this browser.":"Bu tarayıcı sesli aramayı desteklemiyor.");return;}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rec=new SR() as any;
+    rec.lang=isEN()?'en-US':'tr-TR';
+    rec.continuous=false;
+    rec.interimResults=false;
+    setListening(true);
+    rec.onend=()=>setListening(false);
+    rec.onerror=()=>setListening(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onresult=(e:any)=>{
+      const transcript:string=e.results[0][0].transcript.toLowerCase().trim();
+      const scored=LOCS.map(l=>{
+        const name=locName(l).toLowerCase();
+        if(name===transcript||transcript.includes(name))return{l,s:100};
+        const words=transcript.split(/\s+/).filter((w:string)=>w.length>1);
+        const hits=words.filter((w:string)=>name.includes(w)||w.includes(name.split(' ')[0]??''));
+        return{l,s:hits.length*10+(name.startsWith(words[0]??'')?5:0)};
+      }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+      if(scored.length>0){
+        const loc=scored[0].l;
+        setToSearch(locName(loc));setTo(loc);setActiveRouteInput('to');setPanelLoc(loc);
+      } else {
+        setToSearch(transcript);setActiveRouteInput('to');
+      }
+    };
+    rec.start();
   },[]);
 
   // GPS güncellenince bearing hesapla (pusula yoksa)
@@ -765,6 +800,31 @@ export default function CampusMap(){
   const remMins=Math.max(1,Math.round(remM/83));
   const activeStep=navSteps[curStepIdx];
   const nextStep=navSteps[curStepIdx+1]??null;
+
+  // ── TTS: adım değişince sesli oku ─────────────────────────────────────────
+  useEffect(()=>{
+    if(isMuted||!('speechSynthesis' in window))return;
+    if((mode==='nav'||mode==='sim')&&activeStep){
+      window.speechSynthesis.cancel();
+      const utt=new SpeechSynthesisUtterance(activeStep.text);
+      utt.lang=isEN()?'en-US':'tr-TR';
+      utt.rate=0.95;
+      const speak=()=>{
+        const voices=window.speechSynthesis.getVoices();
+        const v=voices.find(v=>v.lang.toLowerCase().startsWith(isEN()?'en':'tr'));
+        if(v)utt.voice=v;
+        window.speechSynthesis.speak(utt);
+      };
+      if(window.speechSynthesis.getVoices().length>0)speak();
+      else window.speechSynthesis.onvoiceschanged=speak;
+    }
+    if(mode==='arrived'){
+      window.speechSynthesis.cancel();
+      const utt=new SpeechSynthesisUtterance(t('arrivedMsg'));
+      utt.lang=isEN()?'en-US':'tr-TR';
+      window.speechSynthesis.speak(utt);
+    }
+  },[curStepIdx,mode,isMuted]); // eslint-disable-line
 
   // Geçilen / kalan rota segmentleri
   const passedRoute=useMemo(()=>{
@@ -1254,6 +1314,12 @@ export default function CampusMap(){
                 ~{remM}m · {remMins} {t('minRemaining')}
               </div>}
             </div>
+            {/* Ses kapat/aç */}
+            <button onClick={()=>setIsMuted(m=>!m)}
+              style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
+                minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0,flexShrink:0}}>
+              {isMuted?"🔇":"🔊"}
+            </button>
             {mode==='sim'&&(
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
                 <button id="speed-btn" onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
@@ -1494,8 +1560,17 @@ export default function CampusMap(){
                     placeholder={t('toPlaceholder')}
                     style={{width:"100%",boxSizing:"border-box",
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
-                      borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
+                      borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:14,
                       outline:"none",minHeight:46}}/>
+                  {/* Mikrofon butonu */}
+                  <button onClick={startVoiceSearch}
+                    style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
+                      background:listening?"#ef4444":"transparent",border:"none",
+                      borderRadius:6,width:30,height:30,cursor:"pointer",
+                      display:"flex",alignItems:"center",justifyContent:"center",
+                      fontSize:16,color:listening?"#fff":"#64748b",padding:0}}>
+                    {listening?"⏹":"🎤"}
+                  </button>
                   {activeRouteInput==='to'&&toSearch&&(
                     <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
                       background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",

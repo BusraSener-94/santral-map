@@ -232,7 +232,7 @@ const CAT_LABELS = {
 } as const;
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
-  {num:1, name:"Cami Tarafı Giriş",  nameEN:"West Gate",           gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",descEN:"West main campus entrance gate near the mosque.",photo:"/buildings/cami-giris.jpg"},
+  {num:1, name:"Cami Tarafı Giriş",  nameEN:"West Gate",           gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",descEN:"West main campus entrance gate near the mosque.",photo:"/buildings/cami-giris.jpg",photos:["/buildings/cami-giris.jpg","/buildings/cami-giris2.jpg"]},
   {num:25,name:"Misafir Girişi",      nameEN:"South Gate",           gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana misafir ve öğrenci güney girişi.",descEN:"Main south entrance for visitors and students."},
   {num:33,name:"Tarihi Giriş",        nameEN:"Historic Gate",        gps:[41.06568,28.94669],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",descEN:"Historic main entrance of the power plant complex.",photo:"/buildings/tarihi-giris.jpg"},
   // ── Eğitsel ───────────────────────────────────────────────────────────────
@@ -281,7 +281,7 @@ const LOCS:Loc[]=[
   // ── Otopark ───────────────────────────────────────────────────────────────
   {num:26,name:"Otopark",             nameEN:"Car Park",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney.",descEN:"Main campus car park – south.",photo:"/buildings/otopark.jpg",photos:["/buildings/otopark.jpg","/buildings/otopark2.jpg"]},
   {num:34,name:"Otopark Girişi",      nameEN:"Parking Entrance",    gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası.",descEN:"Car park vehicle entry/exit point.",photo:"/buildings/otopark-girisi.jpg"},
-  {num:44,name:"Arka Otopark",        nameEN:"North Car Park",      gps:[41.06930,28.94449],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – kuzey taraf.",descEN:"Rear campus car park – north side."},
+  {num:44,name:"Arka Otopark",        nameEN:"North Car Park",      gps:[41.06930,28.94449],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – kuzey taraf.",descEN:"Rear campus car park – north side.",photo:"/buildings/arka-otopark.jpg"},
 ];
 
 // ── İkonlar ───────────────────────────────────────────────────────────────────

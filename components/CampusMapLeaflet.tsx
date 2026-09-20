@@ -985,7 +985,7 @@ export default function CampusMap(){
         <MapContainer center={CAMPUS_CENTER} zoom={17}
           style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
           zoomControl={false} zoomSnap={0.1}
-          fadeAnimation={false}
+          fadeAnimation={false} markerZoomAnimation={false} zoomAnimation={false}
           {...({rotate:true,touchRotate:true} as object)}>
           <DisableCompassAutoRotate/>
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

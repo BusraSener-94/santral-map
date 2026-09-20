@@ -186,39 +186,65 @@ interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:str
 function PhotoGallery({loc,height}:{loc:Loc;height:number}){
   const imgs=loc.photos||(loc.photo?[loc.photo]:null);
   const[idx,setIdx]=useState(0);
-  const startX=useRef<number|null>(null);
-  const startY=useRef<number|null>(null);
-  const isDragging=useRef(false);
+  const galleryRef=useRef<HTMLDivElement>(null);
+  // mouse/desktop pointer tracking
+  const mStartX=useRef<number|null>(null);
+  const mDragging=useRef(false);
 
   useEffect(()=>{setIdx(0);},[loc.num]);
+
+  // Native non-passive touch – iOS Safari scroll müdahalesini engeller
+  useEffect(()=>{
+    const el=galleryRef.current;
+    if(!el||!imgs||imgs.length<=1)return;
+    let sx=0,sy=0,dir:null|'h'|'v'=null;
+    const onStart=(e:TouchEvent)=>{sx=e.touches[0].clientX;sy=e.touches[0].clientY;dir=null;};
+    const onMove=(e:TouchEvent)=>{
+      if(dir==='v')return;
+      const dx=Math.abs(e.touches[0].clientX-sx),dy=Math.abs(e.touches[0].clientY-sy);
+      if(dir===null&&(dx>5||dy>5))dir=dx>dy?'h':'v';
+      if(dir==='h')e.preventDefault();
+    };
+    const onEnd=(e:TouchEvent)=>{
+      if(dir!=='h')return;
+      const diff=sx-e.changedTouches[0].clientX;
+      if(Math.abs(diff)>25){
+        if(diff>0)setIdx(i=>(i+1)%imgs.length);
+        else setIdx(i=>(i-1+imgs.length)%imgs.length);
+      }
+    };
+    el.addEventListener('touchstart',onStart,{passive:true});
+    el.addEventListener('touchmove',onMove,{passive:false});
+    el.addEventListener('touchend',onEnd,{passive:true});
+    return()=>{
+      el.removeEventListener('touchstart',onStart);
+      el.removeEventListener('touchmove',onMove);
+      el.removeEventListener('touchend',onEnd);
+    };
+  },[imgs?.length,loc.num]);
+
   if(!imgs)return null;
 
-  const handlePointerDown=(e:React.PointerEvent<HTMLDivElement>)=>{
-    if(imgs.length<=1)return;
-    startX.current=e.clientX;
-    startY.current=e.clientY;
-    isDragging.current=true;
+  // Mouse / desktop
+  const onPDown=(e:React.PointerEvent<HTMLDivElement>)=>{
+    if(e.pointerType==='touch'||imgs.length<=1)return;
+    mStartX.current=e.clientX;mDragging.current=true;
     e.currentTarget.setPointerCapture(e.pointerId);
   };
-
-  const handlePointerUp=(e:React.PointerEvent<HTMLDivElement>)=>{
-    if(!isDragging.current||startX.current===null)return;
-    const diffX=startX.current-e.clientX;
-    const diffY=(startY.current??e.clientY)-e.clientY;
-    if(Math.abs(diffX)>Math.abs(diffY)&&Math.abs(diffX)>25){
-      if(diffX>0){setIdx(i=>(i+1)%imgs.length);}
-      else{setIdx(i=>(i-1+imgs.length)%imgs.length);}
+  const onPUp=(e:React.PointerEvent<HTMLDivElement>)=>{
+    if(!mDragging.current||mStartX.current===null)return;
+    const diff=mStartX.current-e.clientX;
+    if(Math.abs(diff)>25){
+      if(diff>0)setIdx(i=>(i+1)%imgs.length);
+      else setIdx(i=>(i-1+imgs.length)%imgs.length);
     }
-    startX.current=null;startY.current=null;isDragging.current=false;
+    mStartX.current=null;mDragging.current=false;
   };
-
-  const handlePointerCancel=()=>{
-    startX.current=null;startY.current=null;isDragging.current=false;
-  };
+  const onPCancel=()=>{mStartX.current=null;mDragging.current=false;};
 
   return(
-    <div onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel}
-      style={{position:"relative",marginBottom:10,touchAction:"none",userSelect:"none",
+    <div ref={galleryRef} onPointerDown={onPDown} onPointerUp={onPUp} onPointerCancel={onPCancel}
+      style={{position:"relative",marginBottom:10,touchAction:"pan-y",userSelect:"none",
         cursor:imgs.length>1?"grab":"default"}}>
       <img src={imgs[idx]} alt={loc.nameEN||loc.name} draggable={false}
         style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block",pointerEvents:"none"}}/>
@@ -508,8 +534,8 @@ export default function CampusMap(){
     }
     if(splash==="hidden")return; // Aynı oturumda yeniden mount → animasyon atla
     sessionStorage.setItem("splash_shown","1");
-    const t1=setTimeout(()=>setSplash("fading"),2800);
-    const t2=setTimeout(()=>setSplash("hidden"),3700);
+    const t1=setTimeout(()=>setSplash("fading"),4500);
+    const t2=setTimeout(()=>setSplash("hidden"),5400);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 

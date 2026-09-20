@@ -181,7 +181,39 @@ function MapRefCapture({mapRef}:{mapRef:MutableRefObject<L.Map|null>}){
 }
 
 // ── Veri ─────────────────────────────────────────────────────────────────────
-interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:string[];desc:string;descEN?:string;emoji:string;photo?:string;hidden?:boolean;logo?:string;logoSize?:number;}
+interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:string[];desc:string;descEN?:string;emoji:string;photo?:string;photos?:string[];hidden?:boolean;logo?:string;logoSize?:number;}
+
+function PhotoGallery({loc,height}:{loc:Loc;height:number}){
+  const imgs=loc.photos||(loc.photo?[loc.photo]:null);
+  const[idx,setIdx]=useState(0);
+  if(!imgs)return null;
+  return(
+    <div style={{position:"relative",marginBottom:10}}>
+      <img src={imgs[idx]} alt={loc.nameEN||loc.name}
+        style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block"}}/>
+      {imgs.length>1&&(
+        <>
+          <button onMouseDown={e=>e.preventDefault()}
+            onClick={()=>setIdx(i=>(i-1+imgs.length)%imgs.length)}
+            style={{position:"absolute",left:4,top:"50%",transform:"translateY(-50%)",
+              background:"rgba(0,0,0,0.45)",border:"none",color:"#fff",borderRadius:"50%",
+              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1}}>‹</button>
+          <button onMouseDown={e=>e.preventDefault()}
+            onClick={()=>setIdx(i=>(i+1)%imgs.length)}
+            style={{position:"absolute",right:4,top:"50%",transform:"translateY(-50%)",
+              background:"rgba(0,0,0,0.45)",border:"none",color:"#fff",borderRadius:"50%",
+              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1}}>›</button>
+          <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4}}>
+            {imgs.map((_,i)=>(
+              <div key={i} style={{width:5,height:5,borderRadius:"50%",
+                background:i===idx?"#fff":"rgba(255,255,255,0.4)"}}/>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 const locName=(l:Loc)=>isEN()&&l.nameEN?l.nameEN:l.name;
 const locDesc=(l:Loc)=>isEN()&&l.descEN?l.descEN:l.desc;
 const CAT:Record<string,{c:string;l:string}>={
@@ -247,7 +279,7 @@ const LOCS:Loc[]=[
   {num:42,name:"Kuaför",              nameEN:"Hair Salon",          gps:[41.06820,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – HairCraft.",descEN:"Campus hair and barber salon – HairCraft.",logo:"/buildings/haircraft-logo.png",photo:"/buildings/haircraft.jpg"},
   {num:43,name:"Çalışma Alanı",       nameEN:"Study Area",          gps:[41.06809,28.94445],cats:["işlevsel"], emoji:"📖",desc:"Yemekhane arkasındaki öğrenci çalışma salonu.",descEN:"Student study hall behind the cafeteria.",photo:"/buildings/calisma-salonu.jpg"},
   // ── Otopark ───────────────────────────────────────────────────────────────
-  {num:26,name:"Otopark",             nameEN:"Car Park",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney.",descEN:"Main campus car park – south."},
+  {num:26,name:"Otopark",             nameEN:"Car Park",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney.",descEN:"Main campus car park – south.",photo:"/buildings/otopark.jpg",photos:["/buildings/otopark.jpg","/buildings/otopark2.jpg"]},
   {num:34,name:"Otopark Girişi",      nameEN:"Parking Entrance",    gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası.",descEN:"Car park vehicle entry/exit point.",photo:"/buildings/otopark-girisi.jpg"},
   {num:44,name:"Arka Otopark",        nameEN:"North Car Park",      gps:[41.06930,28.94449],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – kuzey taraf.",descEN:"Rear campus car park – north side."},
 ];
@@ -1925,10 +1957,7 @@ export default function CampusMap(){
           {/* Panel içi bina detay kartı – arama seçiminden */}
           {panelLoc&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom'||mode==='sim'||mode==='nav')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
-              {panelLoc.photo&&(
-                <img src={panelLoc.photo} alt={locName(panelLoc)}
-                  style={{width:"100%",height:110,objectFit:"cover",borderRadius:10,marginBottom:10,display:"block"}}/>
-              )}
+              <PhotoGallery loc={panelLoc} height={110}/>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
                 {!panelLoc.photo&&<span style={{fontSize:28}}>{panelLoc.emoji}</span>}
                 <div style={{flex:1}}>

@@ -905,9 +905,16 @@ export default function CampusMap(){
   // Input focus veya panelLoc seçilince panel aç
   useEffect(()=>{
     if(!sheetRef.current)return;
-    if(activeRouteInput||panelLoc){
+    if(panelLoc){
+      // Bina seçimi: 72vh aç (klavye kapalı)
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
+    } else if(activeRouteInput){
+      // Klavye açılıyor: görünür viewport'a sığacak yükseklik, max 230px
+      const visH=window.visualViewport?window.visualViewport.height:window.innerHeight;
+      const target=Math.min(230,Math.round(visH*0.42));
+      sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
+      sheetRef.current.style.height=`${target}px`;
     }
   },[activeRouteInput,panelLoc]);
 
@@ -1683,7 +1690,7 @@ export default function CampusMap(){
               <div style={{position:"relative"}}>
                 <input id="search-input" value={fromSearch}
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
-                  onFocus={()=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();}}
+                  onFocus={()=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;}}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
                   placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
@@ -1703,7 +1710,7 @@ export default function CampusMap(){
                 {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
                   <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
                     background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
-                    maxHeight:200,overflowY:"auto"}}>
+                    maxHeight:140,overflowY:"auto"}}>
                     {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(fromSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
                       <button key={loc.num} onMouseDown={e=>e.preventDefault()}
                         onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
@@ -1748,7 +1755,7 @@ export default function CampusMap(){
                 <div style={{flex:1,position:"relative",minWidth:0}}>
                   <input id="to-input" value={toSearch}
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
-                    onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();}}
+                    onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
                     onKeyDown={e=>{
                       if(e.key!=='Enter')return;

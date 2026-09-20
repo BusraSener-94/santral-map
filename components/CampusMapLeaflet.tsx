@@ -1376,7 +1376,7 @@ export default function CampusMap(){
               </div>}
             </div>
             {/* Ses kapat/aç */}
-            <button onClick={()=>setIsMuted(m=>!m)}
+            <button onClick={()=>setIsMuted(m=>{if(!m&&'speechSynthesis' in window)window.speechSynthesis.cancel();return!m;})}
               style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
                 minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0,flexShrink:0}}>
               {isMuted?"🔇":"🔊"}
@@ -1863,7 +1863,7 @@ export default function CampusMap(){
                       <span style={{fontSize:18}}>≡</span>
                       <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
                     </button>
-                    <button onClick={()=>setIsMuted(m=>!m)}
+                    <button onClick={()=>setIsMuted(m=>{if(!m&&'speechSynthesis' in window)window.speechSynthesis.cancel();return!m;})}
                       style={{...BTN,background:isMuted?"#7f1d1d":"#334155",color:isMuted?"#fca5a5":"#94a3b8",
                         fontSize:18,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:46}}>
                       <span>{isMuted?"🔇":"🔊"}</span>

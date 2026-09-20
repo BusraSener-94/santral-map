@@ -915,7 +915,7 @@ export default function CampusMap(){
 
 
       {/* Haritayı giriş ekranı gelene kadar gizle */}
-      {splash!=="hidden"&&!showWelcome&&!userProfile&&(
+      {splash!=="hidden"&&!showWelcome&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",pointerEvents:"none"}}/>
       )}
 

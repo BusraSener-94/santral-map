@@ -550,6 +550,7 @@ export default function CampusMap(){
   const simRef=useRef<ReturnType<typeof setInterval>|null>(null);
   const cumRef=useRef<number[]>([]);
   const simTravRef=useRef(0);
+  const announcedRef=useRef<Set<number>>(new Set());
 
   // Graf
   const[gd,setGd]=useState<GD|null>(null);
@@ -629,6 +630,7 @@ export default function CampusMap(){
   const startSim=useCallback(()=>{
     if(!route||route.length<2)return;
     stopSim();
+    announcedRef.current.clear();
     const cum=cumRef.current,r=route as [number,number][],total=cum[cum.length-1]??0;
     setSimSpeed(1);simSpeedRef.current=1;
     setSimPos(r[0]);setSimPct(0);setSimPaused(false);simTravRef.current=0;setMode('sim');
@@ -867,6 +869,23 @@ export default function CampusMap(){
       window.speechSynthesis.speak(utt);
     }
   },[curStepIdx,mode,isMuted]); // eslint-disable-line
+
+  // Simülasyonda yakın binalara sesli duyuru
+  useEffect(()=>{
+    if(!simPos||mode!=='sim'||isMuted||!('speechSynthesis' in window))return;
+    const nearby=LOCS.filter(l=>{
+      if(announcedRef.current.has(l.num))return false;
+      const dlat=l.gps[0]-simPos[0],dlon=l.gps[1]-simPos[1];
+      return Math.sqrt(dlat*dlat+dlon*dlon)<0.00035; // ~38m
+    });
+    if(!nearby.length)return;
+    const loc=nearby[0];
+    announcedRef.current.add(loc.num);
+    const utt=new SpeechSynthesisUtterance(isEN()?`Passing by ${locName(loc)}`:`${locName(loc)} yakınından geçiyorsunuz`);
+    utt.lang=isEN()?'en-US':'tr-TR';
+    utt.rate=1.0;
+    window.speechSynthesis.speak(utt);
+  },[simPos,mode,isMuted]); // eslint-disable-line
 
   // Geçilen / kalan rota segmentleri
   const passedRoute=useMemo(()=>{
@@ -1657,8 +1676,17 @@ export default function CampusMap(){
                 </div>
                 <button id="route-btn" onClick={()=>{
                   (document.activeElement as HTMLElement)?.blur();
-                  if(gpsOn&&userPos){setFromGPS(true);setMode('pickTo');}
-                  else setMode('pickFrom');
+                  if((from||fromGPS)&&to){
+                    const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+                    const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+                    calcRoute(fLa,fLo,to);
+                  } else if(gpsOn&&userPos){
+                    setFromGPS(true);
+                    if(to){calcRoute(userPos[0],userPos[1],to);}
+                    else setMode('pickTo');
+                  } else {
+                    setMode('pickFrom');
+                  }
                 }}
                   style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 18px",
                     fontSize:14,borderRadius:10,minHeight:46,flexShrink:0,whiteSpace:"nowrap"}}>
@@ -1834,6 +1862,11 @@ export default function CampusMap(){
                         fontSize:11,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:50}}>
                       <span style={{fontSize:18}}>≡</span>
                       <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
+                    </button>
+                    <button onClick={()=>setIsMuted(m=>!m)}
+                      style={{...BTN,background:isMuted?"#7f1d1d":"#334155",color:isMuted?"#fca5a5":"#94a3b8",
+                        fontSize:18,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:46}}>
+                      <span>{isMuted?"🔇":"🔊"}</span>
                     </button>
                   </div>
                 </div>

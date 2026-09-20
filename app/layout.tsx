@@ -47,7 +47,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
               navigator.serviceWorker.register('/sw.js').catch(() => {});
+              let reloading=false;
               navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if(reloading)return;
+                reloading=true;
                 window.location.reload();
               });
             });

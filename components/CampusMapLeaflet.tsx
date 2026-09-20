@@ -1463,21 +1463,9 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Varış bildirimi ─────────────────────────────────────────────── */}
-      {mode==='arrived'&&(
-        <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
-          zIndex:30,background:"#16a34a",borderRadius:16,padding:"24px 32px",textAlign:"center",
-          boxShadow:"0 8px 32px rgba(0,0,0,0.5)"}}>
-          <div style={{fontSize:48}}>🎉</div>
-          <div style={{color:"#fff",fontWeight:800,fontSize:18,marginTop:8}}>{to?locName(to):""}</div>
-          <div style={{color:"rgba(255,255,255,0.8)",fontSize:13,marginTop:4}}>{t('arrivedMsg')}</div>
-          <button onClick={reset} style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
-            marginTop:16,padding:"10px 24px",width:"100%",fontSize:14}}>{t('btnOk')}</button>
-        </div>
-      )}
 
       {/* ─── Header ─────────────────────────────────────────────────────── */}
-      {mode!=='pickFrom'&&mode!=='pickTo'&&mode!=='arrived'&&(
+      {mode!=='pickFrom'&&mode!=='pickTo'&&(
         <div style={{position:"fixed",top:0,left:0,right:0,zIndex:10,
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
@@ -1576,6 +1564,22 @@ export default function CampusMap(){
         </div>
 
         <div style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8}}>
+
+          {/* ARRIVED: Varış kutlaması alt panelde */}
+          {mode==='arrived'&&(
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,
+              padding:"16px 0 8px",textAlign:"center",animation:"onboard-fadein .3s ease"}}>
+              <div style={{fontSize:52}}>🎉</div>
+              <div style={{color:"#86efac",fontWeight:800,fontSize:20}}>{to?locName(to):""}</div>
+              <div style={{color:"#94a3b8",fontSize:14}}>{t('arrivedMsg')}</div>
+              <button onClick={reset}
+                style={{...BTN,background:"#16a34a",color:"#fff",width:"100%",
+                  fontSize:15,fontWeight:700,minHeight:50,borderRadius:12,marginTop:4}}>
+                {isEN()?"New Route":"Yeni Rota Çiz"}
+              </button>
+            </div>
+          )}
+
 
           {/* IDLE: Dikey 3 bölüm – Başlangıç | GPS satırı | Varış + Yol Tarifi */}
           {mode==='idle'&&(

@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Karpuz'a Sor",
   description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Karpuz'a Sor",
+    description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

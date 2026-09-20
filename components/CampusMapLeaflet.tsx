@@ -186,27 +186,40 @@ interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:str
 function PhotoGallery({loc,height}:{loc:Loc;height:number}){
   const imgs=loc.photos||(loc.photo?[loc.photo]:null);
   const[idx,setIdx]=useState(0);
-  const touchStartX=useRef<number|null>(null);
+  const startX=useRef<number|null>(null);
+  const startY=useRef<number|null>(null);
+  const isDragging=useRef(false);
 
   useEffect(()=>{setIdx(0);},[loc.num]);
   if(!imgs)return null;
 
-  const onTouchStart=(e:React.TouchEvent)=>{
-    touchStartX.current=e.touches[0].clientX;
+  const handlePointerDown=(e:React.PointerEvent<HTMLDivElement>)=>{
+    if(imgs.length<=1)return;
+    startX.current=e.clientX;
+    startY.current=e.clientY;
+    isDragging.current=true;
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
 
-  const onTouchEnd=(e:React.TouchEvent)=>{
-    if(touchStartX.current===null||imgs.length<=1)return;
-    const diffX=touchStartX.current-e.changedTouches[0].clientX;
-    const THRESHOLD=45;
-    if(diffX>THRESHOLD){setIdx(i=>(i+1)%imgs.length);}
-    else if(diffX<-THRESHOLD){setIdx(i=>(i-1+imgs.length)%imgs.length);}
-    touchStartX.current=null;
+  const handlePointerUp=(e:React.PointerEvent<HTMLDivElement>)=>{
+    if(!isDragging.current||startX.current===null)return;
+    const diffX=startX.current-e.clientX;
+    const diffY=(startY.current??e.clientY)-e.clientY;
+    if(Math.abs(diffX)>Math.abs(diffY)&&Math.abs(diffX)>25){
+      if(diffX>0){setIdx(i=>(i+1)%imgs.length);}
+      else{setIdx(i=>(i-1+imgs.length)%imgs.length);}
+    }
+    startX.current=null;startY.current=null;isDragging.current=false;
+  };
+
+  const handlePointerCancel=()=>{
+    startX.current=null;startY.current=null;isDragging.current=false;
   };
 
   return(
-    <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}
-      style={{position:"relative",marginBottom:10,touchAction:"pan-y",userSelect:"none"}}>
+    <div onPointerDown={handlePointerDown} onPointerUp={handlePointerUp} onPointerCancel={handlePointerCancel}
+      style={{position:"relative",marginBottom:10,touchAction:"none",userSelect:"none",
+        cursor:imgs.length>1?"grab":"default"}}>
       <img src={imgs[idx]} alt={loc.nameEN||loc.name} draggable={false}
         style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block",pointerEvents:"none"}}/>
       {imgs.length>1&&(
@@ -215,13 +228,13 @@ function PhotoGallery({loc,height}:{loc:Loc;height:number}){
             onClick={()=>setIdx(i=>(i-1+imgs.length)%imgs.length)}
             style={{position:"absolute",left:4,top:"50%",transform:"translateY(-50%)",
               background:"rgba(0,0,0,0.45)",border:"none",color:"#fff",borderRadius:"50%",
-              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1}}>‹</button>
+              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1,zIndex:2}}>‹</button>
           <button onMouseDown={e=>e.preventDefault()}
             onClick={()=>setIdx(i=>(i+1)%imgs.length)}
             style={{position:"absolute",right:4,top:"50%",transform:"translateY(-50%)",
               background:"rgba(0,0,0,0.45)",border:"none",color:"#fff",borderRadius:"50%",
-              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1}}>›</button>
-          <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4}}>
+              width:26,height:26,cursor:"pointer",fontSize:16,lineHeight:1,zIndex:2}}>›</button>
+          <div style={{position:"absolute",bottom:5,left:"50%",transform:"translateX(-50%)",display:"flex",gap:4,zIndex:2}}>
             {imgs.map((_,i)=>(
               <div key={i} style={{width:5,height:5,borderRadius:"50%",
                 background:i===idx?"#fff":"rgba(255,255,255,0.4)"}}/>

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteTitle,
     description: siteDesc,
-    images: [{ url: ogImage, width: 630, height: 630 }],
+    images: [{ url: ogImage, width: 1200, height: 630 }],
   },
   appleWebApp: {
     capable: true,

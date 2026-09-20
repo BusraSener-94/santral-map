@@ -183,7 +183,7 @@ function MapRefCapture({mapRef}:{mapRef:MutableRefObject<L.Map|null>}){
 // ── Veri ─────────────────────────────────────────────────────────────────────
 interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:string[];desc:string;descEN?:string;emoji:string;photo?:string;photos?:string[];hidden?:boolean;logo?:string;logoSize?:number;}
 
-function PhotoGallery({loc,height}:{loc:Loc;height:number}){
+function PhotoGallery({loc,height,mb=10}:{loc:Loc;height:number;mb?:number}){
   const imgs=loc.photos||(loc.photo?[loc.photo]:null);
   const[idx,setIdx]=useState(0);
   const galleryRef=useRef<HTMLDivElement>(null);
@@ -244,7 +244,7 @@ function PhotoGallery({loc,height}:{loc:Loc;height:number}){
 
   return(
     <div ref={galleryRef} onPointerDown={onPDown} onPointerUp={onPUp} onPointerCancel={onPCancel}
-      style={{position:"relative",marginBottom:10,touchAction:"pan-y",userSelect:"none",
+      style={{position:"relative",marginBottom:mb,touchAction:"pan-y",userSelect:"none",
         cursor:imgs.length>1?"grab":"default"}}>
       <img src={imgs[idx]} alt={loc.nameEN||loc.name} draggable={false}
         style={{width:"100%",height,objectFit:"cover",borderRadius:10,display:"block",pointerEvents:"none"}}/>
@@ -1303,13 +1303,12 @@ export default function CampusMap(){
               boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
 
             {/* Fotoğraf veya emoji başlık */}
-            {selectedLoc.photo?(
+            {(selectedLoc.photo||selectedLoc.photos)?(
               <div style={{position:"relative",borderRadius:"20px 20px 0 0",overflow:"hidden"}}>
-                <img src={selectedLoc.photo} alt={locName(selectedLoc)}
-                  style={{width:"100%",height:170,objectFit:"cover",display:"block"}}/>
-                <div style={{position:"absolute",bottom:0,left:0,right:0,
+                <PhotoGallery loc={selectedLoc} height={170} mb={0}/>
+                <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:3,
                   background:"linear-gradient(transparent,rgba(0,0,0,0.75))",
-                  padding:"24px 16px 14px"}}>
+                  padding:"24px 16px 14px",pointerEvents:"none"}}>
                   <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{locName(selectedLoc)}</div>
                   {ROOMS[String(selectedLoc.num)]&&(
                     <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
@@ -1318,7 +1317,7 @@ export default function CampusMap(){
                   )}
                 </div>
                 <button onClick={()=>setSelectedLoc(null)}
-                  style={{position:"absolute",top:10,right:10,width:32,height:32,
+                  style={{position:"absolute",top:10,right:10,width:32,height:32,zIndex:4,
                     borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
                     color:"#fff",fontSize:18,cursor:"pointer",display:"flex",
                     alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>

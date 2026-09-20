@@ -822,11 +822,15 @@ export default function CampusMap(){
     }
   },[activeRouteInput,panelLoc]);
 
-  // Sim başlayınca panel default'a dönsün
+  // Sim başlayınca panel default'a dönsün; arrived modunda içeriğe göre büyüsün
   useEffect(()=>{
-    if(mode==='sim'&&sheetRef.current){
+    if(!sheetRef.current)return;
+    if(mode==='sim'){
       sheetRef.current.style.transition="height 0.4s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height="230px";
+    } else if(mode==='arrived'){
+      sheetRef.current.style.transition="height 0.35s cubic-bezier(0.32,0.72,0,1)";
+      sheetRef.current.style.height="280px";
     }
   },[mode]);
 
@@ -1567,14 +1571,16 @@ export default function CampusMap(){
 
           {/* ARRIVED: Varış kutlaması alt panelde */}
           {mode==='arrived'&&(
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,
-              padding:"16px 0 8px",textAlign:"center",animation:"onboard-fadein .3s ease"}}>
-              <div style={{fontSize:52}}>🎉</div>
-              <div style={{color:"#86efac",fontWeight:800,fontSize:20}}>{to?locName(to):""}</div>
-              <div style={{color:"#94a3b8",fontSize:14}}>{t('arrivedMsg')}</div>
+            <div style={{display:"flex",flexDirection:"column",alignItems:"center",
+              justifyContent:"center",gap:6,padding:"8px 0 env(safe-area-inset-bottom,12px)",
+              textAlign:"center",animation:"onboard-fadein .3s ease"}}>
+              <div style={{fontSize:42}}>🎉</div>
+              <div style={{color:"#86efac",fontWeight:800,fontSize:18,lineHeight:1.2}}>{to?locName(to):""}</div>
+              <div style={{color:"#94a3b8",fontSize:13}}>{t('arrivedMsg')}</div>
               <button onClick={reset}
                 style={{...BTN,background:"#16a34a",color:"#fff",width:"100%",
-                  fontSize:15,fontWeight:700,minHeight:50,borderRadius:12,marginTop:4}}>
+                  fontSize:15,fontWeight:700,minHeight:48,borderRadius:12,marginTop:6,
+                  paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 0px)"}}>
                 {isEN()?"New Route":"Yeni Rota Çiz"}
               </button>
             </div>

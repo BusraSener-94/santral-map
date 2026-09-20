@@ -325,10 +325,13 @@ export default function CampusMap(){
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
-  const hasProfile=typeof window!=="undefined"&&!!localStorage.getItem("karpuza_user");
-  const[splash,setSplash]=useState<"visible"|"fading"|"hidden">(hasProfile?"visible":"hidden");
+  // sessionStorage ile oturum başına sadece 1 kez splash → re-mount'ta tekrar çıkmaz
+  const[splash,setSplash]=useState<"visible"|"fading"|"hidden">(()=>{
+    if(typeof window!=="undefined"&&sessionStorage.getItem("splash_shown"))return"hidden";
+    return"visible";
+  });
   const[userProfile,setUserProfile]=useState<UserProfile|null>(null);
-  const[showWelcome,setShowWelcome]=useState(!hasProfile);
+  const[showWelcome,setShowWelcome]=useState(false);
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
   const[wRole,setWRole]=useState<UserRole|null>(null);
@@ -344,7 +347,7 @@ export default function CampusMap(){
     {text:t('onboard1'),target:"gps-btn"},
     {text:t('onboard2'),target:"search-input"},
     {text:t('onboard3'),target:"cat-row"},
-    {text:t('onboard4'),target:"route-btn"},
+    {text:t('onboard4'),target:"to-input"},
     {text:t('onboard5'),target:"to-input"},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
     {text:t('onboard7'),target:null},
@@ -417,13 +420,16 @@ export default function CampusMap(){
     else setToSearch("");
   },[to]);
 
-  // Splash ekranı: kayıtlı kullanıcılar için göster; ilk kez gelenlerde atla
+  // Splash ekranı: oturum başına 1 kez; ilk kez gelenlerde hızlı fade
   useEffect(()=>{
+    if(splash==="hidden")return; // sessionStorage'dan zaten hidden başlamış
+    sessionStorage.setItem("splash_shown","1");
     const stored=localStorage.getItem("karpuza_user");
     if(!stored){
-      setSplash("hidden");
       setShowWelcome(true);
-      return;
+      setSplash("fading");
+      const t=setTimeout(()=>setSplash("hidden"),500);
+      return()=>clearTimeout(t);
     }
     const p:UserProfile=JSON.parse(stored);
     setUserProfile(p);
@@ -588,6 +594,8 @@ export default function CampusMap(){
   // ── Rota hesapla ──
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
+    // Başlangıç ile varış aynı noktaysa hesaplama
+    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005)return;
     const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
     const s=steps(pts);setNavSteps(s);setCurStepIdx(0);
@@ -1632,13 +1640,23 @@ export default function CampusMap(){
                 )}
               </div>
 
-              {/* Varış input + Yol Tarifi */}
+              {/* Varış input */}
               <div style={{display:"flex",gap:6,alignItems:"center"}}>
                 <div style={{flex:1,position:"relative",minWidth:0}}>
                   <input id="to-input" value={toSearch}
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
                     onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
+                    onKeyDown={e=>{
+                      if(e.key!=='Enter')return;
+                      const match=LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase()))[0];
+                      if(!match)return;
+                      setTo(match);setToSearch(locName(match));setActiveRouteInput(null);
+                      const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+                      const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+                      if(from||fromGPS){calcRoute(fLa,fLo,match);setMode('ready');}
+                      else{setMode('pickFrom');}
+                    }}
                     placeholder={t('toPlaceholder')}
                     style={{width:"100%",boxSizing:"border-box",
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
@@ -1674,24 +1692,6 @@ export default function CampusMap(){
                     </div>
                   )}
                 </div>
-                <button id="route-btn" onClick={()=>{
-                  (document.activeElement as HTMLElement)?.blur();
-                  if((from||fromGPS)&&to){
-                    const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-                    const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                    calcRoute(fLa,fLo,to);
-                  } else if(gpsOn&&userPos){
-                    setFromGPS(true);
-                    if(to){calcRoute(userPos[0],userPos[1],to);}
-                    else setMode('pickTo');
-                  } else {
-                    setMode('pickFrom');
-                  }
-                }}
-                  style={{...BTN,background:"#16a34a",color:"#fff",padding:"0 18px",
-                    fontSize:14,borderRadius:10,minHeight:46,flexShrink:0,whiteSpace:"nowrap"}}>
-                  {t('btnRoute')}
-                </button>
               </div>
 
             </div>

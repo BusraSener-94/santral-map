@@ -12,20 +12,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const isEnBuild = process.env.NEXT_PUBLIC_LANG === "en";
+const siteTitle = isEnBuild ? "Ask Karpuz" : "Karpuz'a Sor";
+const siteDesc = isEnBuild
+  ? "Istanbul Bilgi University Santral Campus Navigation"
+  : "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon";
+const siteUrl = isEnBuild
+  ? "https://santral-map-en.vercel.app"
+  : "https://santral-map.vercel.app";
+const ogImage = isEnBuild ? "/og-image-en.jpg" : "/og-image.jpg";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://santral-map.vercel.app"),
-  title: "Karpuz'a Sor",
-  description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDesc,
   manifest: "/manifest.json",
   openGraph: {
-    title: "Karpuz'a Sor",
-    description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630 }],
+    title: siteTitle,
+    description: siteDesc,
+    images: [{ url: ogImage, width: 1200, height: 630 }],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Karpuz'a Sor",
+    title: siteTitle,
   },
 };
 

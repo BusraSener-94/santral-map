@@ -918,6 +918,21 @@ export default function CampusMap(){
     }
   },[activeRouteInput,panelLoc]);
 
+  // iOS Safari: klavye açılınca paneli klavye üstüne kilitle
+  useEffect(()=>{
+    const vv=window.visualViewport;
+    if(!vv)return;
+    const onVVChange=()=>{
+      if(!sheetRef.current)return;
+      const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
+      sheetRef.current.style.bottom=kbH>50?`${kbH}px`:'0px';
+      if(kbH>50){window.scrollTo(0,0);document.body.scrollTop=0;}
+    };
+    vv.addEventListener('resize',onVVChange);
+    vv.addEventListener('scroll',onVVChange);
+    return()=>{vv.removeEventListener('resize',onVVChange);vv.removeEventListener('scroll',onVVChange);};
+  },[]);
+
   // Sim başlayınca panel default'a dönsün; arrived modunda içeriğe göre büyüsün
   useEffect(()=>{
     if(!sheetRef.current)return;

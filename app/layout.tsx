@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://santral-map.vercel.app"),
   title: "Karpuz'a Sor",
   description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
   manifest: "/manifest.json",
@@ -26,12 +27,13 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Karpuz'a Sor",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -363,6 +363,7 @@ export default function CampusMap(){
   const[activeRouteInput,setActiveRouteInput]=useState<'from'|'to'|null>(null);
   const[isMuted,setIsMuted]=useState(false);
   const[listening,setListening]=useState(false);
+  const[voiceHint,setVoiceHint]=useState<string|null>(null);
   const[editingTo,setEditingTo]=useState(false);
   const[editToSearch,setEditToSearch]=useState("");
 
@@ -459,6 +460,24 @@ export default function CampusMap(){
   },[]);
 
   // ── Sesli Arama (STT) ──────────────────────────────────────────────────────
+  // STT transkript normalizasyonu
+  const normalizeTranscript=(raw:string):string=>{
+    let s=raw.toLowerCase().trim();
+    // Türkçe sayı kelimeleri → rakam
+    const nums:Record<string,string>={bir:'1',iki:'2','üç':'3','dört':'4','beş':'5',
+      'altı':'6',yedi:'7',sekiz:'8',dokuz:'9',on:'10'};
+    for(const[w,d] of Object.entries(nums)) s=s.replace(new RegExp(`\\b${w}\\b`,'g'),d);
+    // Stop-words
+    for(const sw of ['git','gidelim','gitmek','istiyorum','istiyom','nerede','nasıl',
+      'giderim','bina','binası','binasına','götür','lütfen','acaba','abi','hocam','yol'])
+      s=s.replace(new RegExp(`\\b${sw}\\b`,'g'),'');
+    // "e 3" → "e3", "l 1" → "l1"
+    s=s.replace(/\b([a-züçşğıöeaı])\s+(\d)\b/g,'$1$2');
+    // Türkçe yönelme ekleri sondan kırp
+    s=s.replace(/(\w{3,}?)(ye|ya|nın|nin|nün|nun|da|de|ta|te)\b/g,'$1');
+    return s.replace(/\s+/g,' ').trim();
+  };
+
   const startVoiceSearch=useCallback((target:'from'|'to')=>{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
@@ -470,17 +489,26 @@ export default function CampusMap(){
     rec.interimResults=false;
     setListening(true);
     rec.onend=()=>setListening(false);
-    rec.onerror=()=>setListening(false);
+    rec.onerror=()=>{setListening(false);setVoiceHint(isEN()?"Could not understand, try again.":"Anlaşılamadı, tekrar deneyin.");setTimeout(()=>setVoiceHint(null),2500);};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult=(e:any)=>{
-      const transcript:string=e.results[0][0].transcript.toLowerCase().trim();
+      const transcript:string=normalizeTranscript(e.results[0][0].transcript);
       const scored=LOCS.map(l=>{
         const name=locName(l).toLowerCase();
-        if(name===transcript||transcript.includes(name))return{l,s:100};
+        const code=l.name.toLowerCase(); // orijinal TR kod (E3, L1 gibi)
+        // Tam eşleşme
+        if(code===transcript||name===transcript)return{l,s:200};
+        // Transkript bina kodunu içeriyor
+        if(transcript.includes(code)||code.includes(transcript))return{l,s:150};
+        if(transcript.includes(name))return{l,s:100};
         const words=transcript.split(/\s+/).filter((w:string)=>w.length>1);
-        const hits=words.filter((w:string)=>name.includes(w)||w.includes(name.split(' ')[0]??''));
-        return{l,s:hits.length*10+(name.startsWith(words[0]??'')?5:0)};
+        const hits=words.filter((w:string)=>name.includes(w)||code.includes(w)||w.includes(code));
+        // desc ve cats içinde de ara
+        const desc=(l.desc||'').toLowerCase();
+        const catHits=words.filter((w:string)=>desc.includes(w)).length;
+        return{l,s:hits.length*10+catHits*5+(name.startsWith(words[0]??'')?8:0)};
       }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
+      if(scored.length===0){setVoiceHint(isEN()?"Building not found.":"Bina bulunamadı.");setTimeout(()=>setVoiceHint(null),2500);}
       if(scored.length>0){
         const loc=scored[0].l;
         if(target==='from'){
@@ -1392,6 +1420,17 @@ export default function CampusMap(){
         </div>
       )}
 
+      {/* ─── Sesli komut hint toast ─────────────────────────────────────── */}
+      {voiceHint&&(
+        <div style={{position:"absolute",top:72,left:"50%",transform:"translateX(-50%)",
+          zIndex:40,background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
+          color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:13,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",
+          animation:"onboard-fadein .25s ease"}}>
+          {voiceHint}
+        </div>
+      )}
+
       {/* ─── Varış bildirimi ─────────────────────────────────────────────── */}
       {mode==='arrived'&&(
         <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
@@ -1527,7 +1566,8 @@ export default function CampusMap(){
                     background:listening?"#16a34a":"transparent",border:"none",
                     borderRadius:6,width:30,height:30,cursor:"pointer",
                     display:"flex",alignItems:"center",justifyContent:"center",
-                    fontSize:16,color:listening?"#fff":"#64748b",padding:0}}>
+                    fontSize:16,color:listening?"#fff":"#64748b",padding:0,
+                    animation:listening?"gps-pulse 1s ease-out infinite":undefined}}>
                   {listening?"⏹":"🎤"}
                 </button>
                 {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
@@ -1626,6 +1666,36 @@ export default function CampusMap(){
                 </button>
               </div>
 
+            </div>
+          )}
+
+          {/* PICKFROM: Başlangıç noktası arama listesi */}
+          {mode==='pickFrom'&&(
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {userPos&&(
+                <button onClick={()=>{setFromGPS(true);setFrom(null);setFromSearch(t('yourLocation'));setMode('pickTo');}}
+                  style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
+                    padding:"10px 16px",borderRadius:10,width:"100%",gap:6,minHeight:44}}>
+                  📍 {t('useMyLocation')}
+                </button>
+              )}
+              <input value={search} onChange={e=>setSearch(e.target.value)}
+                placeholder={t('fromPlaceholder')}
+                autoFocus
+                style={{flex:1,background:"#0f172a",border:"1px solid #16a34a",borderRadius:10,
+                  padding:"11px 14px",color:"#fff",fontSize:14,outline:"none",minHeight:44}}/>
+              <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
+                {visible.slice(0,10).map(loc=>(
+                  <button key={loc.num} onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setMode('pickTo');}}
+                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
+                      background:"#0f172a",border:"none",borderRadius:8,cursor:"pointer",
+                      color:"#fff",textAlign:"left",width:"100%"}}>
+                    <span style={{fontSize:18,flexShrink:0}}>{loc.emoji}</span>
+                    <span style={{fontSize:14,fontWeight:600,flex:1}}>{locName(loc)}</span>
+                    <span style={{color:"#16a34a",fontSize:12,flexShrink:0}}>🟢 {t('btnStartHere').replace('🟢 ','')}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

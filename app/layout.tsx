@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Karpuza Sor",
+  title: "Karpuz'a Sor",
   description: "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Karpuza Sor",
+    title: "Karpuz'a Sor",
   },
   viewport: {
     width: "device-width",

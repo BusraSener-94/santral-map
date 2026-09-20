@@ -459,7 +459,7 @@ export default function CampusMap(){
   },[]);
 
   // ── Sesli Arama (STT) ──────────────────────────────────────────────────────
-  const startVoiceSearch=useCallback(()=>{
+  const startVoiceSearch=useCallback((target:'from'|'to')=>{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
     if(!SR){alert(isEN()?"Voice search not supported in this browser.":"Bu tarayıcı sesli aramayı desteklemiyor.");return;}
@@ -483,13 +483,27 @@ export default function CampusMap(){
       }).filter(x=>x.s>0).sort((a,b)=>b.s-a.s);
       if(scored.length>0){
         const loc=scored[0].l;
-        setToSearch(locName(loc));setTo(loc);setActiveRouteInput('to');setPanelLoc(loc);
+        if(target==='from'){
+          setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+          if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}
+        } else {
+          setToSearch(locName(loc));setTo(loc);setActiveRouteInput('to');setPanelLoc(loc);
+          // Başlangıç seçilmemişse from inputuna odaklan
+          if(!from&&!fromGPS){
+            setTimeout(()=>document.getElementById('search-input')?.focus(),300);
+          } else if(from||fromGPS){
+            const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
+            const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+            calcRoute(fLa,fLo,loc);setMode('ready');
+          }
+        }
       } else {
-        setToSearch(transcript);setActiveRouteInput('to');
+        if(target==='from'){setFromSearch(transcript);setActiveRouteInput('from');}
+        else{setToSearch(transcript);setActiveRouteInput('to');}
       }
     };
     rec.start();
-  },[]);
+  },[from,fromGPS,to,userPos]); // eslint-disable-line
 
   // GPS güncellenince bearing hesapla (pusula yoksa)
   useEffect(()=>{
@@ -1505,8 +1519,17 @@ export default function CampusMap(){
                   placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
                     background:"#0f172a",border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
-                    borderRadius:10,padding:"11px 14px",color:"#fff",fontSize:14,
+                    borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:14,
                     outline:"none",minHeight:46}}/>
+                {/* Mikrofon butonu – başlangıç */}
+                <button onClick={()=>startVoiceSearch('from')}
+                  style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
+                    background:listening?"#16a34a":"transparent",border:"none",
+                    borderRadius:6,width:30,height:30,cursor:"pointer",
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:16,color:listening?"#fff":"#64748b",padding:0}}>
+                  {listening?"⏹":"🎤"}
+                </button>
                 {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
                   <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
                     background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
@@ -1562,8 +1585,8 @@ export default function CampusMap(){
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
                       borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:14,
                       outline:"none",minHeight:46}}/>
-                  {/* Mikrofon butonu */}
-                  <button onClick={startVoiceSearch}
+                  {/* Mikrofon butonu – varış */}
+                  <button onClick={()=>startVoiceSearch('to')}
                     style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
                       background:listening?"#ef4444":"transparent",border:"none",
                       borderRadius:6,width:30,height:30,cursor:"pointer",

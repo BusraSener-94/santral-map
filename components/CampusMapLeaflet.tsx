@@ -420,17 +420,20 @@ export default function CampusMap(){
     else setToSearch("");
   },[to]);
 
-  // Splash ekranı: oturum başına 1 kez; ilk kez gelenlerde hızlı fade
+  // Splash + init: profil okuma her zaman çalışır; animasyon sadece ilk oturum yükünde
   useEffect(()=>{
-    if(splash==="hidden")return; // sessionStorage'dan zaten hidden başlamış
-    sessionStorage.setItem("splash_shown","1");
     const stored=localStorage.getItem("karpuza_user");
     if(!stored){
+      // İlk kez gelen kullanıcı
       setShowWelcome(true);
-      setSplash("fading");
-      const t=setTimeout(()=>setSplash("hidden"),500);
-      return()=>clearTimeout(t);
+      if(splash!=="hidden"){
+        setSplash("fading");
+        const t=setTimeout(()=>setSplash("hidden"),500);
+        return()=>clearTimeout(t);
+      }
+      return;
     }
+    // Dönen kullanıcı
     const p:UserProfile=JSON.parse(stored);
     setUserProfile(p);
     if(SHEET_URL){
@@ -440,6 +443,8 @@ export default function CampusMap(){
           name:p.name,role:p.role,token:SHEET_TOKEN})
       }).catch(()=>{});
     }
+    if(splash==="hidden")return; // Aynı oturumda yeniden mount → animasyon atla
+    sessionStorage.setItem("splash_shown","1");
     const t1=setTimeout(()=>setSplash("fading"),2800);
     const t2=setTimeout(()=>setSplash("hidden"),3700);
     return()=>{clearTimeout(t1);clearTimeout(t2);};

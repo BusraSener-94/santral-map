@@ -438,7 +438,7 @@ export default function CampusMap(){
     {text:t('onboard0'),target:null},
     {text:t('onboard1'),target:"gps-btn"},
     {text:t('onboard2'),target:null,preview:"to-input"},
-    {text:t('onboard3'),target:null},
+    {text:t('onboard3'),target:null,preview:"cat-row"},
     {text:t('onboard4'),target:null,preview:"from-gps-btn"},
     {text:t('onboard5'),target:null},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
@@ -2190,8 +2190,13 @@ export default function CampusMap(){
               <div style={{flex:1}} onClick={advanceOnboard}/>
             </div>
 
-            {/* Kart – tıklamak ilerletir (Atla hariç) */}
-            <div key={`ob${onboardStep}`} onClick={advanceOnboard}
+            {/* Kart – sağ %67 ilerler, sol %33 geri gider */}
+            <div key={`ob${onboardStep}`} onClick={(e)=>{
+              const r=e.currentTarget.getBoundingClientRect();
+              if(e.clientX-r.left<r.width*0.33&&onboardStep>0)
+                setOnboardStep(s=>s!==null?Math.max(0,s-1):null);
+              else advanceOnboard();
+            }}
               style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:0,
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
                 display:"flex",flexDirection:"column",alignItems:"center",
@@ -2226,13 +2231,20 @@ export default function CampusMap(){
                   ))}
                 </div>
 
-                {/* Atla + ileri */}
+                {/* Geri / Atla + ileri */}
                 <div style={{display:"flex",alignItems:"center",
                   justifyContent:"space-between",width:"100%"}}>
-                  <button onClick={e=>{e.stopPropagation();
-                    localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                    style={{background:"transparent",color:"#94a3b8",border:"none",
-                      fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
+                  {onboardStep>0?(
+                    <button onClick={e=>{e.stopPropagation();
+                      setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
+                      style={{background:"transparent",color:"#94a3b8",border:"none",
+                        fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('onboardBack')}</button>
+                  ):(
+                    <button onClick={e=>{e.stopPropagation();
+                      localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                      style={{background:"transparent",color:"#94a3b8",border:"none",
+                        fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
+                  )}
                   <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
                     {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
                   </span>
@@ -2256,6 +2268,33 @@ export default function CampusMap(){
                       boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
                       animation:"onboard-glow 1.4s ease-in-out infinite"}}>
                       {t('toPlaceholder')}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Panel önizleme – cat-row adımında kategori filtreleri */}
+              {ONBOARD_STEPS[onboardStep]?.preview==="cat-row"&&(
+                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
+                  display:"flex",justifyContent:"center",alignItems:"flex-end",
+                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
+                  <div style={{width:"100%",maxHeight:"100%",
+                    background:"#1e293b",borderRadius:"12px 12px 0 0",
+                    padding:"12px 12px 14px",display:"flex",flexDirection:"column",gap:8,
+                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                    <span style={{color:"#64748b",fontSize:11}}>{t('filterLabel')}</span>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {(['catAll','catEgitsel','catSosyal','catIdari','catIslevsel','catOtopark','catGiris'] as const).map((key,i)=>(
+                        <div key={key} style={{
+                          background:i===2?"#0d9488":"#0f172a",
+                          color:i===2?"#fff":"#94a3b8",
+                          borderRadius:16,padding:"5px 10px",fontSize:11,
+                          border:i===2?"2.5px solid #f97316":"1px solid #1e3a5f",
+                          boxShadow:i===2?"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)":"none",
+                          animation:i===2?"onboard-glow 1.4s ease-in-out infinite":"none"}}>
+                          {t(key)}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -2290,7 +2329,7 @@ export default function CampusMap(){
             </div>
 
             {/* Görsel kapsayıcı spacer – mockup adımlarında boşluğu doldurur */}
-            {(ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"||ONBOARD_STEPS[onboardStep]?.preview==="to-input")&&(
+            {(ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"||ONBOARD_STEPS[onboardStep]?.preview==="to-input"||ONBOARD_STEPS[onboardStep]?.preview==="cat-row")&&(
               <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
                 display:"flex",justifyContent:"center",alignItems:"flex-end",
                 width:"100%",maxWidth:400}}/>

@@ -124,6 +124,7 @@ const TR = {
   // Onboarding navigasyon
   onboardTapStart: "Dokun, başla!",
   onboardTapRight: "Sağa dokun →",
+  onboardBack: "← Geri",
 } as const;
 
 const EN: { [K in keyof typeof TR]: string } = {
@@ -231,6 +232,7 @@ const EN: { [K in keyof typeof TR]: string } = {
 
   onboardTapStart: "Tap to start!",
   onboardTapRight: "Tap right →",
+  onboardBack: "← Back",
 };
 
 type TKeys = keyof typeof TR;

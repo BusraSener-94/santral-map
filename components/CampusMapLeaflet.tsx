@@ -1480,28 +1480,28 @@ export default function CampusMap(){
       )}
 
       {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
-      {(mode==='pickFrom'||mode==='pickTo')&&(
+      {mode==='pickFrom'&&(
         <div style={{position:"absolute",top:68,left:"50%",transform:"translateX(-50%)",
           zIndex:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10,
-          background:mode==='pickFrom'?"#16a34a":"#ef4444",
+          background:"#16a34a",
           borderRadius:20,padding:"14px 20px",width:"80%",maxWidth:320,
           boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
           animation:"onboard-fadein 0.25s ease"}}>
           <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
-            <span style={{fontSize:22}}>{mode==='pickFrom'?"🟢":"🔴"}</span>
+            <span style={{fontSize:22}}>🟢</span>
             <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
-              {mode==='pickFrom'?t('pickFromTitle'):t('pickToTitle')}
+              {t('pickFromTitle')}
             </span>
-            <button onClick={mode==='pickTo'?()=>setMode('idle'):reset}
+            <button onClick={reset}
               style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",
                 minHeight:32,width:32,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
               ✕
             </button>
           </div>
           <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,textAlign:"center",lineHeight:1.6,whiteSpace:"pre-line"}}>
-            {mode==='pickTo'?t('pickToDesc'):t('pickFromDesc')}
+            {t('pickFromDesc')}
           </div>
-          {mode==='pickFrom'&&gpsOn&&userPos&&(
+          {gpsOn&&userPos&&(
             <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}
               style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
                 fontSize:13,padding:"8px 20px",minHeight:36,borderRadius:30,width:"100%"}}>
@@ -1612,7 +1612,7 @@ export default function CampusMap(){
 
 
       {/* ─── Header ─────────────────────────────────────────────────────── */}
-      {mode!=='pickFrom'&&mode!=='pickTo'&&(
+      {mode!=='pickFrom'&&(
         <div style={{position:"fixed",top:0,left:0,right:0,zIndex:10,
           background:"linear-gradient(135deg,#154360,#1a6fa8)",
           padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
@@ -1905,6 +1905,17 @@ export default function CampusMap(){
           {/* PICKTО: Varış noktası arama listesi */}
           {mode==='pickTo'&&(
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <button onClick={()=>setMode('idle')}
+                  style={{...BTN,background:"transparent",color:"#94a3b8",
+                    minHeight:32,padding:"0 10px",fontSize:12,borderRadius:6,flexShrink:0,
+                    border:"1px solid #334155"}}>
+                  ← {isEN()?"Back":"Geri"}
+                </button>
+                <span style={{color:"#f1f5f9",fontSize:13,fontWeight:600,flex:1}}>
+                  🔴 {t('pickToTitle')}
+                </span>
+              </div>
               <input value={search} onChange={e=>setSearch(e.target.value)}
                 placeholder={t('searchDestPlaceholder')}
                 autoFocus

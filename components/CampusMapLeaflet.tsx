@@ -438,7 +438,7 @@ export default function CampusMap(){
     {text:t('onboard1'),target:"gps-btn"},
     {text:t('onboard2'),target:"search-input"},
     {text:t('onboard3'),target:"cat-row"},
-    {text:t('onboard4'),target:"to-input"},
+    {text:t('onboard4'),target:"gps-btn"},
     {text:t('onboard5'),target:"to-input"},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
     {text:t('onboard7'),target:null},
@@ -1651,7 +1651,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Sağ araç çubuğu: zoom + pusula + konuma git ──────────────────── */}
-      <div style={{position:"absolute",right:12,top:82,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
+      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')&&activeStep?145:82,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
         {[["z+","+"],["z-","−"]].map(([id,l])=>(
           <button key={id} id={id} style={{...BTN,width:40,height:40,background:"#1e293b",
             color:"#fff",border:"1px solid #334155",borderRadius:10,minHeight:40,

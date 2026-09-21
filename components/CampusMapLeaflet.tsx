@@ -534,8 +534,8 @@ export default function CampusMap(){
     }
     if(splash==="hidden")return; // Aynı oturumda yeniden mount → animasyon atla
     sessionStorage.setItem("splash_shown","1");
-    const t1=setTimeout(()=>setSplash("fading"),5000);
-    const t2=setTimeout(()=>setSplash("hidden"),5900);
+    const t1=setTimeout(()=>setSplash("fading"),3000);
+    const t2=setTimeout(()=>setSplash("hidden"),3900);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 

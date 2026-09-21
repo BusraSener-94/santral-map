@@ -1518,48 +1518,49 @@ export default function CampusMap(){
       {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
       {(mode==='sim'||mode==='nav')&&activeStep&&(
         <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
-          boxShadow:"0 4px 16px rgba(0,0,0,0.5)"}}>
-          {/* Ana yön kartı */}
-          <div style={{background:"#0d9488",padding:"14px 18px",
-            display:"flex",alignItems:"center",gap:14}}>
-            <div style={{fontSize:52,lineHeight:1,minWidth:56,textAlign:"center",
-              filter:"drop-shadow(0 2px 4px rgba(0,0,0,0.3))"}}>
+          boxShadow:"0 2px 12px rgba(0,0,0,0.45)"}}>
+          {/* Ana yön kartı – kompakt */}
+          <div style={{background:"#0d9488",padding:"9px 12px",
+            display:"flex",alignItems:"center",gap:10}}>
+            <div style={{fontSize:36,lineHeight:1,minWidth:40,textAlign:"center",
+              filter:"drop-shadow(0 1px 3px rgba(0,0,0,0.3))"}}>
               {activeStep.arrow}
             </div>
-            <div style={{flex:1}}>
-              <div style={{color:"#fff",fontSize:20,fontWeight:800,lineHeight:1.2}}>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{color:"#fff",fontSize:16,fontWeight:800,lineHeight:1.2,
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                 {activeStep.text}
               </div>
-              {remM>0&&<div style={{color:"rgba(255,255,255,0.75)",fontSize:13,marginTop:4}}>
+              {remM>0&&<div style={{color:"rgba(255,255,255,0.75)",fontSize:12,marginTop:2}}>
                 ~{remM}m · {remMins} {t('minRemaining')}
               </div>}
             </div>
             {mode==='sim'&&(
-              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0}}>
                 <button id="speed-btn" onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
                   style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
-                    minHeight:36,padding:"0 11px",borderRadius:8,fontSize:13,fontWeight:800}}>
+                    minHeight:32,padding:"0 10px",borderRadius:8,fontSize:12,fontWeight:800}}>
                   {simSpeed}×
                 </button>
                 {simPaused?(
                   <button onClick={resumeSim}
                     style={{...BTN,background:"#16a34a",color:"#fff",
-                      minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>▶</button>
+                      minHeight:36,width:36,borderRadius:"50%",fontSize:16,padding:0}}>▶</button>
                 ):(
                   <button onClick={pauseSim}
                     style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
-                      minHeight:40,width:40,borderRadius:"50%",fontSize:18,padding:0}}>⏸</button>
+                      minHeight:36,width:36,borderRadius:"50%",fontSize:16,padding:0}}>⏸</button>
                 )}
               </div>
             )}
           </div>
-          {/* Sonraki adım */}
+          {/* Sonraki adım – kompakt */}
           {nextStep&&(
-            <div style={{background:"#065f46",padding:"8px 18px 8px 88px",
-              display:"flex",alignItems:"center",gap:8}}>
-              <span style={{color:"rgba(255,255,255,0.6)",fontSize:12,whiteSpace:"nowrap"}}>{t('thenLabel')}</span>
-              <span style={{fontSize:18,color:"rgba(255,255,255,0.85)"}}>{nextStep.arrow}</span>
-              <span style={{fontSize:13,color:"rgba(255,255,255,0.85)",flex:1,
+            <div style={{background:"#065f46",padding:"5px 12px",
+              display:"flex",alignItems:"center",gap:6}}>
+              <span style={{color:"rgba(255,255,255,0.6)",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('thenLabel')}</span>
+              <span style={{fontSize:15,color:"rgba(255,255,255,0.85)",flexShrink:0}}>{nextStep.arrow}</span>
+              <span style={{fontSize:12,color:"rgba(255,255,255,0.85)",
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nextStep.text}</span>
             </div>
           )}
@@ -1569,24 +1570,18 @@ export default function CampusMap(){
       {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
       {stickyNearby&&(
         <div style={{position:"absolute",zIndex:16,
-          top:(mode==='sim'||mode==='nav')&&activeStep?200:70,
-          left:"50%",transform:"translateX(-50%)",
-          pointerEvents:"none"}}>
-          <div style={{background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
-            color:"#fff",padding:"8px 16px",borderRadius:24,
-            display:"flex",alignItems:"center",gap:8,
-            boxShadow:"0 4px 16px rgba(0,0,0,0.5)",
-            border:"1px solid rgba(255,255,255,0.1)",
-            whiteSpace:"nowrap"}}>
-            {stickyNearby.photo?(
-              <img src={stickyNearby.photo} alt={locName(stickyNearby)}
-                style={{width:42,height:42,borderRadius:8,objectFit:"cover",flexShrink:0}}/>
-            ):(
-              <span style={{fontSize:22}}>{stickyNearby.emoji}</span>
-            )}
-            <div>
-              <div style={{fontSize:13,fontWeight:700}}>{locName(stickyNearby)}</div>
-              <div style={{fontSize:10,color:"#94a3b8"}}>{locDesc(stickyNearby).slice(0,40)}</div>
+          top:(mode==='sim'||mode==='nav')&&activeStep?160:70,
+          right:10,
+          pointerEvents:"none",maxWidth:"52vw"}}>
+          <div style={{background:"rgba(15,23,42,0.88)",backdropFilter:"blur(6px)",
+            color:"#fff",padding:"6px 12px",borderRadius:16,
+            display:"flex",alignItems:"center",gap:7,
+            boxShadow:"0 2px 10px rgba(0,0,0,0.4)",
+            border:"1px solid rgba(255,255,255,0.08)"}}>
+            <span style={{fontSize:18,flexShrink:0}}>{stickyNearby.emoji}</span>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:12,fontWeight:700,
+                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{locName(stickyNearby)}</div>
             </div>
           </div>
         </div>
@@ -1595,7 +1590,7 @@ export default function CampusMap(){
       {/* ─── Sesli komut hint toast ─────────────────────────────────────── */}
       {voiceHint&&(
         <div style={{position:"absolute",
-          top:(mode==='nav'||mode==='sim')&&activeStep?192:72,
+          top:(mode==='nav'||mode==='sim')&&activeStep?155:72,
           left:"50%",transform:"translateX(-50%)",
           zIndex:40,background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
           color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:13,

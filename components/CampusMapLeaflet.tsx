@@ -746,6 +746,17 @@ export default function CampusMap(){
 
   const startSim=useCallback(()=>{
     if(!route||route.length<2)return;
+    // GPS konumu varış noktasına yakınsa "Zaten buradasınız"
+    if(fromGPS&&userPos&&to&&hav(userPos[0],userPos[1],to.gps[0],to.gps[1])<ARRIVE_M){
+      setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
+      setTimeout(()=>setVoiceHint(null),3000);
+      setMode('arrived');return;
+    }
+    // Manuel seçimde aynı bina
+    if(!fromGPS&&from&&to&&from.num===to.num){
+      setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");
+      setTimeout(()=>setVoiceHint(null),3000);return;
+    }
     stopSim();
     announcedRef.current.clear();
     const cum=cumRef.current,r=route as [number,number][],total=cum[cum.length-1]??0;
@@ -753,7 +764,7 @@ export default function CampusMap(){
     setSimSpeed(1);simSpeedRef.current=1;
     setSimPos(r[0]);setSimPct(0);setSimPaused(false);simTravRef.current=0;setMode('sim');
     runSimInterval(cum,r,total);
-  },[route,stopSim,runSimInterval]);
+  },[route,stopSim,runSimInterval,from,fromGPS,userPos,to]);// eslint-disable-line
 
   const pauseSim=useCallback(()=>{
     if(simRef.current){clearInterval(simRef.current);simRef.current=null;}
@@ -1998,7 +2009,13 @@ export default function CampusMap(){
                     </button>
                     {/* Gerçek GPS navigasyon */}
                     {gpsOn&&userPos?(
-                      <button onClick={()=>{setFromGPS(true);setMode('nav');}}
+                      <button onClick={()=>{
+                        if(to&&userPos&&hav(userPos[0],userPos[1],to.gps[0],to.gps[1])<ARRIVE_M){
+                          setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
+                          setTimeout(()=>setVoiceHint(null),3000);
+                          setMode('arrived');return;
+                        }
+                        setFromGPS(true);setMode('nav');}}
                         style={{...BTN,flex:1,background:"#3b82f6",color:"#fff",fontSize:13,
                           padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
                         <span style={{fontSize:18}}>🚶</span>

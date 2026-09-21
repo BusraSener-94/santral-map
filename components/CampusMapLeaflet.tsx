@@ -910,11 +910,9 @@ export default function CampusMap(){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     } else if(activeRouteInput){
-      // Klavye açılıyor: görünür viewport'a sığacak yükseklik, max 230px
-      const visH=window.visualViewport?window.visualViewport.height:window.innerHeight;
-      const target=Math.min(230,Math.round(visH*0.42));
+      // Klavye açılıyor: sabit 230px – GPS butonu ve her iki input görünür kalır
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height=`${target}px`;
+      sheetRef.current.style.height="230px";
     }
   },[activeRouteInput,panelLoc]);
 
@@ -1668,7 +1666,7 @@ export default function CampusMap(){
           height:"230px",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
           overflowY:"auto",overflowX:"hidden",
-          transition:"height 0.25s cubic-bezier(0.32,0.72,0,1)"}}
+          transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
         ref={sheetRef}>
 
         {/* Drag handle */}

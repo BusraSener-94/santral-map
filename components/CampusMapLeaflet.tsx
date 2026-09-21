@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useRef, type MutableRefObject } from "react";
+import { createPortal } from "react-dom";
 import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -2121,7 +2122,7 @@ export default function CampusMap(){
       </div>
 
       {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
-      {onboardStep!==null&&(
+      {onboardStep!==null&&typeof document!=="undefined"&&createPortal(
         <>
           {/* 4-div spotlight: hedef dışını karartır, buton tam görünür kalır */}
           {hlRect ? (
@@ -2295,7 +2296,8 @@ export default function CampusMap(){
                 width:"100%",maxWidth:400}}/>
             )}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );

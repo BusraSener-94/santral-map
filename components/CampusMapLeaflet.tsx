@@ -1252,9 +1252,10 @@ export default function CampusMap(){
             {/* Geçilen yol – dynCanvas'ta, simPct değişince sadece bu canvas yeniden çizilir */}
             {passedRoute.length>1&&<Polyline renderer={dynCanvas} positions={passedRoute} interactive={false} smoothFactor={0} pathOptions={{color:"#94a3b8",weight:8,opacity:0.55,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>}
           </>}
-          {simPos&&<Marker position={simPos} icon={PERSON} zIndexOffset={3000}/>}
-          {/* Gerçek GPS – simülasyonda gizle */}
-          {userPos&&mode!=='sim'&&<Marker position={userPos} icon={PERSON} zIndexOffset={2900}/>}
+          {/* Tek Karpuz marker – sim'de simPos, diğerinde userPos */}
+          {(mode==='sim'?simPos:userPos)&&(
+            <Marker position={(mode==='sim'?simPos:userPos)!} icon={PERSON} zIndexOffset={3000}/>
+          )}
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             const showLabel=showLabels||iF||iT;

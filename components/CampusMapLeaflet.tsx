@@ -1675,7 +1675,7 @@ export default function CampusMap(){
             :"0 -4px 24px rgba(0,0,0,0.5)",
           height:"185px",maxHeight:"85dvh",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
-          display:"flex",flexDirection:"column",
+          display:onboardStep!==null?"none":"flex",flexDirection:"column",
           overflow:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
         ref={sheetRef}>

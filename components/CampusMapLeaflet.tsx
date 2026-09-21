@@ -513,13 +513,13 @@ export default function CampusMap(){
   useEffect(()=>{
     const stored=localStorage.getItem("karpuza_user");
     if(!stored){
-      // İlk kez gelen kullanıcı
-      setShowWelcome(true);
+      // İlk kez gelen kullanıcı – 3 sn logo göster, sonra karşılama ekranına geç
       if(splash!=="hidden"){
-        setSplash("fading");
-        const t=setTimeout(()=>setSplash("hidden"),500);
-        return()=>clearTimeout(t);
+        const t1=setTimeout(()=>setSplash("fading"),3000);
+        const t2=setTimeout(()=>{setSplash("hidden");setShowWelcome(true);},3900);
+        return()=>{clearTimeout(t1);clearTimeout(t2);};
       }
+      setShowWelcome(true);
       return;
     }
     // Dönen kullanıcı
@@ -534,8 +534,8 @@ export default function CampusMap(){
     }
     if(splash==="hidden")return; // Aynı oturumda yeniden mount → animasyon atla
     sessionStorage.setItem("splash_shown","1");
-    const t1=setTimeout(()=>setSplash("fading"),4500);
-    const t2=setTimeout(()=>setSplash("hidden"),5400);
+    const t1=setTimeout(()=>setSplash("fading"),7000);
+    const t2=setTimeout(()=>setSplash("hidden"),7900);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 

@@ -17,7 +17,7 @@ const CAMPUS_CENTER: [number, number] = [41.0673, 28.9490];
 const CAMPUS_BOUNDS: [[number,number],[number,number]] = [[41.063, 28.941], [41.071, 28.957]];
 const ARRIVE_M = 40; // metre – bu kadar yaklaşınca "ulaştınız" (GPS sapması için toleranslı)
 
-interface OnboardStep{text:string;target:string|null;ring?:string;}
+interface OnboardStep{text:string;target:string|null;ring?:string;preview?:string;}
 
 // Google Sheets Web App URL
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbx-wzOfRVu_1CIQZzde3r8f1wdsHpSE1MIkxT-PxR3UVLl758OySrZO_P7ZBrlUGFFd/exec";
@@ -438,7 +438,7 @@ export default function CampusMap(){
     {text:t('onboard1'),target:"gps-btn"},
     {text:t('onboard2'),target:"search-input"},
     {text:t('onboard3'),target:"cat-row"},
-    {text:t('onboard4'),target:"from-gps-btn"},
+    {text:t('onboard4'),target:null,preview:"from-gps-btn"},
     {text:t('onboard5'),target:"to-input"},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
     {text:t('onboard7'),target:null},
@@ -2195,7 +2195,8 @@ export default function CampusMap(){
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
                 display:"flex",flexDirection:"column",alignItems:"center",
                 padding:"26px 22px 18px",position:"relative",zIndex:1,
-                flexShrink:0,
+                flexShrink:0,overflow:"hidden",
+                maxHeight:"calc(100dvh - 88px)",
                 cursor:"pointer",animation:"onboard-fadein 0.22s ease"}}>
 
               {/* Üst içerik – flex-shrink:0 */}
@@ -2238,7 +2239,7 @@ export default function CampusMap(){
               </div>
 
               {/* Panel önizleme – yalnızca from-gps-btn adımında */}
-              {ONBOARD_STEPS[onboardStep]?.target==="from-gps-btn"&&(
+              {ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"&&(
                 <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
                   display:"flex",justifyContent:"center",alignItems:"flex-end",
                   width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
@@ -2266,7 +2267,7 @@ export default function CampusMap(){
             </div>
 
             {/* Görsel kapsayıcı spacer – from-gps-btn adımında boşluğu doldurur */}
-            {ONBOARD_STEPS[onboardStep]?.target==="from-gps-btn"&&(
+            {ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"&&(
               <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
                 display:"flex",justifyContent:"center",alignItems:"flex-end",
                 width:"100%",maxWidth:400}}/>

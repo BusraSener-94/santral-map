@@ -2190,7 +2190,10 @@ export default function CampusMap(){
               <div style={{flex:1}} onClick={advanceOnboard}/>
             </div>
 
-            {/* Kart – sağ %67 ilerler, sol %33 geri gider */}
+            {/* ── Kart: 3 katmanlı sabit yükseklik ──────────────────────────── */}
+            {/* Katman 1: Fotoğraf + kaydırılabilir metin (flex:1)            */}
+            {/* Katman 2: Preview – sabit 130px (koşullu)                     */}
+            {/* Katman 3: Footer – grid 3 sütun, asla yerinden oynamaz        */}
             <div key={`ob${onboardStep}`} onClick={(e)=>{
               const r=e.currentTarget.getBoundingClientRect();
               if(e.clientX-r.left<r.width*0.33&&onboardStep>0)
@@ -2199,30 +2202,115 @@ export default function CampusMap(){
             }}
               style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:0,
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
-                display:"flex",flexDirection:"column",alignItems:"center",
-                padding:"26px 22px 18px",position:"relative",zIndex:1,
-                flexShrink:0,overflow:"hidden",
-                maxHeight:"calc(100dvh - 88px)",
-                cursor:"pointer",animation:"onboard-fadein 0.22s ease"}}>
+                display:"flex",flexDirection:"column",
+                position:"relative",zIndex:1,cursor:"pointer",
+                animation:"onboard-fadein 0.22s ease",
+                height:"min(460px,calc(100dvh - 110px))",
+                overflow:"hidden"}}>
 
-              {/* Üst içerik – flex-shrink:0 */}
-              <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
-                {/* Karpuz fotoğrafı */}
-                <div style={{width:84,height:84,borderRadius:"50%",overflow:"hidden",
-                  background:"#bbf7d0",marginBottom:14,flexShrink:0,
+              {/* ── Katman 1: Fotoğraf + metin ────────────────────────────── */}
+              <div style={{flex:1,minHeight:0,overflow:"hidden",
+                display:"flex",flexDirection:"column",alignItems:"center",
+                padding:"22px 22px 0"}}>
+                <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
+                  background:"#bbf7d0",marginBottom:12,flexShrink:0,
                   boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
                   <img src="/karpuz-karsilama.png" alt="Karpuz"
                     style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 </div>
-
-                {/* Metin */}
-                <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
-                  textAlign:"center",marginBottom:14,whiteSpace:"pre-line"}}>
-                  {ONBOARD_STEPS[onboardStep].text}
+                <div style={{flex:1,overflowY:"auto",width:"100%",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  paddingBottom:8}}>
+                  <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
+                    textAlign:"center",whiteSpace:"pre-line"}}>
+                    {ONBOARD_STEPS[onboardStep].text}
+                  </div>
                 </div>
+              </div>
 
-                {/* Dot progress */}
-                <div style={{display:"flex",gap:5,marginBottom:14}}>
+              {/* ── Katman 2: Preview – sabit 130px ───────────────────────── */}
+              {ONBOARD_STEPS[onboardStep]?.preview&&(
+                <div style={{height:130,flexShrink:0,overflow:"hidden",
+                  display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+
+                  {ONBOARD_STEPS[onboardStep].preview==="to-input"&&(
+                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
+                      padding:"10px 14px 14px",display:"flex",flexDirection:"column",gap:6,
+                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                        color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
+                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                        color:"rgba(255,255,255,0.75)",fontSize:12,
+                        border:"2.5px solid #f97316",
+                        boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
+                        animation:"onboard-glow 1.4s ease-in-out infinite"}}>
+                        {t('toPlaceholder')}
+                      </div>
+                    </div>
+                  )}
+
+                  {ONBOARD_STEPS[onboardStep].preview==="cat-row"&&(
+                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
+                      padding:"12px 14px 14px",display:"flex",flexDirection:"column",gap:8,
+                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                      <span style={{color:"#64748b",fontSize:11}}>{t('filterLabel')}</span>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {(['catAll','catEgitsel','catSosyal','catIdari','catIslevsel','catOtopark','catGiris'] as const).map((key,i)=>(
+                          <div key={key} style={{
+                            background:i===2?"#0d9488":"#0f172a",
+                            color:i===2?"#fff":"#94a3b8",
+                            borderRadius:16,padding:"5px 10px",fontSize:11,
+                            border:i===2?"2.5px solid #f97316":"1px solid #1e3a5f",
+                            boxShadow:i===2?"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)":"none",
+                            animation:i===2?"onboard-glow 1.4s ease-in-out infinite":"none"}}>
+                            {t(key)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {ONBOARD_STEPS[onboardStep].preview==="from-gps-btn"&&(
+                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
+                      padding:"10px 14px 14px",display:"flex",flexDirection:"column",gap:6,
+                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                        color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
+                      <div style={{
+                        background:"#0d9488",borderRadius:20,padding:"9px 16px",
+                        display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                        color:"#fff",fontWeight:700,fontSize:13,
+                        border:"2.5px solid #f97316",
+                        boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
+                        animation:"onboard-glow 1.4s ease-in-out infinite"}}>
+                        <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
+                        {t('startFromLocation')}
+                      </div>
+                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                        color:"#475569",fontSize:12}}>{t('toPlaceholder')}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Katman 3: Footer – 3 sütun grid, asla kayamaz ────────── */}
+              <div style={{flexShrink:0,padding:"10px 18px 16px",
+                borderTop:"1px solid #f1f5f9",
+                display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center"}}>
+                <div style={{justifySelf:"start" as const}}>
+                  {onboardStep>0?(
+                    <button onClick={e=>{e.stopPropagation();
+                      setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
+                      style={{background:"transparent",color:"#94a3b8",border:"none",
+                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('onboardBack')}</button>
+                  ):(
+                    <button onClick={e=>{e.stopPropagation();
+                      localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                      style={{background:"transparent",color:"#94a3b8",border:"none",
+                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('btnSkip')}</button>
+                  )}
+                </div>
+                <div style={{justifySelf:"center" as const,display:"flex",gap:5}}>
                   {ONBOARD_STEPS.map((_,i)=>(
                     <div key={i} style={{height:6,borderRadius:3,
                       width:i===onboardStep?20:6,
@@ -2230,110 +2318,13 @@ export default function CampusMap(){
                       transition:"all 0.2s ease"}}/>
                   ))}
                 </div>
-
-                {/* Geri / Atla + ileri */}
-                <div style={{display:"flex",alignItems:"center",
-                  justifyContent:"space-between",width:"100%"}}>
-                  {onboardStep>0?(
-                    <button onClick={e=>{e.stopPropagation();
-                      setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
-                      style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('onboardBack')}</button>
-                  ):(
-                    <button onClick={e=>{e.stopPropagation();
-                      localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                      style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
-                  )}
+                <div style={{justifySelf:"end" as const}}>
                   <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
                     {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
                   </span>
                 </div>
               </div>
-
-              {/* Panel önizleme – to-input adımında Varış inputu vurgulu */}
-              {ONBOARD_STEPS[onboardStep]?.preview==="to-input"&&(
-                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
-                  display:"flex",justifyContent:"center",alignItems:"flex-end",
-                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
-                  <div style={{width:"100%",maxHeight:"100%",
-                    background:"#1e293b",borderRadius:"12px 12px 0 0",
-                    padding:"10px 12px 14px",display:"flex",flexDirection:"column",gap:6,
-                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                      color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
-                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                      color:"rgba(255,255,255,0.75)",fontSize:12,
-                      border:"2.5px solid #f97316",
-                      boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
-                      animation:"onboard-glow 1.4s ease-in-out infinite"}}>
-                      {t('toPlaceholder')}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Panel önizleme – cat-row adımında kategori filtreleri */}
-              {ONBOARD_STEPS[onboardStep]?.preview==="cat-row"&&(
-                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
-                  display:"flex",justifyContent:"center",alignItems:"flex-end",
-                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
-                  <div style={{width:"100%",maxHeight:"100%",
-                    background:"#1e293b",borderRadius:"12px 12px 0 0",
-                    padding:"12px 12px 14px",display:"flex",flexDirection:"column",gap:8,
-                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                    <span style={{color:"#64748b",fontSize:11}}>{t('filterLabel')}</span>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {(['catAll','catEgitsel','catSosyal','catIdari','catIslevsel','catOtopark','catGiris'] as const).map((key,i)=>(
-                        <div key={key} style={{
-                          background:i===2?"#0d9488":"#0f172a",
-                          color:i===2?"#fff":"#94a3b8",
-                          borderRadius:16,padding:"5px 10px",fontSize:11,
-                          border:i===2?"2.5px solid #f97316":"1px solid #1e3a5f",
-                          boxShadow:i===2?"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)":"none",
-                          animation:i===2?"onboard-glow 1.4s ease-in-out infinite":"none"}}>
-                          {t(key)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Panel önizleme – yalnızca from-gps-btn adımında */}
-              {ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"&&(
-                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
-                  display:"flex",justifyContent:"center",alignItems:"flex-end",
-                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
-                  <div style={{width:"100%",maxHeight:"100%",objectFit:"contain",
-                    background:"#1e293b",borderRadius:"12px 12px 0 0",
-                    padding:"10px 12px 14px",display:"flex",flexDirection:"column",gap:6,
-                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                      color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
-                    <div style={{
-                      background:"#0d9488",borderRadius:20,padding:"9px 16px",
-                      display:"flex",alignItems:"center",justifyContent:"center",gap:6,
-                      color:"#fff",fontWeight:700,fontSize:13,
-                      border:"2.5px solid #f97316",
-                      boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
-                      animation:"onboard-glow 1.4s ease-in-out infinite"}}>
-                      <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
-                      {t('startFromLocation')}
-                    </div>
-                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                      color:"#475569",fontSize:12}}>{t('toPlaceholder')}</div>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {/* Görsel kapsayıcı spacer – mockup adımlarında boşluğu doldurur */}
-            {(ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"||ONBOARD_STEPS[onboardStep]?.preview==="to-input"||ONBOARD_STEPS[onboardStep]?.preview==="cat-row")&&(
-              <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
-                display:"flex",justifyContent:"center",alignItems:"flex-end",
-                width:"100%",maxWidth:400}}/>
-            )}
           </div>
         </>,
         document.body

@@ -355,8 +355,8 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
   const col=isF?"#16a34a":isT?"#ef4444":(CAT[loc.cats[0]]?.c??"#3b82f6");
   if(!showLabel&&!loc.logo){
     return L.divIcon({
-      html:`<div style="width:13px;height:13px;border-radius:50%;background:${col};border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.6);"></div>`,
-      className:"",iconSize:[13,13],iconAnchor:[6,6],
+      html:`<div style="width:9px;height:9px;border-radius:50%;background:${col};border:2px solid rgba(255,255,255,0.8);box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>`,
+      className:"",iconSize:[9,9],iconAnchor:[4,4],
     });
   }
   if(loc.logo){
@@ -367,15 +367,15 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
       className:"",iconSize:[sz,sz],iconAnchor:[half,half],
     });
   }
-  const bg=isF?"#16a34a":isT?"#ef4444":"#fff";
-  const tc=isF||isT?"#fff":"#1e293b";
-  const sh=isF||isT?"0 2px 6px rgba(0,0,0,0.4)":"0 1px 4px rgba(0,0,0,0.18)";
+  const bg=isF?"#16a34a":isT?"#ef4444":"rgba(15,23,42,0.72)";
+  const tc="#fff";
+  const sh=isF||isT?"0 2px 6px rgba(0,0,0,0.4)":"0 1px 3px rgba(0,0,0,0.3)";
   return L.divIcon({
     html:`<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
-      <div style="background:${bg};color:${tc};font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;box-shadow:${sh};">${locName(loc)}</div>
-      <div style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.5);"></div>
+      <div style="background:${bg};color:${tc};font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;box-shadow:${sh};backdrop-filter:blur(4px);">${locName(loc)}</div>
+      <div style="width:9px;height:9px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
     </div>`,
-    className:"",iconSize:[90,28],iconAnchor:[45,26],
+    className:"",iconSize:[90,26],iconAnchor:[45,24],
   });
 }
 function ZoomWatcher({setShowLabels}:{setShowLabels:(v:boolean)=>void}){
@@ -472,6 +472,7 @@ export default function CampusMap(){
   const[isMuted,setIsMuted]=useState(false);
   const[listening,setListening]=useState(false);
   const[voiceHint,setVoiceHint]=useState<string|null>(null);
+  const voiceHintTextRef=useRef<string>('');
   const[editingTo,setEditingTo]=useState(false);
   const[editToSearch,setEditToSearch]=useState("");
 
@@ -1595,18 +1596,19 @@ export default function CampusMap(){
       {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
       {/* stickyNearby kaldırıldı – görsel gürültü */}
 
-      {/* ─── Sesli komut hint toast ─────────────────────────────────────── */}
-      {voiceHint&&(
-        <div style={{position:"absolute",
-          top:(mode==='nav'||mode==='sim')&&activeStep?155:72,
-          left:"50%",transform:"translateX(-50%)",
-          zIndex:40,background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
-          color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:13,
-          boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",
-          animation:"onboard-fadein .25s ease"}}>
-          {voiceHint}
-        </div>
-      )}
+      {/* ─── Sesli komut hint toast – sabit HUD, harita konumundan bağımsız ── */}
+      {(()=>{if(voiceHint)voiceHintTextRef.current=voiceHint;return null;})()}
+      <div style={{position:"fixed",
+        top:(mode==='nav'||mode==='sim')&&activeStep?155:100,
+        left:"50%",transform:"translateX(-50%)",
+        zIndex:40,background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
+        color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:13,
+        boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",
+        pointerEvents:"none",
+        opacity:voiceHint?1:0,
+        transition:"opacity 0.35s ease"}}>
+        {voiceHintTextRef.current}
+      </div>
 
 
       {/* ─── Header ─────────────────────────────────────────────────────── */}

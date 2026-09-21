@@ -138,12 +138,20 @@ function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
 }
 
 // Navigasyon sırasında haritayı kullanıcı konumuna kilitle
-function MapFollower({pos,active}:{pos:[number,number]|null;active:boolean}){
+// autoTrack=false iken panTo yapılmaz; kullanıcı serbest dolaşabilir
+function MapFollower({pos,active,autoTrack,onDrag}:{
+  pos:[number,number]|null;active:boolean;autoTrack:boolean;onDrag:()=>void;
+}){
   const m=useMap();
   useEffect(()=>{
-    if(!active||!pos)return;
+    if(!active||!pos||!autoTrack)return;
     m.panTo(pos,{animate:true,duration:0.5});
-  },[active,pos,m]);
+  },[active,pos,m,autoTrack]);
+  useEffect(()=>{
+    if(!active)return;
+    m.on('dragstart',onDrag);
+    return()=>{m.off('dragstart',onDrag);};
+  },[active,m,onDrag]);
   return null;
 }
 
@@ -452,6 +460,10 @@ export default function CampusMap(){
   const[stickyNearby,setStickyNearby]=useState<Loc|null>(null);
   const stickyNearbyTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const nearbyLockUntilRef=useRef<number>(0);
+  const[autoTrack,setAutoTrack]=useState(true);
+  const handleMapDrag=useCallback(()=>setAutoTrack(false),[]);
+  // nav/sim başladığında takibi aç
+  useEffect(()=>{if(mode==='nav'||mode==='sim')setAutoTrack(true);},[mode]);
   const[gpsError,setGpsError]=useState<string|null>(null);
   const[showKarpuzIntro,setShowKarpuzIntro]=useState(false);
   const[fromSearch,setFromSearch]=useState("");
@@ -1311,7 +1323,7 @@ export default function CampusMap(){
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>
-          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'}/>
+          <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} autoTrack={autoTrack} onDrag={handleMapDrag}/>
         </MapContainer>
       </div>
 
@@ -1674,6 +1686,14 @@ export default function CampusMap(){
             style={{...BTN,width:40,height:40,background:"#1e293b",
               border:"1px solid #334155",borderRadius:10,minHeight:40,
               boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📍</button>
+        )}
+        {/* Merkeze Dön – kullanıcı nav/sim sırasında haritayı kaydırdığında çıkar */}
+        {!autoTrack&&(mode==='nav'||mode==='sim')&&(
+          <button onClick={()=>setAutoTrack(true)}
+            style={{...BTN,width:40,height:40,background:"#0d9488",
+              border:"none",borderRadius:10,minHeight:40,
+              boxShadow:"0 2px 8px rgba(0,0,0,0.4),0 0 0 2px #5eead4",
+              fontSize:20,color:"#fff",animation:"onboard-fadein 0.18s ease"}}>⊙</button>
         )}
       </div>
 

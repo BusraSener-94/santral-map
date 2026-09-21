@@ -688,10 +688,11 @@ export default function CampusMap(){
   // ── Rota hesapla ──
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
-    // Başlangıç ile varış aynı noktaysa uyar
-    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005){
-      setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");
+    // Başlangıç zaten varış noktasına çok yakınsa → direkt "ulaştınız"
+    if(hav(fLat,fLon,tLa,tLo)<ARRIVE_M){
+      setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
       setTimeout(()=>setVoiceHint(null),3000);
+      setMode('arrived');
       return;
     }
     const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
@@ -702,12 +703,12 @@ export default function CampusMap(){
     setMode('ready');
   },[gd,adList]);
 
-  // FROM veya GPS değişince rota yeniden hesapla
+  // FROM veya GPS değişince rota yeniden hesapla (arrived/nav/sim'de tekrar hesaplanmasın)
   useEffect(()=>{
-    if(!to)return;
+    if(!to||mode==='arrived'||mode==='nav'||mode==='sim')return;
     if(fromGPS&&userPos)calcRoute(userPos[0],userPos[1],to);
     else if(from&&!fromGPS)calcRoute(from.gps[0],from.gps[1],to);
-  },[from,fromGPS,userPos,to,calcRoute]);// eslint-disable-line
+  },[from,fromGPS,userPos,to,mode,calcRoute]);// eslint-disable-line
 
   // ── Simülasyon ──
   const stopSim=useCallback(()=>{

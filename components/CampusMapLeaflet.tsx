@@ -688,8 +688,12 @@ export default function CampusMap(){
   // ── Rota hesapla ──
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
-    // Başlangıç ile varış aynı noktaysa hesaplama
-    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005)return;
+    // Başlangıç ile varış aynı noktaysa uyar
+    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005){
+      setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");
+      setTimeout(()=>setVoiceHint(null),3000);
+      return;
+    }
     const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
     const s=steps(pts);setNavSteps(s);setCurStepIdx(0);
@@ -1730,7 +1734,9 @@ export default function CampusMap(){
                     maxHeight:140,overflowY:"auto"}}>
                     {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(fromSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
                       <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                        onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+                        onClick={()=>{
+                          if(to&&loc.num===to.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
+                          setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
                           if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}}}
                         style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
                           background:"transparent",border:"none",
@@ -1804,7 +1810,9 @@ export default function CampusMap(){
                       maxHeight:200,overflowY:"auto"}}>
                       {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
                         <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                          onClick={()=>{setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+                          onClick={()=>{
+                            if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
+                            setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
                             const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
                             const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
                             if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}

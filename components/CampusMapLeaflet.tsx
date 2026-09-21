@@ -619,10 +619,12 @@ export default function CampusMap(){
           // Başlangıç seçilmemişse from inputuna odaklan
           if(!from&&!fromGPS){
             setTimeout(()=>document.getElementById('search-input')?.focus(),300);
-          } else if(from||fromGPS){
-            const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-            const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
+          } else if(from||(fromGPS&&userPos)){
+            const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+            const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
             calcRoute(fLa,fLo,loc);setMode('ready');
+          } else if(fromGPS&&!userPos){
+            setMode('pickFrom');
           }
         }
       } else {
@@ -688,6 +690,7 @@ export default function CampusMap(){
   // ── Rota hesapla ──
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
+    if(!fLat&&!fLon)return; // GPS henüz gelmemişse [0,0] geçersizdir
     if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005)return;
     const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
@@ -729,7 +732,7 @@ export default function CampusMap(){
       const step=(83/60)*(TICK/1000)*8*simSpeedRef.current;
       simTravRef.current+=step;
       const trav=simTravRef.current;
-      if(trav>=total){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('arrived');return;}
+      if(trav>=total||total<=0){clearInterval(simRef.current!);simRef.current=null;setSimPos(null);setSimPct(100);setMode('arrived');return;}
       setSimPct(Math.round((trav/total)*100));
       for(let i=1;i<cum.length;i++){
         if(cum[i]>=trav){
@@ -746,6 +749,7 @@ export default function CampusMap(){
     stopSim();
     announcedRef.current.clear();
     const cum=cumRef.current,r=route as [number,number][],total=cum[cum.length-1]??0;
+    if(total<=0){setMode('arrived');return;}
     setSimSpeed(1);simSpeedRef.current=1;
     setSimPos(r[0]);setSimPct(0);setSimPaused(false);simTravRef.current=0;setMode('sim');
     runSimInterval(cum,r,total);
@@ -815,9 +819,11 @@ export default function CampusMap(){
     if(mode==='pickFrom'){setPanelLoc(loc);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
     if(mode==='pickTo'){
       setPanelLoc(loc);setTo(loc);
-      const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-      const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-      calcRoute(fLa,fLo,loc);
+      if(from||(fromGPS&&userPos)){
+        const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+        const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+        calcRoute(fLa,fLo,loc);
+      }
       return;
     }
     // Diğer tüm modlarda (idle, ready, sim, nav, arrived) bina modalı aç
@@ -1793,10 +1799,11 @@ export default function CampusMap(){
                       const match=LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase()))[0];
                       if(!match)return;
                       setTo(match);setToSearch(locName(match));setActiveRouteInput(null);
-                      const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-                      const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                      if(from||fromGPS){calcRoute(fLa,fLo,match);setMode('ready');}
-                      else{setMode('pickFrom');}
+                      if(from||(fromGPS&&userPos)){
+                        const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                        const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                        calcRoute(fLa,fLo,match);setMode('ready');
+                      } else {setMode('pickFrom');}
                     }}
                     placeholder={t('toPlaceholder')}
                     style={{width:"100%",boxSizing:"border-box",
@@ -1821,9 +1828,12 @@ export default function CampusMap(){
                           onClick={()=>{
                             if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
                             setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
-                            const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-                            const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                            if(from||fromGPS){calcRoute(fLa,fLo,loc);setMode('ready');}}}
+                            if(from||(fromGPS&&userPos)){
+                              const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                              const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                              calcRoute(fLa,fLo,loc);setMode('ready');
+                            } else if(fromGPS&&!userPos){setMode('pickFrom');}}}
+
                           style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
                             background:"transparent",border:"none",
                             borderBottom:i<arr.length-1?"1px solid #334155":"none",
@@ -1923,9 +1933,11 @@ export default function CampusMap(){
                             <button key={loc.num} onMouseDown={e=>e.preventDefault()}
                               onClick={()=>{
                                 setTo(loc);setToSearch(locName(loc));setEditingTo(false);setEditToSearch("");setPanelLoc(loc);
-                                const fLa=fromGPS&&userPos?userPos[0]:from?.gps[0]??0;
-                                const fLo=fromGPS&&userPos?userPos[1]:from?.gps[1]??0;
-                                calcRoute(fLa,fLo,loc);setMode('ready');
+                                if(from||(fromGPS&&userPos)){
+                                  const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                                  const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                                  calcRoute(fLa,fLo,loc);setMode('ready');
+                                }
                               }}
                               style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
                                 background:"transparent",border:"none",

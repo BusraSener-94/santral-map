@@ -2297,18 +2297,17 @@ export default function CampusMap(){
               <div style={{flexShrink:0,padding:"10px 18px 16px",
                 borderTop:"1px solid #f1f5f9",
                 display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center"}}>
-                <div style={{justifySelf:"start" as const}}>
-                  {onboardStep>0?(
+                <div style={{justifySelf:"start" as const,display:"flex",flexDirection:"column",alignItems:"flex-start",gap:0}}>
+                  {onboardStep>0&&(
                     <button onClick={e=>{e.stopPropagation();
                       setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
                       style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('onboardBack')}</button>
-                  ):(
-                    <button onClick={e=>{e.stopPropagation();
-                      localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                      style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('btnSkip')}</button>
+                        fontSize:12,cursor:"pointer",padding:"2px 0"}}>{t('onboardBack')}</button>
                   )}
+                  <button onClick={e=>{e.stopPropagation();
+                    localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                    style={{background:"transparent",color:"#94a3b8",border:"none",
+                      fontSize:12,cursor:"pointer",padding:"2px 0"}}>{t('btnSkip')}</button>
                 </div>
                 <div style={{justifySelf:"center" as const,display:"flex",gap:5}}>
                   {ONBOARD_STEPS.map((_,i)=>(

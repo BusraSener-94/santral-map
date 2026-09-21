@@ -9,7 +9,8 @@ import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
 import { t, greetUser, tFloor, tCat, isEN, setLang } from "../lib/i18n";
 
-type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string};
+type Occupant={name:string;title:string};
+type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string;occupants?:Occupant[]};
 type RoomsData=Record<string,Record<string,RoomEntry[]>>;
 const ROOMS=ROOMS_RAW as RoomsData;
 
@@ -310,6 +311,50 @@ const CAT_LABELS = {
   otopark: t('catOtopark'),
   giriş:   t('catGiris'),
 } as const;
+function RoomRow({r,roomKey,expanded,onToggle,dark}:{
+  r:RoomEntry;roomKey:string;expanded:boolean;onToggle:(k:string)=>void;dark?:boolean;
+}){
+  const hasOcc=!!r.occupants?.length;
+  const baseTxt=dark?"#e2e8f0":"#1e293b";
+  const subTxt=dark?"#94a3b8":"#475569";
+  const divider=dark?"#1e293b":"#f8fafc";
+  return(
+    <div style={{borderBottom:`1px solid ${divider}`}}>
+      <div style={{display:"flex",gap:6,alignItems:"center",padding:"3px 6px",
+        background:expanded?(dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)"):"transparent",
+        transition:"background 0.15s"}}>
+        <span style={{color:baseTxt,fontWeight:700,minWidth:48,flexShrink:0,fontSize:dark?11:12}}>{r.oda}</span>
+        <span style={{color:subTxt,flex:1,overflow:"hidden",textOverflow:"ellipsis",
+          whiteSpace:"nowrap",fontSize:dark?11:12}}>{r.label===r.cat?tCat(r.label):r.label}</span>
+        {r.cap&&(
+          <button
+            onClick={()=>hasOcc&&onToggle(roomKey)}
+            style={{display:"flex",alignItems:"center",gap:3,
+              background:expanded?(dark?"rgba(99,102,241,0.2)":"rgba(99,102,241,0.12)"):"transparent",
+              border:"none",borderRadius:6,padding:"2px 5px",
+              cursor:hasOcc?"pointer":"default",
+              color:hasOcc?(expanded?"#818cf8":dark?"#64748b":"#6366f1"):subTxt,
+              fontSize:dark?10:11,fontWeight:hasOcc?700:400,
+              transition:"background 0.15s,color 0.15s",flexShrink:0}}>
+            {r.cap}<span style={{fontSize:dark?10:11}}>👤</span>
+            {hasOcc&&<span style={{fontSize:9,opacity:0.7,marginLeft:1}}>{expanded?"▲":"▼"}</span>}
+          </button>
+        )}
+      </div>
+      {expanded&&hasOcc&&(
+        <div style={{padding:"4px 6px 6px 54px",background:dark?"rgba(99,102,241,0.06)":"rgba(99,102,241,0.04)"}}>
+          {r.occupants!.map((o,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"baseline",gap:6,
+              padding:"3px 0",borderBottom:i<r.occupants!.length-1?`1px solid ${divider}`:"none"}}>
+              <span style={{fontSize:dark?11:12,color:baseTxt,fontWeight:600,flex:1}}>{o.name}</span>
+              <span style={{fontSize:dark?10:11,color:subTxt,flexShrink:0}}>{o.title}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
   {num:1, name:"Cami Tarafı Giriş",  nameEN:"West Gate",           gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",descEN:"West main campus entrance gate near the mosque.",photo:"/buildings/cami-giris.jpg",photos:["/buildings/cami-giris.jpg","/buildings/cami-giris2.jpg"]},
@@ -489,6 +534,8 @@ export default function CampusMap(){
   const voiceHintTextRef=useRef<string>('');
   const[editingTo,setEditingTo]=useState(false);
   const[editToSearch,setEditToSearch]=useState("");
+  const[expandedRoomKey,setExpandedRoomKey]=useState<string|null>(null);
+  const toggleRoom=(k:string)=>setExpandedRoomKey(p=>p===k?null:k);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -1463,15 +1510,11 @@ export default function CampusMap(){
                           background:"#f1f5f9",padding:"3px 8px",borderRadius:6,marginBottom:4}}>
                           {tFloor(floor)}
                         </div>
-                        {(rooms as RoomEntry[]).map((r,i)=>(
-                          <div key={i} style={{display:"flex",gap:6,alignItems:"baseline",
-                            padding:"3px 6px",borderBottom:"1px solid #f8fafc"}}>
-                            <span style={{color:"#1e293b",fontWeight:700,minWidth:48,flexShrink:0,fontSize:12}}>{r.oda}</span>
-                            <span style={{color:"#475569",flex:1,overflow:"hidden",
-                              textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:12}}>{r.label===r.cat?tCat(r.label):r.label}</span>
-                            {r.cap&&<span style={{color:"#94a3b8",flexShrink:0,fontSize:11}}>{r.cap}👤</span>}
-                          </div>
-                        ))}
+                        {(rooms as RoomEntry[]).map((r,i)=>{
+                          const rk=`sel_${selectedLoc.num}_${floor}_${i}`;
+                          return<RoomRow key={rk} r={r} roomKey={rk}
+                            expanded={expandedRoomKey===rk} onToggle={toggleRoom}/>;
+                        })}
                       </div>
                     ))}
                   </div>
@@ -2151,14 +2194,11 @@ export default function CampusMap(){
                         background:"#0f172a",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
                         {tFloor(floor)}
                       </div>
-                      {(rooms as RoomEntry[]).map((r,i)=>(
-                        <div key={i} style={{display:"flex",gap:6,padding:"2px 4px",
-                          borderBottom:"1px solid #1e293b",alignItems:"baseline"}}>
-                          <span style={{color:"#e2e8f0",fontWeight:700,minWidth:42,flexShrink:0,fontSize:11}}>{r.oda}</span>
-                          <span style={{color:"#94a3b8",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{r.label===r.cat?tCat(r.label):r.label}</span>
-                          {r.cap&&<span style={{color:"#475569",flexShrink:0,fontSize:10}}>{r.cap}👤</span>}
-                        </div>
-                      ))}
+                      {(rooms as RoomEntry[]).map((r,i)=>{
+                        const rk=`pan_${panelLoc.num}_${floor}_${i}`;
+                        return<RoomRow key={rk} r={r} roomKey={rk}
+                          expanded={expandedRoomKey===rk} onToggle={toggleRoom} dark/>;
+                      })}
                     </div>
                   ))}
                 </div>

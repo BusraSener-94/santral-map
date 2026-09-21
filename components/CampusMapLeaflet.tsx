@@ -1294,7 +1294,9 @@ export default function CampusMap(){
           )}
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
-            const showLabel=showLabels||iF||iT;
+            // Nav/sim'de sadece varış etiketi, diğerleri gizli
+            const navActive=mode==='nav'||mode==='sim';
+            const showLabel=navActive?iT:(showLabels||iF||iT);
             return(
               <Marker key={loc.num} position={loc.gps} icon={mkIcon(loc,iF,iT,showLabel)}
                 zIndexOffset={(iF||iT)?1000:0}
@@ -1580,7 +1582,7 @@ export default function CampusMap(){
       {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
       {stickyNearby&&(
         <div style={{position:"absolute",zIndex:16,
-          top:(mode==='sim'||mode==='nav')&&activeStep?170:70,
+          top:(mode==='sim'||mode==='nav')&&activeStep?200:70,
           left:"50%",transform:"translateX(-50%)",
           pointerEvents:"none"}}>
           <div style={{background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
@@ -1605,7 +1607,9 @@ export default function CampusMap(){
 
       {/* ─── Sesli komut hint toast ─────────────────────────────────────── */}
       {voiceHint&&(
-        <div style={{position:"absolute",top:72,left:"50%",transform:"translateX(-50%)",
+        <div style={{position:"absolute",
+          top:(mode==='nav'||mode==='sim')&&activeStep?192:72,
+          left:"50%",transform:"translateX(-50%)",
           zIndex:40,background:"rgba(15,23,42,0.92)",backdropFilter:"blur(8px)",
           color:"#fff",padding:"8px 18px",borderRadius:20,fontSize:13,
           boxShadow:"0 4px 16px rgba(0,0,0,0.5)",whiteSpace:"nowrap",
@@ -2079,7 +2083,7 @@ export default function CampusMap(){
           )}
 
           {/* Panel içi bina detay kartı – klavye kapalıyken */}
-          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom'||mode==='sim'||mode==='nav')&&(
+          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               <PhotoGallery loc={panelLoc} height={110}/>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>

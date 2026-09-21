@@ -688,13 +688,7 @@ export default function CampusMap(){
   // ── Rota hesapla ──
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
-    // Başlangıç zaten varış noktasına çok yakınsa → direkt "ulaştınız"
-    if(hav(fLat,fLon,tLa,tLo)<ARRIVE_M){
-      setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
-      setTimeout(()=>setVoiceHint(null),3000);
-      setMode('arrived');
-      return;
-    }
+    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005)return;
     const pts=gd&&adList?dijk(gd,adList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
     const s=steps(pts);setNavSteps(s);setCurStepIdx(0);
@@ -709,6 +703,19 @@ export default function CampusMap(){
     if(fromGPS&&userPos)calcRoute(userPos[0],userPos[1],to);
     else if(from&&!fromGPS)calcRoute(from.gps[0],from.gps[1],to);
   },[from,fromGPS,userPos,to,mode,calcRoute]);// eslint-disable-line
+
+  // GPS başlangıç + varış noktasına çok yakınsa → "Zaten buradasınız" (bir kez göster)
+  const arrivedAlertedRef=useRef(false);
+  useEffect(()=>{
+    if(!to||!userPos||!fromGPS)return;
+    if(mode==='arrived'||mode==='sim'){arrivedAlertedRef.current=false;return;}
+    if(hav(userPos[0],userPos[1],to.gps[0],to.gps[1])<ARRIVE_M&&!arrivedAlertedRef.current){
+      arrivedAlertedRef.current=true;
+      setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
+      setTimeout(()=>setVoiceHint(null),3000);
+      setMode('arrived');
+    }
+  },[userPos,to,fromGPS,mode]); // eslint-disable-line
 
   // ── Simülasyon ──
   const stopSim=useCallback(()=>{

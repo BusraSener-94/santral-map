@@ -923,8 +923,16 @@ export default function CampusMap(){
     const onVVChange=()=>{
       if(!sheetRef.current)return;
       const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
-      sheetRef.current.style.bottom=kbH>50?`${kbH}px`:'0px';
-      if(kbH>50){window.scrollTo(0,0);document.body.scrollTop=0;}
+      if(kbH>50){
+        sheetRef.current.style.bottom=`${kbH}px`;
+        // Klavye açıkken panel görünür viewport'u taşmasın
+        const maxH=Math.round(vv.height*0.85);
+        const curH=parseInt(sheetRef.current.style.height||"230");
+        if(curH>maxH)sheetRef.current.style.height=`${maxH}px`;
+        window.scrollTo(0,0);document.body.scrollTop=0;
+      } else {
+        sheetRef.current.style.bottom='0px';
+      }
     };
     vv.addEventListener('resize',onVVChange);
     vv.addEventListener('scroll',onVVChange);

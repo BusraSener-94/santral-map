@@ -1,4 +1,4 @@
-const CACHE = 'santral-v315';
+const CACHE = 'santral-v316';
 const TILE_CACHE = 'tiles-v1';
 const PRECACHE = ['/', '/campus_graph.json'];
 

@@ -439,7 +439,7 @@ export default function CampusMap(){
     {text:t('onboard2'),target:"search-input"},
     {text:t('onboard3'),target:"cat-row"},
     {text:t('onboard4'),target:null,preview:"from-gps-btn"},
-    {text:t('onboard5'),target:"to-input"},
+    {text:t('onboard5'),target:null},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
     {text:t('onboard7'),target:null},
   ],[]);
@@ -1669,6 +1669,7 @@ export default function CampusMap(){
       {/* ─── Alt panel ───────────────────────────────────────────────────── */}
       <div
         style={{position:"fixed",bottom:0,left:0,right:0,zIndex:10,
+          ...(onboardStep!==null?{opacity:0,pointerEvents:"none"}:{}),
           background:"#1e293b",borderRadius:"16px 16px 0 0",
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"

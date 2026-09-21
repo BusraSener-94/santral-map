@@ -114,7 +114,7 @@ const TR = {
   onboard1: "Konumunu açmak için\nbu düğmeye dokun 📍",
   onboard2: "Gitmek istediğin binayı\nburaya yaz 🔍",
   onboard3: "Kategoriye göre filtrele:\nSosyal, Eğitsel, İdari...",
-  onboard4: "Kampüsü keşfetmeye başlamak için\ndoğrudan Konumunuzdan Başlatın\nbutonuna dokunabilirsin 🟢",
+  onboard4: "Kampüsü keşfetmek için doğrudan\n'Konumunuzdan Başlatın' butonuna\ndokunun 🟢",
   onboard5:
     "Herhangi bir konuma dokununca kart açılır.\n'Buradan Başla' ile başlangıç noktanı belirle 🟢\nArdından varış sor: haritada gitmek\nistediğin noktaya dokun ya da aşağıya yaz 🗺",
   onboard6:
@@ -222,7 +222,7 @@ const EN: { [K in keyof typeof TR]: string } = {
   onboard1: "Tap this button\nto enable your location 📍",
   onboard2: "Type the building\nyou want to find here 🔍",
   onboard3: "Filter by category:\nSocial, Academic, Admin...",
-  onboard4: "You can tap 'Start from My Location'\nto start exploring the campus\nright away 🟢",
+  onboard4: "Tap the 'Start from My Location'\nbutton to start exploring\nthe campus 🟢",
   onboard5:
     "Tap any location to open its card.\nTap 'Start Here' to set your starting point 🟢\nThen ask for directions: tap a point\non the map or type below 🗺",
   onboard6:

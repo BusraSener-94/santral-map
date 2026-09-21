@@ -438,7 +438,7 @@ export default function CampusMap(){
     {text:t('onboard1'),target:"gps-btn"},
     {text:t('onboard2'),target:"search-input"},
     {text:t('onboard3'),target:"cat-row"},
-    {text:t('onboard4'),target:"gps-btn"},
+    {text:t('onboard4'),target:"from-gps-btn"},
     {text:t('onboard5'),target:"to-input"},
     {text:t('onboard6'),target:"nav-card",ring:"speed-btn"},
     {text:t('onboard7'),target:null},
@@ -1758,7 +1758,7 @@ export default function CampusMap(){
               {/* GPS orta satırı */}
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <div style={{flex:1,height:1,background:"#1e293b"}}/>
-                <button
+                <button id="from-gps-btn"
                   onMouseDown={e=>{e.preventDefault();setFromGPS(true);setFrom(null);setFromSearch(t('yourLocation'));
                     if(to&&userPos)calcRoute(userPos[0],userPos[1],to);}}
                   style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
@@ -2149,7 +2149,7 @@ export default function CampusMap(){
               {(ringRect??hlRect)&&(()=>{const rr=ringRect??hlRect!;return(
                 <div style={{position:"fixed",
                   left:rr.left+rr.width/2,
-                  top: rr.top<200 ? rr.bottom+14 : rr.top-42,
+                  top: rr.top<200 ? rr.bottom+14 : rr.top-28,
                   transform:"translateX(-50%)",
                   fontSize:26,zIndex:9994,pointerEvents:"none",lineHeight:1,
                   animation: rr.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
@@ -2167,7 +2167,8 @@ export default function CampusMap(){
             background:"transparent",
             display:"flex",flexDirection:"column",
             alignItems:"center",justifyContent:"center",
-            padding:"56px 20px 130px"}}>
+            height:"100dvh",
+            padding:"56px 20px 16px"}}>
 
             {/* Story progress bars */}
             <div style={{position:"absolute",top:14,left:14,right:14,display:"flex",gap:4}}>
@@ -2190,48 +2191,86 @@ export default function CampusMap(){
 
             {/* Kart – tıklamak ilerletir (Atla hariç) */}
             <div key={`ob${onboardStep}`} onClick={advanceOnboard}
-              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:380,
+              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:0,
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
                 display:"flex",flexDirection:"column",alignItems:"center",
                 padding:"26px 22px 18px",position:"relative",zIndex:1,
+                flexShrink:0,
                 cursor:"pointer",animation:"onboard-fadein 0.22s ease"}}>
 
-              {/* Karpuz fotoğrafı */}
-              <div style={{width:84,height:84,borderRadius:"50%",overflow:"hidden",
-                background:"#bbf7d0",marginBottom:14,flexShrink:0,
-                boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
-                <img src="/karpuz-karsilama.png" alt="Karpuz"
-                  style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              {/* Üst içerik – flex-shrink:0 */}
+              <div style={{flexShrink:0,display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
+                {/* Karpuz fotoğrafı */}
+                <div style={{width:84,height:84,borderRadius:"50%",overflow:"hidden",
+                  background:"#bbf7d0",marginBottom:14,flexShrink:0,
+                  boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
+                  <img src="/karpuz-karsilama.png" alt="Karpuz"
+                    style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+                </div>
+
+                {/* Metin */}
+                <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
+                  textAlign:"center",marginBottom:14,whiteSpace:"pre-line"}}>
+                  {ONBOARD_STEPS[onboardStep].text}
+                </div>
+
+                {/* Dot progress */}
+                <div style={{display:"flex",gap:5,marginBottom:14}}>
+                  {ONBOARD_STEPS.map((_,i)=>(
+                    <div key={i} style={{height:6,borderRadius:3,
+                      width:i===onboardStep?20:6,
+                      background:i===onboardStep?"#0d9488":i<onboardStep?"#94a3b8":"#e2e8f0",
+                      transition:"all 0.2s ease"}}/>
+                  ))}
+                </div>
+
+                {/* Atla + ileri */}
+                <div style={{display:"flex",alignItems:"center",
+                  justifyContent:"space-between",width:"100%"}}>
+                  <button onClick={e=>{e.stopPropagation();
+                    localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
+                    style={{background:"transparent",color:"#94a3b8",border:"none",
+                      fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
+                  <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
+                    {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
+                  </span>
+                </div>
               </div>
 
-              {/* Metin */}
-              <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
-                textAlign:"center",marginBottom:14,whiteSpace:"pre-line"}}>
-                {ONBOARD_STEPS[onboardStep].text}
-              </div>
-
-              {/* Dot progress */}
-              <div style={{display:"flex",gap:5,marginBottom:14}}>
-                {ONBOARD_STEPS.map((_,i)=>(
-                  <div key={i} style={{height:6,borderRadius:3,
-                    width:i===onboardStep?20:6,
-                    background:i===onboardStep?"#0d9488":i<onboardStep?"#94a3b8":"#e2e8f0",
-                    transition:"all 0.2s ease"}}/>
-                ))}
-              </div>
-
-              {/* Atla + ileri */}
-              <div style={{display:"flex",alignItems:"center",
-                justifyContent:"space-between",width:"100%"}}>
-                <button onClick={e=>{e.stopPropagation();
-                  localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                  style={{background:"transparent",color:"#94a3b8",border:"none",
-                    fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
-                <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
-                  {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
-                </span>
-              </div>
+              {/* Panel önizleme – yalnızca from-gps-btn adımında */}
+              {ONBOARD_STEPS[onboardStep]?.target==="from-gps-btn"&&(
+                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
+                  display:"flex",justifyContent:"center",alignItems:"flex-end",
+                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
+                  <div style={{width:"100%",maxHeight:"100%",objectFit:"contain",
+                    background:"#1e293b",borderRadius:"12px 12px 0 0",
+                    padding:"10px 12px 14px",display:"flex",flexDirection:"column",gap:6,
+                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                      color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
+                    <div style={{
+                      background:"#0d9488",borderRadius:20,padding:"9px 16px",
+                      display:"flex",alignItems:"center",justifyContent:"center",gap:6,
+                      color:"#fff",fontWeight:700,fontSize:13,
+                      border:"2.5px solid #f97316",
+                      boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
+                      animation:"onboard-glow 1.4s ease-in-out infinite"}}>
+                      <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
+                      {t('startFromLocation')}
+                    </div>
+                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                      color:"#475569",fontSize:12}}>{t('toPlaceholder')}</div>
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Görsel kapsayıcı spacer – from-gps-btn adımında boşluğu doldurur */}
+            {ONBOARD_STEPS[onboardStep]?.target==="from-gps-btn"&&(
+              <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
+                display:"flex",justifyContent:"center",alignItems:"flex-end",
+                width:"100%",maxWidth:400}}/>
+            )}
           </div>
         </>
       )}

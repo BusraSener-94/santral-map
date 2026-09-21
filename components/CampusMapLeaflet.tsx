@@ -941,10 +941,13 @@ export default function CampusMap(){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     } else if(activeRouteInput){
-      // Klavye açılıyor: sabit 230px – GPS butonu ve her iki input görünür kalır
+      const vv=window.visualViewport;
+      // Klavye açıkken görünür alana göre panel boyutunu belirle
+      const kbOpen=vv&&(vv.height<window.innerHeight*0.75);
+      const targetH=kbOpen?Math.round(vv.height*0.92):230;
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height="230px";
-      sheetRef.current.scrollTop=0; // İçeriği başa al – from input görünür
+      sheetRef.current.style.height=`${Math.max(230,targetH)}px`;
+      sheetRef.current.scrollTop=0;
     }
   },[activeRouteInput,panelLoc]);
 
@@ -954,15 +957,19 @@ export default function CampusMap(){
     if(!vv)return;
     const onVVChange=()=>{
       if(!sheetRef.current)return;
+      // kbH: interactiveWidget cihazlarda 0 olur (viewport zaten küçülür), eskI Android'lerde >0
       const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
       if(kbH>50){
-        // interactiveWidget:resizes-content zaten paneli klavye üstüne koyuyor.
-        // Sadece panel yüksekliğini görünür alana sığdır.
-        const maxH=Math.round(vv.height*0.85);
+        sheetRef.current.style.bottom=`${kbH}px`; // eski Android: paneli klavyenin üstüne taşı
+        // Input yazarken panel içeriğe göre büyüsün; değilse %60 üst sınır
+        const activeInput=document.activeElement?.tagName==='INPUT';
+        const targetH=activeInput
+          ?Math.min(Math.round(vv.height*0.92),parseInt(sheetRef.current.style.height||"230"))
+          :Math.round(vv.height*0.6);
         const curH=parseInt(sheetRef.current.style.height||"230");
-        if(curH>maxH)sheetRef.current.style.height=`${maxH}px`;
+        if(activeInput&&curH<targetH)sheetRef.current.style.height=`${targetH}px`;
+        else if(!activeInput&&curH>targetH)sheetRef.current.style.height=`${targetH}px`;
       } else {
-        // Klavye kapandı – bottom sıfırla
         sheetRef.current.style.bottom='0px';
       }
     };
@@ -1743,7 +1750,6 @@ export default function CampusMap(){
                     background:"#0f172a",border:`1px solid ${activeRouteInput==='from'?"#16a34a":"#334155"}`,
                     borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:16,
                     outline:"none",minHeight:46}}/>
-                {/* Mikrofon butonu – başlangıç */}
                 <button onClick={()=>startVoiceSearch('from')}
                   style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
                     background:listening?"#16a34a":"transparent",border:"none",
@@ -1753,27 +1759,27 @@ export default function CampusMap(){
                     animation:listening?"gps-pulse 1s ease-out infinite":undefined}}>
                   {listening?"⏹":"🎤"}
                 </button>
-                {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
-                  <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
-                    background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
-                    maxHeight:140,overflowY:"auto"}}>
-                    {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(fromSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
-                      <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                        onClick={()=>{
-                          if(to&&loc.num===to.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
-                          setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
-                          if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}}}
-                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
-                          background:"transparent",border:"none",
-                          borderBottom:i<arr.length-1?"1px solid #334155":"none",
-                          cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
-                        <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
-                        <span style={{fontSize:13,flex:1}}>{locName(loc)}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
+              {/* From öneri listesi – inline (panel overflow'unu aşmaz) */}
+              {activeRouteInput==='from'&&fromSearch&&!fromGPS&&(
+                <div style={{background:"#1e293b",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
+                  maxHeight:160,overflowY:"auto",marginTop:-2}}>
+                  {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(fromSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
+                    <button key={loc.num} onMouseDown={e=>e.preventDefault()}
+                      onClick={()=>{
+                        if(to&&loc.num===to.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
+                        setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+                        if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}}}
+                      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                        background:"transparent",border:"none",
+                        borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                        cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                      <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
+                      <span style={{fontSize:13,flex:1}}>{locName(loc)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* GPS orta satırı */}
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -1821,7 +1827,6 @@ export default function CampusMap(){
                       background:"#0f172a",border:`1px solid ${activeRouteInput==='to'?"#ef4444":"#334155"}`,
                       borderRadius:10,padding:"11px 44px 11px 14px",color:"#fff",fontSize:16,
                       outline:"none",minHeight:46}}/>
-                  {/* Mikrofon butonu – varış */}
                   <button onClick={()=>startVoiceSearch('to')}
                     style={{position:"absolute",right:8,top:"50%",transform:"translateY(-50%)",
                       background:listening?"#ef4444":"transparent",border:"none",
@@ -1830,33 +1835,32 @@ export default function CampusMap(){
                       fontSize:16,color:listening?"#fff":"#64748b",padding:0}}>
                     {listening?"⏹":"🎤"}
                   </button>
-                  {activeRouteInput==='to'&&toSearch&&(
-                    <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 4px)",zIndex:50,
-                      background:"#1e293b",borderRadius:10,boxShadow:"0 4px 20px rgba(0,0,0,0.7)",
-                      maxHeight:200,overflowY:"auto"}}>
-                      {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
-                        <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                          onClick={()=>{
-                            if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
-                            setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
-                            if(from||(fromGPS&&userPos)){
-                              const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
-                              const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
-                              calcRoute(fLa,fLo,loc);setMode('ready');
-                            } else if(fromGPS&&!userPos){setMode('pickFrom');}}}
-
-                          style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
-                            background:"transparent",border:"none",
-                            borderBottom:i<arr.length-1?"1px solid #334155":"none",
-                            cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
-                          <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
-                          <span style={{fontSize:13,flex:1}}>{locName(loc)}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
+              {/* To öneri listesi – inline (panel overflow'unu aşmaz) */}
+              {activeRouteInput==='to'&&toSearch&&(
+                <div style={{background:"#1e293b",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
+                  maxHeight:160,overflowY:"auto",marginTop:-2}}>
+                  {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase())).slice(0,8).map((loc,i,arr)=>(
+                    <button key={loc.num} onMouseDown={e=>e.preventDefault()}
+                      onClick={()=>{
+                        if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
+                        setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+                        if(from||(fromGPS&&userPos)){
+                          const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                          const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                          calcRoute(fLa,fLo,loc);setMode('ready');
+                        } else if(fromGPS&&!userPos){setMode('pickFrom');}}}
+                      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                        background:"transparent",border:"none",
+                        borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                        cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                      <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
+                      <span style={{fontSize:13,flex:1}}>{locName(loc)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
             </div>
           )}

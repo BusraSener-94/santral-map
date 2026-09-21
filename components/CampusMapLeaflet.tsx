@@ -941,12 +941,8 @@ export default function CampusMap(){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     } else if(activeRouteInput){
-      const vv=window.visualViewport;
-      // Klavye açıkken görünür alana göre panel boyutunu belirle
-      const kbOpen=vv&&(vv.height<window.innerHeight*0.75);
-      const targetH=kbOpen?Math.round(vv.height*0.92):230;
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height=`${Math.max(230,targetH)}px`;
+      sheetRef.current.style.height="230px";
       sheetRef.current.scrollTop=0;
     }
   },[activeRouteInput,panelLoc]);
@@ -957,21 +953,12 @@ export default function CampusMap(){
     if(!vv)return;
     const onVVChange=()=>{
       if(!sheetRef.current)return;
-      // kbH: interactiveWidget cihazlarda 0 olur (viewport zaten küçülür), eskI Android'lerde >0
+      // interactiveWidget:resizes-content cihazlarda kbH≈0, eski Android'lerde >0
       const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
-      if(kbH>50){
-        sheetRef.current.style.bottom=`${kbH}px`; // eski Android: paneli klavyenin üstüne taşı
-        // Input yazarken panel içeriğe göre büyüsün; değilse %60 üst sınır
-        const activeInput=document.activeElement?.tagName==='INPUT';
-        const targetH=activeInput
-          ?Math.min(Math.round(vv.height*0.92),parseInt(sheetRef.current.style.height||"230"))
-          :Math.round(vv.height*0.6);
-        const curH=parseInt(sheetRef.current.style.height||"230");
-        if(activeInput&&curH<targetH)sheetRef.current.style.height=`${targetH}px`;
-        else if(!activeInput&&curH>targetH)sheetRef.current.style.height=`${targetH}px`;
-      } else {
+      if(kbH<50){
         sheetRef.current.style.bottom='0px';
       }
+      // Yükseklik veya bottom manipülasyonu YOK – CSS max-height:85dvh halleder
     };
     vv.addEventListener('resize',onVVChange);
     vv.addEventListener('scroll',onVVChange);
@@ -1706,20 +1693,23 @@ export default function CampusMap(){
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
-          height:"230px",
+          height:"230px",maxHeight:"85dvh",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
-          overflowY:"auto",overflowX:"hidden",
+          display:"flex",flexDirection:"column",
+          overflow:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
         ref={sheetRef}>
 
-        {/* Drag handle */}
+        {/* Drag handle – flex-shrink:0 ile ezilmez */}
         <div ref={handleRef}
           style={{display:"flex",justifyContent:"center",alignItems:"center",
-            padding:"16px 0",cursor:"grab",width:"100%",touchAction:"none"}}>
+            padding:"16px 0",cursor:"grab",width:"100%",touchAction:"none",flexShrink:0}}>
           <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
         </div>
 
-        <div style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8}}>
+        {/* Kaydırılabilir içerik alanı */}
+        <div style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8,
+          flex:1,overflowY:"auto",overflowX:"hidden",minHeight:0}}>
 
           {/* ARRIVED: Varış kutlaması alt panelde */}
           {mode==='arrived'&&(
@@ -1747,7 +1737,7 @@ export default function CampusMap(){
               <div style={{position:"relative"}}>
                 <input id="search-input" value={fromSearch}
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
-                  onFocus={()=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;}}
+                  onFocus={e=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
                   placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
@@ -1813,7 +1803,7 @@ export default function CampusMap(){
                 <div style={{flex:1,position:"relative",minWidth:0}}>
                   <input id="to-input" value={toSearch}
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
-                    onFocus={()=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;}}
+                    onFocus={e=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
                     onKeyDown={e=>{
                       if(e.key!=='Enter')return;

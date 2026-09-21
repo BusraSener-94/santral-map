@@ -451,6 +451,7 @@ export default function CampusMap(){
   const longPressTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
   const[stickyNearby,setStickyNearby]=useState<Loc|null>(null);
   const stickyNearbyTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  const nearbyLockUntilRef=useRef<number>(0);
   const[gpsError,setGpsError]=useState<string|null>(null);
   const[showKarpuzIntro,setShowKarpuzIntro]=useState(false);
   const[fromSearch,setFromSearch]=useState("");
@@ -1077,9 +1078,18 @@ export default function CampusMap(){
   useEffect(()=>{
     if(nearbyBldg){
       if(stickyNearbyTimer.current)clearTimeout(stickyNearbyTimer.current);
-      setStickyNearby(nearbyBldg);
+      setStickyNearby(prev=>{
+        const now=Date.now();
+        // Farklı bina && kilit süresi dolmadıysa geçiş yapma
+        if(prev&&prev.num!==nearbyBldg.num&&now<nearbyLockUntilRef.current)return prev;
+        nearbyLockUntilRef.current=now+3000;
+        return nearbyBldg;
+      });
     } else {
-      stickyNearbyTimer.current=setTimeout(()=>setStickyNearby(null),5000);
+      stickyNearbyTimer.current=setTimeout(()=>{
+        setStickyNearby(null);
+        nearbyLockUntilRef.current=0;
+      },5000);
     }
     return()=>{if(stickyNearbyTimer.current)clearTimeout(stickyNearbyTimer.current);};
   },[nearbyBldg]);
@@ -2208,23 +2218,20 @@ export default function CampusMap(){
                 height:"min(460px,calc(100dvh - 110px))",
                 overflow:"hidden"}}>
 
-              {/* ── Katman 1: Fotoğraf + metin ────────────────────────────── */}
+              {/* ── Katman 1: Fotoğraf + metin – dikeyde ortalanır ───────── */}
               <div style={{flex:1,minHeight:0,overflow:"hidden",
                 display:"flex",flexDirection:"column",alignItems:"center",
-                padding:"22px 22px 0"}}>
+                justifyContent:"center",
+                padding:"22px 22px 12px",gap:12}}>
                 <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
-                  background:"#bbf7d0",marginBottom:12,flexShrink:0,
+                  background:"#bbf7d0",flexShrink:0,
                   boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
                   <img src="/karpuz-karsilama.png" alt="Karpuz"
                     style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 </div>
-                <div style={{flex:1,overflowY:"auto",width:"100%",
-                  display:"flex",alignItems:"center",justifyContent:"center",
-                  paddingBottom:8}}>
-                  <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
-                    textAlign:"center",whiteSpace:"pre-line"}}>
-                    {ONBOARD_STEPS[onboardStep].text}
-                  </div>
+                <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
+                  textAlign:"center",whiteSpace:"pre-line",width:"100%"}}>
+                  {ONBOARD_STEPS[onboardStep].text}
                 </div>
               </div>
 
@@ -2297,17 +2304,17 @@ export default function CampusMap(){
               <div style={{flexShrink:0,padding:"10px 18px 16px",
                 borderTop:"1px solid #f1f5f9",
                 display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center"}}>
-                <div style={{justifySelf:"start" as const,display:"flex",flexDirection:"column",alignItems:"flex-start",gap:0}}>
+                <div style={{justifySelf:"start" as const,display:"flex",flexDirection:"row",alignItems:"center",gap:12}}>
                   {onboardStep>0&&(
                     <button onClick={e=>{e.stopPropagation();
                       setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
                       style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"2px 0"}}>{t('onboardBack')}</button>
+                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('onboardBack')}</button>
                   )}
                   <button onClick={e=>{e.stopPropagation();
                     localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
                     style={{background:"transparent",color:"#94a3b8",border:"none",
-                      fontSize:12,cursor:"pointer",padding:"2px 0"}}>{t('btnSkip')}</button>
+                      fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('btnSkip')}</button>
                 </div>
                 <div style={{justifySelf:"center" as const,display:"flex",gap:5}}>
                   {ONBOARD_STEPS.map((_,i)=>(

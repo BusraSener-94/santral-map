@@ -436,7 +436,7 @@ export default function CampusMap(){
   const ONBOARD_STEPS=useMemo<OnboardStep[]>(()=>[
     {text:t('onboard0'),target:null},
     {text:t('onboard1'),target:"gps-btn"},
-    {text:t('onboard2'),target:null},
+    {text:t('onboard2'),target:null,preview:"to-input"},
     {text:t('onboard3'),target:null},
     {text:t('onboard4'),target:null,preview:"from-gps-btn"},
     {text:t('onboard5'),target:null},
@@ -2238,6 +2238,28 @@ export default function CampusMap(){
                 </div>
               </div>
 
+              {/* Panel önizleme – to-input adımında Varış inputu vurgulu */}
+              {ONBOARD_STEPS[onboardStep]?.preview==="to-input"&&(
+                <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
+                  display:"flex",justifyContent:"center",alignItems:"flex-end",
+                  width:"calc(100% + 44px)",marginLeft:-22,marginRight:-22,marginTop:12}}>
+                  <div style={{width:"100%",maxHeight:"100%",
+                    background:"#1e293b",borderRadius:"12px 12px 0 0",
+                    padding:"10px 12px 14px",display:"flex",flexDirection:"column",gap:6,
+                    boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
+                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                      color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
+                    <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
+                      color:"rgba(255,255,255,0.75)",fontSize:12,
+                      border:"2.5px solid #f97316",
+                      boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
+                      animation:"onboard-glow 1.4s ease-in-out infinite"}}>
+                      {t('toPlaceholder')}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Panel önizleme – yalnızca from-gps-btn adımında */}
               {ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"&&(
                 <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
@@ -2266,8 +2288,8 @@ export default function CampusMap(){
               )}
             </div>
 
-            {/* Görsel kapsayıcı spacer – from-gps-btn adımında boşluğu doldurur */}
-            {ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"&&(
+            {/* Görsel kapsayıcı spacer – mockup adımlarında boşluğu doldurur */}
+            {(ONBOARD_STEPS[onboardStep]?.preview==="from-gps-btn"||ONBOARD_STEPS[onboardStep]?.preview==="to-input")&&(
               <div style={{flexGrow:1,flexShrink:1,minHeight:0,overflow:"hidden",
                 display:"flex",justifyContent:"center",alignItems:"flex-end",
                 width:"100%",maxWidth:400}}/>

@@ -300,7 +300,7 @@ const LOCS:Loc[]=[
   {num:9, name:"L3",                  gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası.",descEN:"L3 Energy building.",photo:"/buildings/l3.jpg"},
   {num:11,name:"E3",                  gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – Bilgisayar Mühendisliği, Elektrik Elektronik Mühendisliği, Enerji Sistemleri Mühendisliği.",descEN:"Faculty of Engineering and Natural Sciences – Computer Engineering, Electrical & Electronics Engineering, Energy Systems Engineering.",photo:"/buildings/e3.jpg"},
   {num:12,name:"E4",                  gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"İletişim Fakültesi – Medya, Reklamcılık, Sahne Sanatları, Sanat ve Kültür Yönetimi.",descEN:"Faculty of Communication – Media, Advertising, Performing Arts, Arts and Cultural Management.",photo:"/buildings/e4.jpg"},
-  {num:13,name:"ÇSM Sınıflar",        nameEN:"ÇSM Classrooms",      gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",descEN:"ÇSM lower floor – classrooms and study rooms.",photo:"/buildings/csm-siniflar.jpg"},
+  {num:13,name:"ÇSM Sınıflar",        nameEN:"CSM Classrooms",      gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",descEN:"CSM lower floor – classrooms and study rooms.",photo:"/buildings/csm-siniflar.jpg"},
   {num:18,name:"E5",                  gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Uluslararası İlişkiler, Avrupa Birliği Enstitüsü.",descEN:"Faculty of Social Sciences and Humanities – International Relations, European Union Institute.",photo:"/buildings/e5.jpg"},
   {num:19,name:"E6",                  gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",descEN:"E6 academic building.",photo:"/buildings/e6.jpg"},
   {num:16,name:"KD4 Mimarlık",        nameEN:"KD4 Architecture",    gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık Fakültesi – Mimarlık, İç Mimarlık, Endüstri Ürünleri Tasarımı.",descEN:"Faculty of Architecture – Architecture, Interior Architecture, Industrial Product Design.",photo:"/buildings/mimarlik-kd4.jpg"},
@@ -311,8 +311,8 @@ const LOCS:Loc[]=[
   {num:37,name:"Blab",               gps:[41.06753,28.94561],cats:["sosyal"],   emoji:"☕",desc:"Blab Coffee – kampüs kafe alanı.",descEN:"Blab Coffee – campus café.",photo:"/buildings/blab.jpg"},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",           nameEN:"Rector's Office",     gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri.",descEN:"Rectorate administrative offices."},
-  {num:14,name:"ÇSM Ofisler",         nameEN:"ÇSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"ÇSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:"/buildings/csm-ofisler.jpg"},
-  {num:36,name:"Öğrenci İşleri",      nameEN:"Student Affairs",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat.",descEN:"Student Affairs Directorate – next to ÇSM Offices, upper floor.",photo:"/buildings/ogrenci-isleri.jpg"},
+  {num:14,name:"ÇSM Ofisler",         nameEN:"CSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"CSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:"/buildings/csm-ofisler.jpg"},
+  {num:36,name:"Öğrenci İşleri",      nameEN:"Student Affairs",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat.",descEN:"Student Affairs Directorate – next to CSM Offices, upper floor.",photo:"/buildings/ogrenci-isleri.jpg"},
   {num:45,name:"Uluslararası Merkez", nameEN:"International Center",gps:[41.06769,28.94670],cats:["idari"],    emoji:"🌍",desc:"Uluslararası Öğrenci Merkezi.",descEN:"International Student Center.",photo:"/buildings/uluslararasi.jpg"},
   {num:21,name:"EN-1",               gps:[41.06757,28.94543],cats:["eğitsel","idari"],emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – İnşaat Mühendisliği, Makine Mühendisliği, Mekatronik Mühendisliği, Matematik, Moleküler Biyoloji ve Genetik.",descEN:"Faculty of Engineering and Natural Sciences – Civil Engineering, Mechanical Engineering, Mechatronics Engineering, Mathematics, Molecular Biology and Genetics."},
   {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",descEN:"Student Support Center (ÖDM) – counseling and career services.",photo:"/buildings/odm.jpg"},
@@ -534,8 +534,8 @@ export default function CampusMap(){
     }
     if(splash==="hidden")return; // Aynı oturumda yeniden mount → animasyon atla
     sessionStorage.setItem("splash_shown","1");
-    const t1=setTimeout(()=>setSplash("fading"),7000);
-    const t2=setTimeout(()=>setSplash("hidden"),7900);
+    const t1=setTimeout(()=>setSplash("fading"),5000);
+    const t2=setTimeout(()=>setSplash("hidden"),5900);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 
@@ -979,47 +979,7 @@ export default function CampusMap(){
   const activeStep=navSteps[curStepIdx];
   const nextStep=navSteps[curStepIdx+1]??null;
 
-  // ── TTS: adım değişince sesli oku ─────────────────────────────────────────
-  useEffect(()=>{
-    if(isMuted||!('speechSynthesis' in window))return;
-    if((mode==='nav'||mode==='sim')&&activeStep){
-      window.speechSynthesis.cancel();
-      const utt=new SpeechSynthesisUtterance(activeStep.text);
-      utt.lang=isEN()?'en-US':'tr-TR';
-      utt.rate=0.95;
-      const speak=()=>{
-        const voices=window.speechSynthesis.getVoices();
-        const v=voices.find(v=>v.lang.toLowerCase().startsWith(isEN()?'en':'tr'));
-        if(v)utt.voice=v;
-        window.speechSynthesis.speak(utt);
-      };
-      if(window.speechSynthesis.getVoices().length>0)speak();
-      else window.speechSynthesis.onvoiceschanged=speak;
-    }
-    if(mode==='arrived'){
-      window.speechSynthesis.cancel();
-      const utt=new SpeechSynthesisUtterance(t('arrivedMsg'));
-      utt.lang=isEN()?'en-US':'tr-TR';
-      window.speechSynthesis.speak(utt);
-    }
-  },[curStepIdx,mode,isMuted]); // eslint-disable-line
-
-  // Simülasyonda yakın binalara sesli duyuru
-  useEffect(()=>{
-    if(!simPos||mode!=='sim'||isMuted||!('speechSynthesis' in window))return;
-    const nearby=LOCS.filter(l=>{
-      if(announcedRef.current.has(l.num))return false;
-      const dlat=l.gps[0]-simPos[0],dlon=l.gps[1]-simPos[1];
-      return Math.sqrt(dlat*dlat+dlon*dlon)<0.00035; // ~38m
-    });
-    if(!nearby.length)return;
-    const loc=nearby[0];
-    announcedRef.current.add(loc.num);
-    const utt=new SpeechSynthesisUtterance(isEN()?`Passing by ${locName(loc)}`:`${locName(loc)} yakınından geçiyorsunuz`);
-    utt.lang=isEN()?'en-US':'tr-TR';
-    utt.rate=1.0;
-    window.speechSynthesis.speak(utt);
-  },[simPos,mode,isMuted]); // eslint-disable-line
+  // TTS navigasyon sesi kaldırıldı – ileride ses seçeneği eklenebilir
 
   // Geçilen / kalan rota segmentleri
   const passedRoute=useMemo(()=>{

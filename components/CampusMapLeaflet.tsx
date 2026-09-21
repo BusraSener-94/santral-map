@@ -358,13 +358,15 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
       className:"",iconSize:[sz,sz],iconAnchor:[half,half],
     });
   }
-  const bg=isF?"rgba(22,163,74,0.95)":isT?"rgba(239,68,68,0.95)":"rgba(15,23,42,0.88)";
+  const bg=isF?"#16a34a":isT?"#ef4444":"#fff";
+  const tc=isF||isT?"#fff":"#1e293b";
+  const sh=isF||isT?"0 2px 6px rgba(0,0,0,0.4)":"0 1px 4px rgba(0,0,0,0.18)";
   return L.divIcon({
     html:`<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
-      <div style="background:${bg};color:#fff;font-size:10px;font-weight:700;padding:3px 7px;border-radius:5px;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;box-shadow:0 2px 6px rgba(0,0,0,0.5);">${locName(loc)}</div>
-      <div style="width:13px;height:13px;border-radius:50%;background:${col};border:2.5px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,0.6);"></div>
+      <div style="background:${bg};color:${tc};font-size:10px;font-weight:600;padding:2px 6px;border-radius:4px;white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;box-shadow:${sh};">${locName(loc)}</div>
+      <div style="width:11px;height:11px;border-radius:50%;background:${col};border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,0.5);"></div>
     </div>`,
-    className:"",iconSize:[90,32],iconAnchor:[45,30],
+    className:"",iconSize:[90,28],iconAnchor:[45,26],
   });
 }
 function ZoomWatcher({setShowLabels}:{setShowLabels:(v:boolean)=>void}){
@@ -850,7 +852,7 @@ export default function CampusMap(){
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
     setPanelLoc(null);announcedRef.current.clear();
-    if(sheetRef.current)sheetRef.current.style.height="230px";
+    if(sheetRef.current)sheetRef.current.style.height="185px";
   },[stopSim]);
 
   const swapFromTo=useCallback(()=>{
@@ -882,7 +884,7 @@ export default function CampusMap(){
       sheet.style.height=`${Math.max(52,Math.min(maxH,dragStartH.current-dy))}px`;
     };
     const onEnd=(e:TouchEvent)=>{
-      const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
+      const PEEK=52,MID=185,maxH=window.innerHeight*0.72;
       const curH=sheet.getBoundingClientRect().height;
       const dy=e.changedTouches[0].clientY-dragY.current;
       sheet.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
@@ -908,7 +910,7 @@ export default function CampusMap(){
       const onMouseUp=(e:MouseEvent)=>{
         window.removeEventListener('mousemove',onMouseMove);
         window.removeEventListener('mouseup',onMouseUp);
-        const PEEK=52,MID=230,maxH=window.innerHeight*0.72;
+        const PEEK=52,MID=185,maxH=window.innerHeight*0.72;
         const curH=sheet.getBoundingClientRect().height;
         const dy=e.clientY-dragY.current;
         sheet.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
@@ -942,7 +944,7 @@ export default function CampusMap(){
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     } else if(activeRouteInput){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height="230px";
+      sheetRef.current.style.height="185px";
       sheetRef.current.scrollTop=0;
     }
   },[activeRouteInput,panelLoc]);
@@ -970,7 +972,7 @@ export default function CampusMap(){
     if(!sheetRef.current)return;
     if(mode==='sim'){
       sheetRef.current.style.transition="height 0.4s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height="230px";
+      sheetRef.current.style.height="185px";
     } else if(mode==='arrived'){
       sheetRef.current.style.transition="height 0.35s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height="280px";
@@ -1568,24 +1570,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Simülasyonda yakından geçilen bina ─────────────────────────── */}
-      {stickyNearby&&(
-        <div style={{position:"absolute",zIndex:16,
-          top:(mode==='sim'||mode==='nav')&&activeStep?160:70,
-          right:10,
-          pointerEvents:"none",maxWidth:"52vw"}}>
-          <div style={{background:"rgba(15,23,42,0.88)",backdropFilter:"blur(6px)",
-            color:"#fff",padding:"6px 12px",borderRadius:16,
-            display:"flex",alignItems:"center",gap:7,
-            boxShadow:"0 2px 10px rgba(0,0,0,0.4)",
-            border:"1px solid rgba(255,255,255,0.08)"}}>
-            <span style={{fontSize:18,flexShrink:0}}>{stickyNearby.emoji}</span>
-            <div style={{minWidth:0}}>
-              <div style={{fontSize:12,fontWeight:700,
-                overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{locName(stickyNearby)}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* stickyNearby kaldırıldı – görsel gürültü */}
 
       {/* ─── Sesli komut hint toast ─────────────────────────────────────── */}
       {voiceHint&&(
@@ -1688,7 +1673,7 @@ export default function CampusMap(){
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
             :"0 -4px 24px rgba(0,0,0,0.5)",
-          height:"230px",maxHeight:"85dvh",
+          height:"185px",maxHeight:"85dvh",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
           display:"flex",flexDirection:"column",
           overflow:"hidden",

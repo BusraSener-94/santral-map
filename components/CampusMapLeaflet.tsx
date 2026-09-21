@@ -820,6 +820,8 @@ export default function CampusMap(){
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
+    setPanelLoc(null);announcedRef.current.clear();
+    if(sheetRef.current)sheetRef.current.style.height="230px";
   },[stopSim]);
 
   const swapFromTo=useCallback(()=>{
@@ -913,6 +915,7 @@ export default function CampusMap(){
       // Klavye açılıyor: sabit 230px – GPS butonu ve her iki input görünür kalır
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height="230px";
+      sheetRef.current.scrollTop=0; // İçeriği başa al – from input görünür
     }
   },[activeRouteInput,panelLoc]);
 
@@ -924,13 +927,13 @@ export default function CampusMap(){
       if(!sheetRef.current)return;
       const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
       if(kbH>50){
-        sheetRef.current.style.bottom=`${kbH}px`;
-        // Klavye açıkken panel görünür viewport'u taşmasın
+        // interactiveWidget:resizes-content zaten paneli klavye üstüne koyuyor.
+        // Sadece panel yüksekliğini görünür alana sığdır.
         const maxH=Math.round(vv.height*0.85);
         const curH=parseInt(sheetRef.current.style.height||"230");
         if(curH>maxH)sheetRef.current.style.height=`${maxH}px`;
-        window.scrollTo(0,0);document.body.scrollTop=0;
       } else {
+        // Klavye kapandı – bottom sıfırla
         sheetRef.current.style.bottom='0px';
       }
     };
@@ -980,6 +983,43 @@ export default function CampusMap(){
   const nextStep=navSteps[curStepIdx+1]??null;
 
   // TTS navigasyon sesi kaldırıldı – ileride ses seçeneği eklenebilir
+
+  // Yakın binalara görsel bildirim (sim + nav)
+  useEffect(()=>{
+    const pos=mode==='sim'?simPos:mode==='nav'?userPos:null;
+    if(!pos)return;
+    const nearby=LOCS.filter(l=>{
+      if(announcedRef.current.has(l.num))return false;
+      const dlat=l.gps[0]-pos[0],dlon=l.gps[1]-pos[1];
+      return Math.sqrt(dlat*dlat+dlon*dlon)<0.00035;
+    });
+    if(!nearby.length)return;
+    const loc=nearby[0];
+    announcedRef.current.add(loc.num);
+    setVoiceHint(isEN()?`📍 Passing by: ${locName(loc)}`:`📍 Yakında: ${locName(loc)}`);
+    setTimeout(()=>setVoiceHint(null),3500);
+  },[simPos,userPos,mode]); // eslint-disable-line
+
+  // 1 dakika uyarısı (nav)
+  const alerted1minRef=useRef(false);
+  useEffect(()=>{if(route)alerted1minRef.current=false;},[route]);
+  useEffect(()=>{
+    if(mode==='nav'&&remMins<=1&&remM>15&&!alerted1minRef.current){
+      alerted1minRef.current=true;
+      setVoiceHint(isEN()?"🏁 Almost there!":"🏁 Az kaldı, varış noktasına yaklaşıyorsunuz!");
+      setTimeout(()=>setVoiceHint(null),4000);
+    }
+  },[remMins,mode,remM]); // eslint-disable-line
+
+  // Sekme geri döndüğünde harita tile'larını yenile
+  useEffect(()=>{
+    const onVisible=()=>{
+      if(document.visibilityState==='visible')
+        setTimeout(()=>mapInstanceRef.current?.invalidateSize({animate:false}),150);
+    };
+    document.addEventListener('visibilitychange',onVisible);
+    return()=>document.removeEventListener('visibilitychange',onVisible);
+  },[]);
 
   // Geçilen / kalan rota segmentleri
   const passedRoute=useMemo(()=>{

@@ -2167,13 +2167,13 @@ export default function CampusMap(){
               <div style={{flex:1}} onClick={advanceOnboard}/>
             </div>
 
-            {/* Kart */}
-            <div key={`ob${onboardStep}`}
+            {/* Kart – tıklamak ilerletir (Atla hariç) */}
+            <div key={`ob${onboardStep}`} onClick={advanceOnboard}
               style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:380,
                 boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
                 display:"flex",flexDirection:"column",alignItems:"center",
                 padding:"26px 22px 18px",position:"relative",zIndex:1,
-                animation:"onboard-fadein 0.22s ease"}}>
+                cursor:"pointer",animation:"onboard-fadein 0.22s ease"}}>
 
               {/* Karpuz fotoğrafı */}
               <div style={{width:84,height:84,borderRadius:"50%",overflow:"hidden",
@@ -2189,7 +2189,6 @@ export default function CampusMap(){
                 {ONBOARD_STEPS[onboardStep].text}
               </div>
 
-
               {/* Dot progress */}
               <div style={{display:"flex",gap:5,marginBottom:14}}>
                 {ONBOARD_STEPS.map((_,i)=>(
@@ -2200,14 +2199,14 @@ export default function CampusMap(){
                 ))}
               </div>
 
-              {/* Atla + ipucu */}
+              {/* Atla + ileri */}
               <div style={{display:"flex",alignItems:"center",
                 justifyContent:"space-between",width:"100%"}}>
                 <button onClick={e=>{e.stopPropagation();
                   localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
                   style={{background:"transparent",color:"#94a3b8",border:"none",
                     fontSize:12,cursor:"pointer",padding:"6px 0"}}>{t('btnSkip')}</button>
-                <span style={{color:"#cbd5e1",fontSize:11}}>
+                <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
                   {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
                 </span>
               </div>

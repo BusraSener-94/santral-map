@@ -297,6 +297,43 @@ function searchLocs(q:string,locs:Loc[]):{loc:Loc;keyword?:string}[]{
   }
   return res;
 }
+type EntityKind='staff'|'institute'|'dept';
+interface Entity{id:string;name:string;nameEN?:string;title?:string;titleEN?:string;kind:EntityKind;parentPoiNum:number;room?:string;}
+const ENTITY_ICON:Record<EntityKind,string>={staff:"👤",institute:"🏛️",dept:"🏢"};
+const ENTITIES:Entity[]=[
+  // Staff
+  {id:"huseyin_arpacioglu",name:"Hüseyin Arpacıoğlu",title:"Kayıt İşleri Müdürü",kind:"staff",parentPoiNum:14,room:"216"},
+  // Institutes in L1
+  {id:"lisansustu",name:"Lisansüstü Programlar Enstitüsü",nameEN:"Institute of Graduate Programs",kind:"institute",parentPoiNum:7},
+  {id:"bilisim_hukuku",name:"Bilişim ve Teknoloji Hukuku Enstitüsü",nameEN:"Institute of IT and Technology Law",title:"Hukuk Enstitüsü",kind:"institute",parentPoiNum:7},
+  // Offices in ÇSM Ofisler
+  {id:"etm",name:"ETM – Eğitim Teknolojileri Merkezi",nameEN:"ETM – Educational Technology Center",title:"Eski UZEM",titleEN:"Former UZEM",kind:"dept",parentPoiNum:14},
+  {id:"kayit_isleri",name:"Kayıt İşleri Müdürlüğü",nameEN:"Registrar's Office",kind:"dept",parentPoiNum:14,room:"216"},
+  {id:"hukuk_musavir",name:"Hukuk Müşavirliği",nameEN:"Legal Counsel",kind:"dept",parentPoiNum:14,room:"215"},
+  // International Center
+  {id:"erasmus",name:"Erasmus / Exchange Ofisi",nameEN:"Erasmus / Exchange Office",title:"Uluslararası Öğrenci Hareketliliği",titleEN:"International Student Mobility",kind:"dept",parentPoiNum:45},
+  // ÖDM
+  {id:"psikolojik_destek",name:"Psikolojik Danışmanlık",nameEN:"Psychological Counseling",title:"Öğrenci Destek Merkezi",titleEN:"Student Support Center",kind:"dept",parentPoiNum:30},
+  {id:"kariyer",name:"Kariyer Merkezi",nameEN:"Career Center",title:"Öğrenci Destek Merkezi",titleEN:"Student Support Center",kind:"dept",parentPoiNum:30},
+  // EN-1 departments
+  {id:"insaat",name:"İnşaat Mühendisliği",nameEN:"Civil Engineering",kind:"dept",parentPoiNum:21},
+  {id:"makine",name:"Makine Mühendisliği",nameEN:"Mechanical Engineering",kind:"dept",parentPoiNum:21},
+  {id:"mekatronik",name:"Mekatronik Mühendisliği",nameEN:"Mechatronics Engineering",kind:"dept",parentPoiNum:21},
+  {id:"matematik",name:"Matematik Bölümü",nameEN:"Mathematics Department",kind:"dept",parentPoiNum:21},
+  {id:"mol_biyoloji",name:"Moleküler Biyoloji ve Genetik",nameEN:"Molecular Biology & Genetics",kind:"dept",parentPoiNum:21},
+];
+function entName(e:Entity){return isEN()&&e.nameEN?e.nameEN:e.name;}
+function entTitle(e:Entity){return isEN()&&e.titleEN?e.titleEN:e.title;}
+function searchEntities(q:string):Entity[]{
+  if(!q)return[];
+  const lq=q.toLocaleLowerCase();
+  return ENTITIES.filter(e=>
+    e.name.toLocaleLowerCase().includes(lq)||
+    (e.nameEN?.toLocaleLowerCase().includes(lq)??false)||
+    (e.title?.toLocaleLowerCase().includes(lq)??false)||
+    (e.titleEN?.toLocaleLowerCase().includes(lq)??false)
+  );
+}
 const CAT:Record<string,{c:string;l:string}>={
   eğitsel:{c:"#3b82f6",l:"Eğitsel"},sosyal:{c:"#f59e0b",l:"Sosyal"},
   idari:{c:"#8b5cf6",l:"İdari"},işlevsel:{c:"#10b981",l:"İşlevsel"},
@@ -311,34 +348,39 @@ const CAT_LABELS = {
   otopark: t('catOtopark'),
   giriş:   t('catGiris'),
 } as const;
-function RoomRow({r,roomKey,expanded,onToggle,dark}:{
-  r:RoomEntry;roomKey:string;expanded:boolean;onToggle:(k:string)=>void;dark?:boolean;
+function RoomRow({r,roomKey,expanded,onToggle,dark,highlighted}:{
+  r:RoomEntry;roomKey:string;expanded:boolean;onToggle:(k:string)=>void;dark?:boolean;highlighted?:boolean;
 }){
   const hasOcc=!!r.occupants?.length;
   const baseTxt=dark?"#e2e8f0":"#1e293b";
   const subTxt=dark?"#94a3b8":"#475569";
   const divider=dark?"#1e293b":"#f8fafc";
   return(
-    <div style={{borderBottom:`1px solid ${divider}`}}>
+    <div style={{borderBottom:`1px solid ${divider}`,
+      boxShadow:highlighted?"inset 3px 0 0 #f97316, 0 0 8px rgba(249,115,22,0.25)":"none",
+      borderRadius:highlighted?4:0,transition:"box-shadow 0.6s ease"}}>
       <div style={{display:"flex",gap:6,alignItems:"center",padding:"3px 6px",
-        background:expanded?(dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)"):"transparent",
-        transition:"background 0.15s"}}>
+        background:highlighted?(dark?"rgba(249,115,22,0.1)":"rgba(249,115,22,0.06)"):
+          expanded?(dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)"):"transparent",
+        transition:"background 0.25s"}}>
         <span style={{color:baseTxt,fontWeight:700,minWidth:48,flexShrink:0,fontSize:dark?11:12}}>{r.oda}</span>
         <span style={{color:subTxt,flex:1,overflow:"hidden",textOverflow:"ellipsis",
           whiteSpace:"nowrap",fontSize:dark?11:12}}>{r.label===r.cat?tCat(r.label):r.label}</span>
         {r.cap&&(
-          <button
-            onClick={()=>hasOcc&&onToggle(roomKey)}
-            style={{display:"flex",alignItems:"center",gap:3,
-              background:expanded?(dark?"rgba(99,102,241,0.2)":"rgba(99,102,241,0.12)"):"transparent",
-              border:"none",borderRadius:6,padding:"2px 5px",
-              cursor:hasOcc?"pointer":"default",
-              color:hasOcc?(expanded?"#818cf8":dark?"#64748b":"#6366f1"):subTxt,
-              fontSize:dark?10:11,fontWeight:hasOcc?700:400,
-              transition:"background 0.15s,color 0.15s",flexShrink:0}}>
-            {r.cap}<span style={{fontSize:dark?10:11}}>👤</span>
-            {hasOcc&&<span style={{fontSize:9,opacity:0.7,marginLeft:1}}>{expanded?"▲":"▼"}</span>}
-          </button>
+          hasOcc?(
+            <button onClick={()=>onToggle(roomKey)}
+              style={{display:"flex",alignItems:"center",gap:3,
+                background:expanded?(dark?"rgba(99,102,241,0.2)":"rgba(99,102,241,0.12)"):"transparent",
+                border:"none",borderRadius:6,padding:"2px 5px",cursor:"pointer",
+                color:expanded?"#818cf8":dark?"#64748b":"#6366f1",
+                fontSize:dark?10:11,fontWeight:700,
+                transition:"background 0.15s,color 0.15s",flexShrink:0}}>
+              {r.cap}<span style={{fontSize:dark?10:11}}>👤</span>
+              <span style={{fontSize:9,opacity:0.7,marginLeft:1}}>{expanded?"▲":"▼"}</span>
+            </button>
+          ):(
+            <span style={{color:subTxt,fontSize:dark?10:11,flexShrink:0,paddingRight:2}}>{r.cap}👤</span>
+          )
         )}
       </div>
       {expanded&&hasOcc&&(
@@ -363,7 +405,7 @@ const LOCS:Loc[]=[
   // ── Eğitsel ───────────────────────────────────────────────────────────────
   {num:2, name:"E1",                  gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"İletişim Fakültesi – Görsel İletişim Tasarımı (VCD), Dijital Oyun Tasarımı, Radyo Televizyon ve Sinema (FTV), Dijital Yapımcılık ve Yayıncılık.",descEN:"Faculty of Communication – Visual Communication Design (VCD), Digital Game Design, Radio Television and Cinema (FTV), Digital Production and Broadcasting.",photo:"/buildings/e1.jpg",keywords:["Görsel İletişim Tasarımı","VCD","Dijital Oyun Tasarımı","Oyun Tasarımı","FTV","Radyo Televizyon","Sinema","Dijital Yapımcılık","İletişim Fakültesi"]},
   {num:3, name:"E2",                  gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Psikoloji, Sosyoloji, Tarih, Karşılaştırmalı Edebiyat, İngiliz Dili ve Edebiyatı, Müzik.",descEN:"Faculty of Social Sciences and Humanities – Psychology, Sociology, History, Comparative Literature, English Language & Literature, Music.",photo:"/buildings/e2.jpg",keywords:["Psikoloji","Sosyoloji","Tarih","Karşılaştırmalı Edebiyat","İngiliz Dili","İngiliz Edebiyatı","Müzik","Sosyal Bilimler","Beşeri Bilimler","SOSBEL"]},
-  {num:7, name:"L1",                  gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"Lisansüstü Programlar Enstitüsü, Bilişim ve Teknoloji Hukuku Enstitüsü, araştırma merkezleri.",descEN:"Institute of Graduate Programs, Institute of IT and Technology Law, research centers.",photo:"/buildings/l1.jpg",keywords:["Lisansüstü Programlar Enstitüsü","Bilişim ve Teknoloji Hukuku","Bilişim Hukuku","Teknoloji Hukuku","Yüksek Lisans","Doktora","SBE","FBE","Enstitü","Graduate"]},
+  {num:7, name:"L1",                  gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"Lisansüstü Programlar Enstitüsü, Bilişim ve Teknoloji Hukuku Enstitüsü, araştırma merkezleri.",descEN:"Institute of Graduate Programs, Institute of IT and Technology Law, research centers.",photo:"/buildings/l1.jpg",keywords:["Yüksek Lisans","Doktora","SBE","FBE","Enstitü","Graduate"]},
   {num:8, name:"L2",                  gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası.",descEN:"L2 building.",photo:"/buildings/l2.jpg"},
   {num:9, name:"L3",                  gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası.",descEN:"L3 Energy building.",photo:"/buildings/l3.jpg"},
   {num:11,name:"E3",                  gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – Bilgisayar Mühendisliği, Elektrik Elektronik Mühendisliği, Enerji Sistemleri Mühendisliği.",descEN:"Faculty of Engineering and Natural Sciences – Computer Engineering, Electrical & Electronics Engineering, Energy Systems Engineering.",photo:"/buildings/e3.jpg",keywords:["Bilgisayar Mühendisliği","Elektrik Elektronik Mühendisliği","Enerji Sistemleri","Mühendislik Fakültesi","BM","EEE","CS","Doğa Bilimleri","Yazılım"]},
@@ -379,9 +421,9 @@ const LOCS:Loc[]=[
   {num:37,name:"Blab",               gps:[41.06753,28.94561],cats:["sosyal"],   emoji:"☕",desc:"Blab Coffee – kampüs kafe alanı.",descEN:"Blab Coffee – campus café.",photo:"/buildings/blab.jpg"},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",           nameEN:"Rector's Office",     gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri.",descEN:"Rectorate administrative offices.",keywords:["Rektör","Genel Sekreter","Yönetim","İdari","Dekanlık","Akademik Kurul"]},
-  {num:14,name:"ÇSM Ofisler",         nameEN:"CSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"CSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:"/buildings/csm-ofisler.jpg",keywords:["Hüseyin Arpacıoğlu","Kayıt İşleri Müdürü","Öğrenci İşleri","ÇSM 216","ETM","UZEM","Eğitim Teknolojileri","Öğrenci Kulüpleri"]},
+  {num:14,name:"ÇSM Ofisler",         nameEN:"CSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"CSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:"/buildings/csm-ofisler.jpg",keywords:["Öğrenci Kulüpleri","ÇSM"]},
   {num:36,name:"Öğrenci İşleri",      nameEN:"Student Affairs",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat.",descEN:"Student Affairs Directorate – next to CSM Offices, upper floor.",photo:"/buildings/ogrenci-isleri.jpg",keywords:["Transkript","Belge","Diploma","Mezuniyet","Kayıt Yenileme","Öğrenci Belgesi","Sertifika","Vizeler","Not"]},
-  {num:45,name:"Uluslararası Merkez", nameEN:"International Center",gps:[41.06769,28.94670],cats:["idari"],    emoji:"🌍",desc:"Uluslararası Öğrenci Merkezi.",descEN:"International Student Center.",photo:"/buildings/uluslararasi.jpg",keywords:["Erasmus","Exchange","Yabancı Öğrenci","Mübadele","Outgoing","Incoming","Uluslararası Öğrenci","International"]},
+  {num:45,name:"Uluslararası Merkez", nameEN:"International Center",gps:[41.06769,28.94670],cats:["idari"],    emoji:"🌍",desc:"Uluslararası Öğrenci Merkezi.",descEN:"International Student Center.",photo:"/buildings/uluslararasi.jpg",keywords:["Yabancı Öğrenci","Mübadele","Uluslararası Öğrenci","International Student"]},
   {num:21,name:"EN-1",               gps:[41.06757,28.94543],cats:["eğitsel","idari"],emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – İnşaat Mühendisliği, Makine Mühendisliği, Mekatronik Mühendisliği, Matematik, Moleküler Biyoloji ve Genetik.",descEN:"Faculty of Engineering and Natural Sciences – Civil Engineering, Mechanical Engineering, Mechatronics Engineering, Mathematics, Molecular Biology and Genetics."},
   {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",descEN:"Student Support Center (ÖDM) – counseling and career services.",photo:"/buildings/odm.jpg",keywords:["Danışmanlık","Kariyer","Psikolojik Destek","PDR","Rehberlik","Öğrenci Destek","Psikoloji Merkezi"]},
   {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",descEN:"Information Technologies unit.",photo:"/buildings/bt.jpg",keywords:["Bilişim","IT","Teknik Destek","Wifi","İnternet","Şifre","Parola","Yazıcı","Laptop","BİT","Helpdesk"]},
@@ -536,6 +578,23 @@ export default function CampusMap(){
   const[editToSearch,setEditToSearch]=useState("");
   const[expandedRoomKey,setExpandedRoomKey]=useState<string|null>(null);
   const toggleRoom=(k:string)=>setExpandedRoomKey(p=>p===k?null:k);
+  const[targetRoom,setTargetRoom]=useState<string|null>(null);
+  const[highlightedRoomKey,setHighlightedRoomKey]=useState<string|null>(null);
+  useEffect(()=>{
+    if(!targetRoom||!to)return;
+    const bRooms=ROOMS[String(to.num)];
+    if(!bRooms)return;
+    for(const[floor,rooms]of Object.entries(bRooms)){
+      const idx=(rooms as RoomEntry[]).findIndex(r=>r.oda===targetRoom||r.oda.includes(targetRoom));
+      if(idx>=0){
+        const rk=`${to.num}_${floor}_${idx}`;
+        setExpandedRoomKey(rk);
+        setHighlightedRoomKey(rk);
+        const tid=setTimeout(()=>setHighlightedRoomKey(null),2500);
+        return()=>clearTimeout(tid);
+      }
+    }
+  },[targetRoom,to]);
 
   // Onboarding: aktif adımın hedef elemanını bul, highlight rect hesapla
   useEffect(()=>{
@@ -931,7 +990,7 @@ export default function CampusMap(){
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
-    setPanelLoc(null);announcedRef.current.clear();
+    setPanelLoc(null);announcedRef.current.clear();setTargetRoom(null);setExpandedRoomKey(null);
     if(sheetRef.current)sheetRef.current.style.height="185px";
   },[stopSim]);
 
@@ -1511,9 +1570,10 @@ export default function CampusMap(){
                           {tFloor(floor)}
                         </div>
                         {(rooms as RoomEntry[]).map((r,i)=>{
-                          const rk=`sel_${selectedLoc.num}_${floor}_${i}`;
+                          const rk=`${selectedLoc.num}_${floor}_${i}`;
                           return<RoomRow key={rk} r={r} roomKey={rk}
-                            expanded={expandedRoomKey===rk} onToggle={toggleRoom}/>;
+                            expanded={expandedRoomKey===rk} onToggle={toggleRoom}
+                            highlighted={highlightedRoomKey===rk}/>;
                         })}
                       </div>
                     ))}
@@ -1912,33 +1972,68 @@ export default function CampusMap(){
                   </button>
                 </div>
               </div>
-              {/* To öneri listesi – inline (panel overflow'unu aşmaz) */}
-              {activeRouteInput==='to'&&toSearch&&(
-                <div style={{background:"#1e293b",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
-                  maxHeight:160,overflowY:"auto",marginTop:-2}}>
-                  {searchLocs(toSearch,LOCS).slice(0,8).map(({loc,keyword},i,arr)=>(
-                    <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                      onClick={()=>{
-                        if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
-                        setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
-                        if(from||(fromGPS&&userPos)){
-                          const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
-                          const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
-                          calcRoute(fLa,fLo,loc);setMode('ready');
-                        } else if(fromGPS&&!userPos){setMode('pickFrom');}}}
-                      style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
-                        background:"transparent",border:"none",
-                        borderBottom:i<arr.length-1?"1px solid #334155":"none",
-                        cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
-                      <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
-                      <div style={{flex:1,minWidth:0}}>
-                        <div style={{fontSize:13}}>{locName(loc)}</div>
-                        {keyword&&<div style={{fontSize:10,color:"#64748b",marginTop:1}}>{isEN()?"Contains:":"İçeriyor:"} {keyword}</div>}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* To öneri listesi – Entity + POI (inline, panel overflow'unu aşmaz) */}
+              {activeRouteInput==='to'&&toSearch&&(()=>{
+                const entRes=searchEntities(toSearch);
+                const locRes=searchLocs(toSearch,LOCS).slice(0,entRes.length>0?5:8);
+                const total=entRes.length+locRes.length;
+                if(total===0)return null;
+                return(
+                  <div style={{background:"#1e293b",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
+                    maxHeight:200,overflowY:"auto",marginTop:-2}}>
+                    {entRes.slice(0,4).map((ent,i)=>{
+                      const parent=LOCS.find(l=>l.num===ent.parentPoiNum);
+                      if(!parent)return null;
+                      return(
+                        <button key={ent.id} onMouseDown={e=>e.preventDefault()}
+                          onClick={()=>{
+                            setTo(parent);setToSearch(locName(parent));setActiveRouteInput(null);
+                            setPanelLoc(parent);setTargetRoom(ent.room??null);
+                            if(from||(fromGPS&&userPos)){
+                              const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                              const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                              calcRoute(fLa,fLo,parent);setMode('ready');
+                            } else {setMode('pickFrom');}}}
+                          style={{display:"flex",alignItems:"center",gap:10,padding:"9px 14px",
+                            background:"rgba(99,102,241,0.08)",border:"none",
+                            borderBottom:"1px solid #334155",
+                            cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                          <span style={{fontSize:16,flexShrink:0}}>{ENTITY_ICON[ent.kind]}</span>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:13,fontWeight:600}}>{entName(ent)}</div>
+                            <div style={{fontSize:10,color:"#94a3b8",marginTop:1}}>
+                              {locName(parent)}{ent.room?` · ${isEN()?"Room":"Oda"} ${ent.room}`:""}
+                              {entTitle(ent)?` — ${entTitle(ent)}`:""}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {locRes.map(({loc,keyword},i,arr)=>(
+                      <button key={loc.num} onMouseDown={e=>e.preventDefault()}
+                        onClick={()=>{
+                          if(from&&!fromGPS&&loc.num===from.num){setVoiceHint(isEN()?"⚠️ Start and destination are the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");setTimeout(()=>setVoiceHint(null),3000);return;}
+                          setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);setPanelLoc(loc);
+                          setTargetRoom(null);
+                          if(from||(fromGPS&&userPos)){
+                            const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
+                            const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
+                            calcRoute(fLa,fLo,loc);setMode('ready');
+                          } else if(fromGPS&&!userPos){setMode('pickFrom');}}}
+                        style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",
+                          background:"transparent",border:"none",
+                          borderBottom:i<arr.length-1?"1px solid #334155":"none",
+                          cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
+                        <span style={{fontSize:15,flexShrink:0}}>{loc.emoji}</span>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13}}>{locName(loc)}</div>
+                          {keyword&&<div style={{fontSize:10,color:"#64748b",marginTop:1}}>{isEN()?"Contains:":"İçeriyor:"} {keyword}</div>}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
             </div>
           )}
@@ -2195,9 +2290,10 @@ export default function CampusMap(){
                         {tFloor(floor)}
                       </div>
                       {(rooms as RoomEntry[]).map((r,i)=>{
-                        const rk=`pan_${panelLoc.num}_${floor}_${i}`;
+                        const rk=`${panelLoc.num}_${floor}_${i}`;
                         return<RoomRow key={rk} r={r} roomKey={rk}
-                          expanded={expandedRoomKey===rk} onToggle={toggleRoom} dark/>;
+                          expanded={expandedRoomKey===rk} onToggle={toggleRoom} dark
+                          highlighted={highlightedRoomKey===rk}/>;
                       })}
                     </div>
                   ))}

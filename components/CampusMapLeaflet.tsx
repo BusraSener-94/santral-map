@@ -1401,8 +1401,24 @@ export default function CampusMap(){
             );})()}
           </div>
 
+          {/* Sosyal medya linkleri */}
+          <div style={{marginTop:24,display:"flex",gap:20,alignItems:"center",justifyContent:"center"}}>
+            <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer"
+              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,textDecoration:"none"}}>
+              <img src="/instagram-logo.png" alt="Instagram"
+                style={{width:36,height:36,objectFit:"contain",borderRadius:8,opacity:0.85}}/>
+              <span style={{color:"rgba(255,255,255,0.45)",fontSize:9,letterSpacing:.3}}>@bilgiedtech</span>
+            </a>
+            <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer"
+              style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,textDecoration:"none"}}>
+              <img src="/youtube-logo.png" alt="YouTube"
+                style={{width:36,height:36,objectFit:"contain",borderRadius:8,opacity:0.85}}/>
+              <span style={{color:"rgba(255,255,255,0.45)",fontSize:9,letterSpacing:.3}}>@bilgiUZEM</span>
+            </a>
+          </div>
+
           {/* BİLGİ logotype alt */}
-          <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+          <div style={{marginTop:16,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
             <img src="/bilgi-logotype.png" alt="BİLGİ"
               style={{height:22,width:"auto",maxWidth:"60vw",objectFit:"contain",opacity:.5}}/>
             <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:.4}}>

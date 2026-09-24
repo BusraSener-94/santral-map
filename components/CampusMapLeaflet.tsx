@@ -2248,6 +2248,11 @@ export default function CampusMap(){
                 </div>
               )}
 
+              {/* Nav/Sim modunda varış fotoğrafı */}
+              {(mode==='sim'||mode==='nav')&&to&&(to.photo||to.photos?.length)&&(
+                <PhotoGallery loc={to} height={140} mb={0}/>
+              )}
+
               {/* Nav/Sim modunda adım butonu */}
               {(mode==='sim'||mode==='nav')&&(
                 <div style={{display:"flex",justifyContent:"flex-end"}}>

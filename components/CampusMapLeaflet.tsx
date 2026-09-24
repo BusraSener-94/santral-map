@@ -564,7 +564,12 @@ export default function CampusMap(){
   const[autoTrack,setAutoTrack]=useState(true);
   const handleMapDrag=useCallback(()=>setAutoTrack(false),[]);
   // nav/sim başladığında takibi aç
-  useEffect(()=>{if(mode==='nav'||mode==='sim')setAutoTrack(true);},[mode]);
+  useEffect(()=>{
+    if(mode==='nav'||mode==='sim'){
+      setAutoTrack(true);
+      if(sheetRef.current)sheetRef.current.style.height="185px";
+    }
+  },[mode]);
   const[gpsError,setGpsError]=useState<string|null>(null);
   const[showKarpuzIntro,setShowKarpuzIntro]=useState(false);
   const[fromSearch,setFromSearch]=useState("");
@@ -2240,6 +2245,18 @@ export default function CampusMap(){
                       <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Nav/Sim modunda adım butonu */}
+              {(mode==='sim'||mode==='nav')&&(
+                <div style={{display:"flex",justifyContent:"flex-end"}}>
+                  <button onClick={()=>setShowSteps(p=>!p)}
+                    style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
+                      fontSize:11,padding:"4px 12px",borderRadius:8,gap:4,minHeight:32}}>
+                    <span style={{fontSize:14}}>≡</span>
+                    <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
+                  </button>
                 </div>
               )}
 

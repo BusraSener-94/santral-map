@@ -302,7 +302,7 @@ interface Entity{id:string;name:string;nameEN?:string;title?:string;titleEN?:str
 const ENTITY_ICON:Record<EntityKind,string>={staff:"👤",institute:"🏛️",dept:"🏢"};
 const ENTITIES:Entity[]=[
   // Staff
-  {id:"huseyin_arpacioglu",name:"Hüseyin Arpacıoğlu",title:"Kayıt İşleri Müdürü – Öğrenci İşleri Daire Başkanlığı",kind:"staff",parentPoiNum:14,room:"216"},
+  {id:"kayit_muduru",name:"Kayıt İşleri Müdürü",title:"Öğrenci İşleri Daire Başkanlığı – Oda 216",kind:"staff",parentPoiNum:14,room:"216"},
   // Institutes in L1
   {id:"lisansustu",name:"Lisansüstü Programlar Enstitüsü",nameEN:"Institute of Graduate Programs",kind:"institute",parentPoiNum:7},
   {id:"bilisim_hukuku",name:"Bilişim ve Teknoloji Hukuku Enstitüsü",nameEN:"Institute of IT and Technology Law",title:"Hukuk Enstitüsü",kind:"institute",parentPoiNum:7},

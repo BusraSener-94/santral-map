@@ -494,18 +494,23 @@ const PERSON=L.divIcon({
   className:"",iconSize:[64,64],iconAnchor:[32,32]
 });
 
-const FRIEND_PIN=L.divIcon({
-  html:`<div style="position:relative;width:40px;height:48px;">
-    <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(52,211,153,0.22);animation:gps-pulse 2s ease-out infinite;"></div>
-    <div style="width:40px;height:40px;border-radius:50%;background:#10b981;border:3px solid #fff;
-      display:flex;align-items:center;justify-content:center;font-size:20px;
-      box-shadow:0 2px 8px rgba(0,0,0,0.45);">👤</div>
-    <div style="position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
-      width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
-      border-top:8px solid #10b981;"></div>
-  </div>`,
-  className:"",iconSize:[40,48],iconAnchor:[20,48]
-});
+const FRIEND_COLORS=["#10b981","#3b82f6","#a855f7","#f59e0b","#ec4899"];
+function mkFriendIcon(idx:number){
+  const col=FRIEND_COLORS[idx%FRIEND_COLORS.length];
+  const num=idx+1;
+  return L.divIcon({
+    html:`<div style="position:relative;width:40px;height:48px;">
+      <div style="position:absolute;inset:-6px;border-radius:50%;background:${col}38;animation:gps-pulse 2s ease-out infinite;"></div>
+      <div style="width:40px;height:40px;border-radius:50%;background:${col};border:3px solid #fff;
+        display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;
+        box-shadow:0 2px 8px rgba(0,0,0,0.45);">${num}</div>
+      <div style="position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+        width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
+        border-top:8px solid ${col};"></div>
+    </div>`,
+    className:"",iconSize:[40,48],iconAnchor:[20,48]
+  });
+}
 
 
 
@@ -539,7 +544,7 @@ export default function CampusMap(){
   const[userPos,setUserPos]=useState<[number,number]|null>(null);
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
-  const[sharedPin,setSharedPin]=useState<[number,number]|null>(null);
+  const[sharedPins,setSharedPins]=useState<[number,number][]>([]);
   // sessionStorage ile oturum başına sadece 1 kez splash → re-mount'ta tekrar çıkmaz
   const[splash,setSplash]=useState<"visible"|"fading"|"hidden">(()=>{
     if(typeof window!=="undefined"&&sessionStorage.getItem("splash_shown"))return"hidden";
@@ -695,15 +700,17 @@ export default function CampusMap(){
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
 
-  // ?pin=lat,lon URL parametresi → arkadaşın konumunu haritada göster
+  // ?pins=lat1,lon1|lat2,lon2 (veya eski ?pin=lat,lon) → arkadaşların konumlarını haritada göster
   useEffect(()=>{
-    const raw=new URLSearchParams(window.location.search).get("pin");
+    const sp=new URLSearchParams(window.location.search);
+    const multi=sp.get("pins");
+    const single=sp.get("pin");
+    const raw=multi??single;
     if(!raw)return;
-    const parts=raw.split(",");
-    if(parts.length===2){
-      const lat=parseFloat(parts[0]),lon=parseFloat(parts[1]);
-      if(!isNaN(lat)&&!isNaN(lon))setSharedPin([lat,lon]);
-    }
+    const parsed:([number,number])[]=(multi?raw.split("|"):[raw])
+      .map(s=>{const[a,b]=s.split(",");return[parseFloat(a),parseFloat(b)]as[number,number];})
+      .filter(([a,b])=>!isNaN(a)&&!isNaN(b));
+    if(parsed.length>0)setSharedPins(parsed);
   },[]);
 
   // Pusula: DeviceOrientationEvent → heading
@@ -1479,24 +1486,23 @@ export default function CampusMap(){
           {(mode==='sim'?simPos:userPos)&&(
             <Marker position={(mode==='sim'?simPos:userPos)!} icon={PERSON} zIndexOffset={3000}/>
           )}
-          {/* Arkadaşın konumu – ?pin= URL parametresinden */}
-          {sharedPin&&(
-            <Marker position={sharedPin} icon={FRIEND_PIN} zIndexOffset={2500}
-              eventHandlers={{click:()=>{
-                const friendLoc:Loc={num:-1,name:t('friendPin'),gps:sharedPin,
-                  cats:[],desc:"",emoji:"👤"};
-                stopSim();setTo(friendLoc);setToSearch(t('friendPin'));
-                setPanelLoc(null);
-                const fLat=fromGPS&&userPos?userPos[0]:from?.gps[0]??sharedPin[0];
-                const fLon=fromGPS&&userPos?userPos[1]:from?.gps[1]??sharedPin[1];
-                if(from||fromGPS)calcRoute(fLat,fLon,friendLoc);
-                setMode('ready');
-              }}}>
-              <Tooltip permanent direction="top" offset={[0,-48]}>
-                {t('friendPin')}
-              </Tooltip>
-            </Marker>
-          )}
+          {/* Arkadaşların konumları – ?pin= / ?pins= URL parametresinden */}
+          {sharedPins.map((pin,idx)=>{
+            const label=sharedPins.length===1?t('friendPin'):`${t('friendPin')} ${idx+1}`;
+            return(
+              <Marker key={idx} position={pin} icon={mkFriendIcon(idx)} zIndexOffset={2500}
+                eventHandlers={{click:()=>{
+                  const friendLoc:Loc={num:-1-idx,name:label,gps:pin,cats:[],desc:"",emoji:"👤"};
+                  stopSim();setTo(friendLoc);setToSearch(label);setPanelLoc(null);
+                  const fLat=fromGPS&&userPos?userPos[0]:from?.gps[0]??pin[0];
+                  const fLon=fromGPS&&userPos?userPos[1]:from?.gps[1]??pin[1];
+                  if(from||fromGPS)calcRoute(fLat,fLon,friendLoc);
+                  setMode('ready');
+                }}}>
+                <Tooltip permanent direction="top" offset={[0,-48]}>{label}</Tooltip>
+              </Marker>
+            );
+          })}
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             // Nav/sim'de sadece varış etiketi, diğerleri gizli
@@ -1878,17 +1884,25 @@ export default function CampusMap(){
               border:"1px solid #334155",borderRadius:10,minHeight:40,
               boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📍</button>
         )}
-        {/* Konumu paylaş – GPS açık ve konum alındıysa görünür */}
+        {/* Konumu paylaş / gruba ekle – GPS açık ve konum alındıysa görünür */}
         {gpsOn&&userPos&&(
           <button
             onClick={()=>{
-              const url=window.location.origin+window.location.pathname+"?pin="+userPos[0].toFixed(6)+","+userPos[1].toFixed(6);
+              const me=userPos[0].toFixed(6)+","+userPos[1].toFixed(6);
+              const existing=sharedPins.map(([a,b])=>a.toFixed(6)+","+b.toFixed(6));
+              const allPins=[...existing,me];
+              const param=allPins.length===1?"pin="+me:"pins="+allPins.join("|");
+              const url=window.location.origin+window.location.pathname+"?"+param;
               navigator.clipboard.writeText(url).catch(()=>{});
-              setVoiceHint(t('shareLocationCopied'));
+              setVoiceHint(sharedPins.length>0
+                ?isEN()?"🔗 Added to group link!":"🔗 Gruba eklendi, link kopyalandı!"
+                :t('shareLocationCopied'));
               setTimeout(()=>setVoiceHint(null),3000);
             }}
-            style={{...BTN,width:40,height:40,background:"#1e293b",
-              border:"1px solid #334155",borderRadius:10,minHeight:40,
+            style={{...BTN,width:40,height:40,
+              background:sharedPins.length>0?"#0d9488":"#1e293b",
+              border:`1px solid ${sharedPins.length>0?"#5eead4":"#334155"}`,
+              borderRadius:10,minHeight:40,
               boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📤</button>
         )}
         {/* Merkeze Dön – kullanıcı nav/sim sırasında haritayı kaydırdığında çıkar */}

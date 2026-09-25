@@ -1481,9 +1481,18 @@ export default function CampusMap(){
           )}
           {/* Arkadaşın konumu – ?pin= URL parametresinden */}
           {sharedPin&&(
-            <Marker position={sharedPin} icon={FRIEND_PIN} zIndexOffset={2500}>
-              <Tooltip permanent direction="top" offset={[0,-48]}
-                className="friend-pin-tooltip">
+            <Marker position={sharedPin} icon={FRIEND_PIN} zIndexOffset={2500}
+              eventHandlers={{click:()=>{
+                const friendLoc:Loc={num:-1,name:t('friendPin'),gps:sharedPin,
+                  cats:[],desc:"",emoji:"👤"};
+                stopSim();setTo(friendLoc);setToSearch(t('friendPin'));
+                setPanelLoc(null);
+                const fLat=fromGPS&&userPos?userPos[0]:from?.gps[0]??sharedPin[0];
+                const fLon=fromGPS&&userPos?userPos[1]:from?.gps[1]??sharedPin[1];
+                if(from||fromGPS)calcRoute(fLat,fLon,friendLoc);
+                setMode('ready');
+              }}}>
+              <Tooltip permanent direction="top" offset={[0,-48]}>
                 {t('friendPin')}
               </Tooltip>
             </Marker>

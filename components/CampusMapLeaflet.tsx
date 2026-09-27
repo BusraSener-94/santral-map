@@ -1327,61 +1327,67 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Kayıt ekranı – Ultra Minimalist & Ferah Onboarding ────────── */}
+      {/* ─── Kayıt ekranı – Responsive (Mobil & Masaüstü Uyumlu) Bento Tasarım ────────── */}
       {showWelcome&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,
           background:isDarkTheme?"#0f172a":"#f8fafc",
-          overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
-          padding:"20px 20px 24px",transition:"background 0.25s ease"}}>
+          overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"space-between",
+          padding:"24px 20px",transition:"background 0.25s ease"}}>
 
-          {/* Üst Bar: Logo, Gece/Gündüz & Dil */}
-          <div style={{width:"100%",maxWidth:360,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:24,objectFit:"contain"}} />
+          {/* Üst Bar: Masaüstünde geniş yayılan, mobilde derli toplu kurumsal başlık */}
+          <header style={{width:"100%",maxWidth:960,display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",marginBottom:"auto"}}>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:30,objectFit:"contain"}} />
             
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {/* Gece / Gündüz Toggle */}
               <button onClick={()=>setIsDarkTheme(!isDarkTheme)}
-                style={{background:isDarkTheme?"rgba(255,255,255,0.06)":"#ffffff",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,borderRadius:20,padding:"4px 9px",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",boxShadow:isDarkTheme?"none":"0 2px 6px rgba(0,0,0,0.06)"}}>
+                style={{background:isDarkTheme?"rgba(255,255,255,0.06)":"#ffffff",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,borderRadius:20,padding:"5px 10px",cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",boxShadow:isDarkTheme?"none":"0 2px 6px rgba(0,0,0,0.05)"}}>
                 {isDarkTheme ? "🌙" : "☀️"}
               </button>
 
               {/* TR / EN Dil Seçici */}
-              <div style={{display:"flex",gap:2,background:isDarkTheme?"rgba(255,255,255,0.06)":"#ffffff",borderRadius:20,padding:"3px 4px",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,boxShadow:isDarkTheme?"none":"0 2px 6px rgba(0,0,0,0.06)"}}>
+              <div style={{display:"flex",gap:2,background:isDarkTheme?"rgba(255,255,255,0.06)":"#ffffff",borderRadius:20,padding:"3px 4px",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,boxShadow:isDarkTheme?"none":"0 2px 6px rgba(0,0,0,0.05)"}}>
                 {(["TR","EN"] as const).map(l=>(
                   <button key={l} onClick={()=>setLang(l.toLowerCase() as "tr"|"en")}
-                    style={{padding:"3px 9px",borderRadius:16,border:"none",fontSize:10,fontWeight:800,letterSpacing:.5,
+                    style={{padding:"4px 10px",borderRadius:16,border:"none",fontSize:10.5,fontWeight:800,letterSpacing:.5,
                       background:isEN()===(l==="EN")?(isDarkTheme?"#ffffff":"#0284c7"):"transparent",
-                      color:isEN()===(l==="EN")?(isDarkTheme?"#090d16":"#ffffff"):(isDarkTheme?"#94a3b8":"#64748b"),cursor:"pointer",transition:"all 0.2s"}}>
+                      color:isEN()===(l==="EN")?(isDarkTheme?"#0f172a":"#ffffff"):(isDarkTheme?"#94a3b8":"#64748b"),cursor:"pointer",transition:"all 0.2s"}}>
                     {l}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
+          </header>
 
-          {/* İçerik: Tek Odaklı, Ferah ve Zarif */}
-          <div style={{width:"100%",maxWidth:360,display:"flex",flexDirection:"column",alignItems:"center",margin:"auto 0"}}>
+          {/* Orta Alan: Masaüstünde zarif yüzen kart, mobilde kompakt form */}
+          <main style={{width:"100%",maxWidth:430,margin:"24px 0",
+            background:isDarkTheme?"rgba(30, 41, 59, 0.6)":"#ffffff",
+            backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",
+            borderRadius:24,padding:"30px 24px 26px",
+            border:isDarkTheme?"1px solid rgba(255,255,255,0.08)":"1px solid rgba(0,0,0,0.06)",
+            boxShadow:isDarkTheme?"0 25px 50px -12px rgba(0,0,0,0.5)":"0 20px 40px -12px rgba(0,0,0,0.08)",
+            display:"flex",flexDirection:"column",alignItems:"center"}}>
             
-            {/* Tek ve Sevimli Maskot */}
-            <div style={{position:"relative",marginBottom:10}}>
+            {/* Karpuz Maskotu */}
+            <div style={{marginBottom:12}}>
               <img src="/karpuz-icon.png" alt="Karpuz" 
-                style={{height:76,width:"auto",objectFit:"contain",filter:"drop-shadow(0 8px 16px rgba(0,0,0,0.25))"}}/>
+                style={{height:74,width:"auto",objectFit:"contain",filter:"drop-shadow(0 6px 12px rgba(0,0,0,0.25))"}}/>
             </div>
 
-            {/* Sade ve Sıcak Başlık */}
+            {/* Başlık ve Karşılama */}
             <div style={{textAlign:"center",marginBottom:20}}>
-              <h2 style={{color:isDarkTheme?"#ffffff":"#0f172a",fontWeight:800,fontSize:20,margin:"0 0 4px 0",letterSpacing:-0.3}}>
+              <h1 style={{color:isDarkTheme?"#ffffff":"#0f172a",fontWeight:800,fontSize:20,margin:"0 0 4px 0",letterSpacing:-0.3}}>
                 {isEN() ? "Hi, I'm Karpuz!" : "Merhaba, ben Karpuz!"}
-              </h2>
-              <p style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12.5,margin:0,lineHeight:1.4}}>
-                {isEN() ? "Choose your role to explore santralistanbul." : "santralistanbul'u keşfetmek için rolünü seç."}
+              </h1>
+              <p style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:13,margin:0,lineHeight:1.4}}>
+                {isEN() ? "Select your role to explore santralistanbul." : "santralistanbul'u keşfetmek için rolünü seç."}
               </p>
             </div>
 
             {/* Form Alanı */}
             <div style={{width:"100%",display:"flex",flexDirection:"column",gap:12}}>
               
-              {/* Sadeleştirilmiş Hafif Rol Seçimi */}
+              {/* Rol Seçici */}
               <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:6}}>
                 {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>{
                   const active = wRole === r;
@@ -1392,8 +1398,8 @@ export default function CampusMap(){
                                 (isEN()?"Guest":"Misafir");
                   return(
                     <button key={r} onClick={()=>{setWRole(r);setWExtra("");}}
-                      style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"10px 2px",borderRadius:14,
-                        border:active?`1.5px solid ${isDarkTheme?"#38bdf8":"#0284c7"}`:`1px solid ${isDarkTheme?"rgba(255,255,255,0.07)":"#e2e8f0"}`,
+                      style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"11px 2px",borderRadius:14,
+                        border:active?`1.5px solid ${isDarkTheme?"#38bdf8":"#0284c7"}`:`1px solid ${isDarkTheme?"rgba(255,255,255,0.08)":"#e2e8f0"}`,
                         background:active?(isDarkTheme?"rgba(56,189,248,0.15)":"#f0f9ff"):(isDarkTheme?"rgba(255,255,255,0.02)":"#ffffff"),
                         color:active?(isDarkTheme?"#38bdf8":"#0284c7"):(isDarkTheme?"#cbd5e1":"#475569"),
                         cursor:"pointer",transition:"all 0.15s ease"}}>
@@ -1408,15 +1414,15 @@ export default function CampusMap(){
 
               {/* İsim Girişi */}
               <input value={wName} onChange={e=>setWName(e.target.value)} placeholder={isEN()?"Your Full Name":"Adınız Soyadınız"}
-                style={{width:"100%",padding:"12px 14px",borderRadius:12,
-                  background:isDarkTheme?"rgba(255,255,255,0.04)":"#ffffff",
+                style={{width:"100%",padding:"13px 15px",borderRadius:14,
+                  background:isDarkTheme?"rgba(255,255,255,0.04)":"#f8fafc",
                   border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,
                   color:isDarkTheme?"#ffffff":"#0f172a",fontSize:13.5,fontWeight:500,outline:"none",boxSizing:"border-box"}}/>
 
               {wRole==="Öğretmen"&&(
                 <input value={wExtra} onChange={e=>setWExtra(e.target.value)} placeholder={isEN()?"Department (Optional)":"Bölümünüz (İsteğe bağlı)"}
-                  style={{width:"100%",padding:"12px 14px",borderRadius:12,
-                    background:isDarkTheme?"rgba(255,255,255,0.04)":"#ffffff",
+                  style={{width:"100%",padding:"13px 15px",borderRadius:14,
+                    background:isDarkTheme?"rgba(255,255,255,0.04)":"#f8fafc",
                     border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.12)":"#cbd5e1"}`,
                     color:isDarkTheme?"#ffffff":"#0f172a",fontSize:13.5,fontWeight:500,outline:"none",boxSizing:"border-box"}}/>
               )}
@@ -1436,13 +1442,13 @@ export default function CampusMap(){
 
               {/* KVKK Modal */}
               {kvkkModal&&(
-                <div onClick={()=>setKvkkModal(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 20px"}}>
-                  <div onClick={e=>e.stopPropagation()} style={{background:isDarkTheme?"#111622":"#ffffff",borderRadius:"20px",padding:"20px",maxWidth:400,width:"90%",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.1)":"#e2e8f0"}`}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                      <div style={{color:isDarkTheme?"#ffffff":"#0f172a",fontWeight:800,fontSize:14}}>KVKK Aydınlatma</div>
+                <div onClick={()=>setKvkkModal(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+                  <div onClick={e=>e.stopPropagation()} style={{background:isDarkTheme?"#1e293b":"#ffffff",borderRadius:"20px",padding:"22px",maxWidth:420,width:"100%",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.1)":"#e2e8f0"}`,boxShadow:"0 20px 40px rgba(0,0,0,0.3)"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+                      <div style={{color:isDarkTheme?"#ffffff":"#0f172a",fontWeight:800,fontSize:14}}>KVKK Aydınlatma Metni</div>
                       <button onClick={()=>setKvkkModal(false)} style={{background:isDarkTheme?"rgba(255,255,255,0.08)":"#f1f5f9",border:"none",color:isDarkTheme?"#94a3b8":"#64748b",width:26,height:26,borderRadius:"50%",cursor:"pointer",fontSize:13}}>✕</button>
                     </div>
-                    <p style={{color:isDarkTheme?"#cbd5e1":"#334155",fontSize:11.5,lineHeight:1.6,margin:0}}>
+                    <p style={{color:isDarkTheme?"#cbd5e1":"#334155",fontSize:11.5,lineHeight:1.65,margin:0}}>
                       {isEN() ? "Istanbul Bilgi University collects your name and role information solely to measure anonymous usage statistics of the Karpuza Sor campus navigation application. Your data is not shared with third parties." : "İstanbul Bilgi Üniversitesi, Karpuza Sor kampüs navigasyon uygulamasının anonim kullanım istatistiklerini ölçmek amacıyla adınızı ve rolünüzü toplamaktadır. Verileriniz üçüncü taraflarla paylaşılmaz."}
                     </p>
                   </div>
@@ -1454,29 +1460,29 @@ export default function CampusMap(){
                 const ok=!!(wName.trim()&&wRole&&wKvkk);
                 return(
                   <button onClick={submitWelcome} disabled={!ok}
-                    style={{padding:"13px",borderRadius:14,border:"none",marginTop:4,width:"100%",
+                    style={{padding:"14px",borderRadius:14,border:"none",marginTop:4,width:"100%",
                       background:ok?(isDarkTheme?"#38bdf8":"#0284c7"):(isDarkTheme?"rgba(255,255,255,0.05)":"#e2e8f0"),
-                      color:ok?(isDarkTheme?"#090d16":"#ffffff"):(isDarkTheme?"#64748b":"#94a3b8"),fontSize:14,fontWeight:800,
+                      color:ok?(isDarkTheme?"#0f172a":"#ffffff"):(isDarkTheme?"#64748b":"#94a3b8"),fontSize:14,fontWeight:800,
                       cursor:ok?"pointer":"default",transition:"all 0.2s ease"}}>
                     {isEN() ? "Start Exploring →" : "Haritaya Başla →"}
                   </button>
                 );
               })()}
 
-              {/* Sosyal Medya */}
-              <div style={{marginTop:8,display:"flex",justifyContent:"center",gap:16,alignItems:"center"}}>
-                <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:5,textDecoration:"none"}}>
-                  <img src="/instagram-logo.png" alt="Instagram" style={{width:12,opacity:0.5}}/>
-                  <span style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:10,fontWeight:600}}>@bilgiedtech</span>
-                </a>
-                <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:5,textDecoration:"none"}}>
-                  <img src="/youtube-logo.png" alt="YouTube" style={{width:12,opacity:0.5}}/>
-                  <span style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:10,fontWeight:600}}>@bilgiUZEM</span>
-                </a>
-              </div>
-
             </div>
-          </div>
+          </main>
+
+          {/* Alt Footer Bar: Masaüstünde ortalı, ferah bağlantılar */}
+          <footer style={{width:"100%",maxWidth:960,display:"flex",justifyContent:"center",gap:20,alignItems:"center",padding:"10px 0",marginTop:"auto"}}>
+            <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
+              <img src="/instagram-logo.png" alt="Instagram" style={{width:13,opacity:0.6}}/>
+              <span style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:11,fontWeight:600}}>@bilgiedtech</span>
+            </a>
+            <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
+              <img src="/youtube-logo.png" alt="YouTube" style={{width:13,opacity:0.6}}/>
+              <span style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:11,fontWeight:600}}>@bilgiUZEM</span>
+            </a>
+          </footer>
         </div>
       )}
 

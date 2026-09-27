@@ -554,6 +554,7 @@ export default function CampusMap(){
   const[showWelcome,setShowWelcome]=useState(false);
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
@@ -2672,5 +2673,4 @@ export default function CampusMap(){
       )}
     </div>
   );
-}const [isDarkTheme, setIsDarkTheme] = useState(true);
-  
+}  

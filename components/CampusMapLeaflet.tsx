@@ -1395,11 +1395,7 @@ export default function CampusMap(){
 
           {/* Form Alanı */}
           <div style={{width:"100%",maxWidth:380,display:"flex",flexDirection:"column",gap:12}}>
-            <div style={{color:isDarkTheme?"#cbd5e1":"#334155",fontSize:10.5,fontWeight:800,letterSpacing:1}}>
-              {isEN() ? "WHO ARE YOU?" : "SEN KİMSİN?"}
-            </div>
-
-            {/* Rol Seçici */}
+{/* Rol Seçici */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:8}}>
               {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>{
                 const active = wRole === r;

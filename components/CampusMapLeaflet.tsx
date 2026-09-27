@@ -1327,16 +1327,16 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Kayıt ekranı – Minimalist, Yüksek Kontrast, Gece/Gündüz & Tam i18n ────────── */}
+      {/* ─── Kayıt ekranı – Sade, Yüksek Kontrast, Gece/Gündüz & Tam i18n ────────── */}
       {showWelcome&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,
           background:isDarkTheme?"#090d16":"#f8fafc",
           overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
-          padding:"32px 20px 36px",transition:"background 0.25s ease"}}>
+          padding:"36px 20px 40px",transition:"background 0.25s ease"}}>
 
           {/* Üst Bar: Logo, Gece/Gündüz & Dil */}
           <div style={{width:"100%",maxWidth:380,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-light.png"} alt="BİLGİ" style={{height:24,objectFit:"contain"}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.svg"} alt="BİLGİ" style={{height:26,objectFit:"contain"}}/>
             
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {/* Gece / Gündüz Toggle */}
@@ -1360,7 +1360,7 @@ export default function CampusMap(){
           </div>
 
           {/* Karpuz Başlık Kartı */}
-          <div style={{width:"100%",maxWidth:380,background:isDarkTheme?"rgba(255,255,255,0.03)":"#ffffff",borderRadius:20,padding:"16px 18px",display:"flex",alignItems:"center",gap:14,border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.08)":"#e2e8f0"}`,boxShadow:isDarkTheme?"none":"0 4px 16px rgba(0,0,0,0.04)",marginBottom:14}}>
+          <div style={{width:"100%",maxWidth:380,background:isDarkTheme?"rgba(255,255,255,0.03)":"#ffffff",borderRadius:20,padding:"16px 18px",display:"flex",alignItems:"center",gap:14,border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.08)":"#e2e8f0"}`,boxShadow:isDarkTheme?"none":"0 4px 16px rgba(0,0,0,0.04)",marginBottom:20}}>
             <div style={{width:66,height:66,borderRadius:18,overflow:"hidden",flexShrink:0,background:isDarkTheme?"#161d2d":"#f1f5f9",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.1)":"#cbd5e1"}`}}>
               <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             </div>
@@ -1373,28 +1373,14 @@ export default function CampusMap(){
                 <img src="/karpuz-icon.png" alt="Karpuz" style={{height:26,width:"auto",objectFit:"contain"}}/>
               </div>
               <div style={{color:isDarkTheme?"#cbd5e1":"#475569",fontSize:11.5,lineHeight:1.45}}>
-                {isEN() ? "I'm here to help you navigate santralistanbul. Enter your info to get started!" : "santralistanbul'da doğru yeri bulman için buradayım. Birkaç bilgi gir, hemen başlayalım!"}
+                {isEN() ? "I'm here to help you navigate santralistanbul. Select your role to get started!" : "santralistanbul'da doğru yeri bulman için buradayım. Rolünü seç, hemen başlayalım!"}
               </div>
             </div>
           </div>
 
-          {/* İstatistikler */}
-          <div style={{width:"100%",maxWidth:380,display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:8,marginBottom:18}}>
-            {[
-              {num:"45",label:isEN()?"PLACES":"NOKTA"},
-              {num:"507",label:isEN()?"ROOMS":"MAHAL"},
-              {num:"14",label:isEN()?"UNITS":"BİRİM"}
-            ].map((s,i)=>(
-              <div key={i} style={{background:isDarkTheme?"rgba(255,255,255,0.02)":"#ffffff",borderRadius:14,padding:"10px 6px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:`1px solid ${isDarkTheme?"rgba(255,255,255,0.07)":"#e2e8f0"}`,boxShadow:isDarkTheme?"none":"0 2px 8px rgba(0,0,0,0.03)"}}>
-                <div style={{color:isDarkTheme?"#ffffff":"#0f172a",fontSize:19,fontWeight:800,letterSpacing:-0.5}}>{s.num}</div>
-                <div style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:9,fontWeight:700,letterSpacing:0.8,marginTop:1}}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
           {/* Form Alanı */}
           <div style={{width:"100%",maxWidth:380,display:"flex",flexDirection:"column",gap:12}}>
-{/* Rol Seçici */}
+            {/* Rol Seçici (SEN KİMSİN başlığı kaldırıldı) */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:8}}>
               {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>{
                 const active = wRole === r;
@@ -1405,13 +1391,13 @@ export default function CampusMap(){
                               (isEN()?"Guest":"Misafir");
                 return(
                   <button key={r} onClick={()=>{setWRole(r);setWExtra("");}}
-                    style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"12px 2px",borderRadius:14,
+                    style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:4,padding:"14px 2px",borderRadius:16,
                       border:active?`1.5px solid ${isDarkTheme?"#38bdf8":"#0284c7"}`:`1px solid ${isDarkTheme?"rgba(255,255,255,0.08)":"#e2e8f0"}`,
                       background:active?(isDarkTheme?"rgba(56,189,248,0.12)":"#f0f9ff"):(isDarkTheme?"rgba(255,255,255,0.02)":"#ffffff"),
                       color:active?(isDarkTheme?"#38bdf8":"#0284c7"):(isDarkTheme?"#cbd5e1":"#475569"),
                       cursor:"pointer",transition:"all 0.2s",boxShadow:isDarkTheme?"none":"0 2px 6px rgba(0,0,0,0.03)"}}>
-                    <span style={{fontSize:18}}>{emoji}</span>
-                    <span style={{fontSize:10,fontWeight:700,textAlign:"center",lineHeight:1.2}}>
+                    <span style={{fontSize:20}}>{emoji}</span>
+                    <span style={{fontSize:10.5,fontWeight:700,textAlign:"center",lineHeight:1.2}}>
                       {label}
                     </span>
                   </button>

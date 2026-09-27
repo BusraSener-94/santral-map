@@ -2078,7 +2078,7 @@ export default function CampusMap(){
             :"0 -4px 24px rgba(0,0,0,0.5)",
           height:"185px",maxHeight:"85dvh",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
-          display:"flex",flexDirection:"column",
+          display: (!showWelcome && showTour) ? "none" : "flex",flexDirection:"column",
           overflow:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
         ref={sheetRef}>
@@ -2509,7 +2509,7 @@ export default function CampusMap(){
 
           {/* Kategori filtreleri – sadece idle modda ve klavye kapalıyken */}
           {mode==='idle'&&!activeRouteInput&&(
-            <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4}}>
+            <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4, borderRadius: 12, padding: (showTour && tourStep === 2) ? 8 : 0, animation: (showTour && tourStep === 2) ? "onboard-glow 1.4s ease-in-out infinite" : "none", boxShadow: (showTour && tourStep === 2) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.6)" : "none", transition: "all 0.3s"}}>
               <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,

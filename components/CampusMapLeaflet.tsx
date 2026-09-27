@@ -555,7 +555,7 @@ export default function CampusMap(){
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
   const [tourStep, setTourStep] = useState<number>(0);
-  const [showTour, setShowTour] = useState<boolean>(true);
+  const [showTour, setShowTour] = useState<boolean>(false);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
@@ -1009,6 +1009,8 @@ export default function CampusMap(){
     };
     localStorage.setItem("karpuza_user",JSON.stringify(profile));
     setUserProfile(profile); setShowWelcome(false);
+    setShowTour(true);
+    setTourStep(0);
     setShowKarpuzIntro(true);
     // Onboarding intro kapandıktan sonra başlar (dismissKarpuzIntro içinde)
     if(SHEET_URL){

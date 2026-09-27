@@ -2008,7 +2008,23 @@ export default function CampusMap(){
             </div>
           </div>
           <div onClick={() => { setMode('pickTo'); setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text" }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#1e293b", marginBottom: 2 }}>{isEN() ? "Where to?" : "Nereye gidiyoruz?"}</span>
+            <input
+              type="text"
+              value={toSearch}
+              onChange={(e) => { setToSearch(e.target.value); setActiveRouteInput('to'); }}
+              onFocus={() => { setActiveRouteInput('to'); }}
+              placeholder={isEN() ? "Where to?" : "Nereye gidiyoruz?"}
+              style={{
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                fontSize: 13,
+                fontWeight: 700,
+                color: isDarkTheme ? "#f8fafc" : "#1e293b",
+                width: "100%",
+                padding: 0
+              }}
+            />
             <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}</span>
           </div>
           <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2, flexShrink: 0 }}>

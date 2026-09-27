@@ -1310,7 +1310,7 @@ export default function CampusMap(){
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
           <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.svg"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} onError={(e)=>{e.currentTarget.src="/bilgi-logotype.png";}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.svg"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} onError={(e)=>{e.currentTarget.src="/bilgi-logotype.png";}}/>{e.currentTarget.src="/bilgi-logotype.png";}}/>
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               {t('campusName')}
             </div>

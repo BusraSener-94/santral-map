@@ -1566,7 +1566,7 @@ export default function CampusMap(){
           transform: "translateX(-50%)",
           width: "calc(100% - 32px)",
           maxWidth: 440,
-          background: isDarkTheme ? "rgba(30, 41, 59, 0.96)" : "rgba(255, 255, 255, 0.98)",
+          background: isDarkTheme ? "#1e293b" : "#ffffff",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
           borderRadius: 22,

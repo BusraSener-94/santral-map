@@ -554,6 +554,8 @@ export default function CampusMap(){
   const[showWelcome,setShowWelcome]=useState(false);
   const[selectedLoc,setSelectedLoc]=useState<Loc|null>(null);
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
+  const [tourStep, setTourStep] = useState<number>(0);
+  const [showTour, setShowTour] = useState<boolean>(true);
   const [isDarkTheme, setIsDarkTheme] = useState(true);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
@@ -1549,6 +1551,141 @@ export default function CampusMap(){
               <span style={{color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12,fontWeight:600}}>@bilgiUZEM</span>
             </a>
           </footer>
+        </div>
+      )}
+
+      
+      {/* ─── Modern 5-Adımlı İnteraktif Rehber Kartı (Geri Butonlu & Karpuz Maskotlu) ─── */}
+      {!showWelcome && showTour && (
+        <div style={{
+          position: "fixed",
+          bottom: 28,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "calc(100% - 32px)",
+          maxWidth: 440,
+          background: isDarkTheme ? "rgba(30, 41, 59, 0.96)" : "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderRadius: 22,
+          padding: "16px 18px 14px",
+          boxShadow: "0 18px 45px rgba(0, 0, 0, 0.22)",
+          border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.08)",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          animation: "fadeInUp 0.25s ease-out"
+        }}>
+          {/* Üst Kısım: Karpuz Maskot Avatarı ve Yönerge Metni */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              overflow: "hidden",
+              flexShrink: 0,
+              background: isDarkTheme ? "rgba(255,255,255,0.06)" : "#f1f5f9",
+              border: "2px solid #c8102e",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 10px rgba(200, 16, 46, 0.2)"
+            }}>
+              <img 
+                src="/karpuz-mascot.png" 
+                alt="Karpuz" 
+                onError={(e)=>{ (e.target as any).src = isEN() ? "/karpuza-sor-en.png" : "/karpuza-sor.png"; }}
+                style={{ width: "92%", height: "92%", objectFit: "contain" }}
+              />
+            </div>
+
+            <div style={{ flex: 1, fontSize: 13.5, lineHeight: 1.45, fontWeight: 600, color: isDarkTheme ? "#f8fafc" : "#1e293b" }}>
+              {tourStep === 0 && (isEN() ? "Ready? Let's explore the campus together." : "Hazır mısın? Kampüsü birlikte keşfedelim.")}
+              {tourStep === 1 && (isEN() ? "Type here to search buildings, rooms or units. I also understand room codes like 'E1 203'." : "Bina, oda ya da birim aramak için buraya yaz, 'E1 203' gibi oda numaralarını da anlıyorum.")}
+              {tourStep === 2 && (isEN() ? "Filter by categories: Educational, Social, Administrative..." : "Kategorilere göre filtrele: Eğitsel, Sosyal, İdari...")}
+              {tourStep === 3 && (isEN() ? "Enable your location so I can show nearby places and guide you live." : "Konumunu aç; sana en yakın yerleri göstereyim ve seni canlı yönlendireyim.")}
+              {tourStep === 4 && (isEN() ? "Tap any spot on the map, open its card, and select 'Go here'. Leave the rest to me." : "Haritadaki bir noktaya dokun, kartını aç ve 'Buraya git' de. Gerisini bana bırak.")}
+            </div>
+          </div>
+
+          {/* Alt Kısım: Turu Atla - Noktalı İlerleme - Geri ve İleri/Başla Butonları */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+            {/* Turu Atla */}
+            <button 
+              onClick={() => setShowTour(false)}
+              style={{
+                background: "none",
+                border: "none",
+                color: isDarkTheme ? "#94a3b8" : "#64748b",
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: "pointer",
+                padding: "6px 4px"
+              }}>
+              {isEN() ? "Skip tour" : "Turu atla"}
+            </button>
+
+            {/* İlerleme Noktaları */}
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              {[0, 1, 2, 3, 4].map(idx => (
+                <div 
+                  key={idx}
+                  style={{
+                    width: tourStep === idx ? 16 : 6,
+                    height: 6,
+                    borderRadius: 3,
+                    background: tourStep === idx ? "#c8102e" : (isDarkTheme ? "rgba(255,255,255,0.2)" : "#cbd5e1"),
+                    transition: "all 0.2s ease"
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Navigasyon Butonları: Geri & İleri/Başla */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {tourStep > 0 && (
+                <button
+                  onClick={() => setTourStep(tourStep - 1)}
+                  style={{
+                    background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                    border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.12)" : "#cbd5e1"}`,
+                    color: isDarkTheme ? "#e2e8f0" : "#475569",
+                    borderRadius: 18,
+                    padding: "6px 12px",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s"
+                  }}>
+                  ← {isEN() ? "Back" : "Geri"}
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  if (tourStep < 4) {
+                    setTourStep(tourStep + 1);
+                  } else {
+                    setShowTour(false);
+                  }
+                }}
+                style={{
+                  background: "#c8102e",
+                  border: "none",
+                  color: "#ffffff",
+                  borderRadius: 18,
+                  padding: "6px 16px",
+                  fontSize: 12.5,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(200, 16, 46, 0.3)",
+                  transition: "all 0.15s"
+                }}>
+                {tourStep === 4 ? (isEN() ? "Start" : "Başla") : (isEN() ? "Next →" : "İleri →")}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

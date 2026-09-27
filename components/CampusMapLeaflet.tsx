@@ -1337,7 +1337,7 @@ export default function CampusMap(){
 
           {/* Üst Bar: Logo, Gece/Gündüz & Dil */}
           <div style={{width:"100%",maxWidth:380,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-            <img src="/bilgi-logotype.png" alt="BİLGİ" style={{height:22,objectFit:"contain",filter:isDarkTheme?"brightness(1.2)":"none"}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-light.png"} alt="BİLGİ" style={{height:24,objectFit:"contain"}}/>
             
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {/* Gece / Gündüz Toggle */}

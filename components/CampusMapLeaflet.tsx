@@ -1998,7 +1998,8 @@ export default function CampusMap(){
           background: isDarkTheme ? "rgba(30, 41, 59, 0.85)" : "rgba(255, 255, 255, 0.9)",
           backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
           borderRadius: 24, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
-          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+          animation: (showTour && tourStep === 1) ? "onboard-glow 1.4s ease-in-out infinite" : "none",
+          boxShadow: (showTour && tourStep === 1) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.9)" : "0 8px 32px rgba(0, 0, 0, 0.15)",
           border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.05)"
         }}>
           <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>

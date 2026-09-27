@@ -1327,116 +1327,150 @@ export default function CampusMap(){
         </div>
       )}
 
-      {/* ─── Kayıt ekranı – tek sayfa (Yenilenmiş Noir Estetik) ────────── */}
+      {/* ─── Kayıt ekranı – Kore / Anime / Z Kuşağı Estetiği ────────── */}
       {showWelcome&&(
-        <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0b101e",
+        <div style={{position:"fixed",inset:0,zIndex:9998,
+          background:"linear-gradient(165deg, #0e1222 0%, #1e1b4b 45%, #2e1065 100%)",
           overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
-          padding:"40px 24px"}}>
+          padding:"36px 20px 40px"}}>
 
-          {/* Üst Logo ve Dil */}
-          <div style={{width:"100%",maxWidth:400,display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:32}}>
-            <div style={{display:"flex",flexDirection:"column",gap:4}}>
-              <img src="/bilgi-logotype.png" alt="BİLGİ" style={{height:24,objectFit:"contain",opacity:0.8}}/>
-            </div>
-            <div style={{display:"flex",gap:4,background:"rgba(255,255,255,0.05)",borderRadius:8,padding:4}}>
+          {/* Arka Plan Anime Parıltı Efektleri */}
+          <div style={{position:"fixed",top:"-10%",left:"-10%",width:"50vw",height:"50vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(236,72,153,0.18) 0%, transparent 70%)",pointerEvents:"none"}}/>
+          <div style={{position:"fixed",bottom:"5%",right:"-10%",width:"60vw",height:"60vw",borderRadius:"50%",background:"radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)",pointerEvents:"none"}}/>
+
+          {/* Üst Logo & Dil Hapı */}
+          <div style={{width:"100%",maxWidth:380,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24,position:"relative",zIndex:2}}>
+            <img src="/bilgi-logotype.png" alt="BİLGİ" style={{height:22,objectFit:"contain",opacity:0.9,filter:"brightness(1.2)"}}/>
+            <div style={{display:"flex",gap:3,background:"rgba(255,255,255,0.08)",backdropFilter:"blur(12px)",borderRadius:30,padding:"3px 4px",border:"1px solid rgba(255,255,255,0.15)"}}>
               {(["TR","EN"] as const).map(l=>(
                 <button key={l} onClick={()=>setLang(l.toLowerCase() as "tr"|"en")}
-                  style={{padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:700,
-                    background:isEN()===(l==="EN")?"#fff":"transparent",
-                    color:isEN()===(l==="EN")?"#0b101e":"rgba(255,255,255,0.4)",cursor:"pointer"}}>
+                  style={{padding:"3px 10px",borderRadius:20,border:"none",fontSize:10,fontWeight:800,letterSpacing:.5,
+                    background:isEN()===(l==="EN")?"linear-gradient(135deg, #ec4899, #a855f7)":"transparent",
+                    color:isEN()===(l==="EN")?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",transition:"all 0.2s"}}>
                   {l}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Karpuz Başlık */}
-          <div style={{display:"flex",alignItems:"center",gap:16,width:"100%",maxWidth:400,marginBottom:32}}>
-            <div style={{width:84,height:84,borderRadius:"24px",background:"#1e293b",overflow:"hidden",boxShadow:"0 8px 24px rgba(0,0,0,0.6)",flexShrink:0}}>
-              <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz" style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+          {/* Karpuz Başlık Kartı */}
+          <div style={{width:"100%",maxWidth:380,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(16px)",borderRadius:24,padding:"18px",display:"flex",alignItems:"center",gap:16,border:"1.5px solid rgba(255,255,255,0.12)",boxShadow:"0 12px 32px rgba(0,0,0,0.35)",marginBottom:18,position:"relative",zIndex:2}}>
+            <div style={{position:"relative",width:78,height:78,borderRadius:22,overflow:"hidden",flexShrink:0,background:"linear-gradient(135deg, #fbcfe8, #c7d2fe)",padding:3,boxShadow:"0 6px 20px rgba(236,72,153,0.35)"}}>
+              <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz" style={{width:"100%",height:"100%",objectFit:"cover",borderRadius:19}}/>
             </div>
             <div style={{flex:1}}>
-              <div style={{color:"#fff",fontWeight:800,fontSize:22,lineHeight:1.2,marginBottom:6}}>{t('welcomeTitle')}</div>
-              <div style={{color:"rgba(255,255,255,0.6)",fontSize:12,lineHeight:1.5}}>{t('welcomeDesc')}</div>
+              <div style={{display:"inline-block",padding:"2px 8px",borderRadius:12,background:"rgba(236,72,153,0.2)",border:"1px solid rgba(236,72,153,0.4)",color:"#f472b6",fontSize:10,fontWeight:800,marginBottom:4}}>
+                SANTRAL'İN REHBERİ ✨
+              </div>
+              <div style={{color:"#fff",fontWeight:800,fontSize:19,lineHeight:1.2,marginBottom:4}}>
+                Merhaba, ben Karpuz 🍉
+              </div>
+              <div style={{color:"rgba(255,255,255,0.7)",fontSize:11.5,lineHeight:1.5}}>
+                {t('welcomeDesc')}
+              </div>
             </div>
           </div>
 
-          {/* İstatistikler */}
-          <div style={{display:"flex",justifyContent:"space-between",width:"100%",maxWidth:400,background:"rgba(255,255,255,0.03)",borderRadius:16,padding:"16px 20px",marginBottom:32,border:"1px solid rgba(255,255,255,0.05)"}}>
-            {[{num:"45",label:"NOKTA"},{num:"507",label:"MAHAL"},{num:"14",label:"BİRİM"}].map((s,i)=>(
-              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <div style={{color:"#fff",fontSize:24,fontWeight:800}}>{s.num}</div>
-                <div style={{color:"rgba(255,255,255,0.4)",fontSize:10,letterSpacing:1,fontWeight:600}}>{s.label}</div>
+          {/* Kore Tarzı Bento Grid İstatistikler */}
+          <div style={{width:"100%",maxWidth:380,display:"grid",gridTemplateColumns:"repeat(3, 1fr)",gap:10,marginBottom:20,position:"relative",zIndex:2}}>
+            {[
+              {num:"45",label:"NOKTA",icon:"📍",color:"#38bdf8",border:"rgba(56,189,248,0.25)"},
+              {num:"507",label:"MAHAL",icon:"🚪",color:"#f472b6",border:"rgba(244,114,182,0.25)"},
+              {num:"14",label:"BİRİM",icon:"🏛️",color:"#a78bfa",border:"rgba(167,139,250,0.25)"}
+            ].map((s,i)=>(
+              <div key={i} style={{background:"rgba(255,255,255,0.04)",backdropFilter:"blur(12px)",borderRadius:18,padding:"12px 6px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",border:`1.5px solid ${s.border}`,boxShadow:"0 4px 16px rgba(0,0,0,0.15)"}}>
+                <span style={{fontSize:14,marginBottom:2}}>{s.icon}</span>
+                <div style={{color:s.color,fontSize:22,fontWeight:900,letterSpacing:-0.5}}>{s.num}</div>
+                <div style={{color:"rgba(255,255,255,0.5)",fontSize:9,fontWeight:800,letterSpacing:0.8,marginTop:1}}>{s.label}</div>
               </div>
             ))}
           </div>
 
           {/* Form Alanı */}
-          <div style={{width:"100%",maxWidth:400,display:"flex",flexDirection:"column",gap:16}}>
-            <div style={{color:"rgba(255,255,255,0.4)",fontSize:11,fontWeight:700,letterSpacing:1}}>SEN KİMSİN?</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:8}}>
-              {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>(
-                <button key={r} onClick={()=>{setWRole(r);setWExtra("");}}
-                  style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:8,padding:"16px 4px",borderRadius:16,
-                    border:`1px solid ${wRole===r?"#e11d48":"rgba(255,255,255,0.05)"}`,
-                    background:wRole===r?"rgba(225,29,72,0.1)":"rgba(255,255,255,0.03)",
-                    color:wRole===r?"#fff":"rgba(255,255,255,0.5)",cursor:"pointer",transition:"all 0.2s"}}>
-                    <span style={{fontSize:22}}>{r==="Öğrenci"?"🎓":r==="Öğretmen"?"👨‍🏫":r==="Personel"?"🏢":"👤"}</span>
-                    <span style={{fontSize:10,fontWeight:600,textAlign:"center"}}>{r==="Öğretmen"?(isEN()?"Faculty":"Öğretim\nÜyesi"):r}</span>
-                </button>
-              ))}
+          <div style={{width:"100%",maxWidth:380,display:"flex",flexDirection:"column",gap:14,position:"relative",zIndex:2}}>
+            <div style={{color:"#fbcfe8",fontSize:11,fontWeight:800,letterSpacing:1,display:"flex",alignItems:"center",gap:6}}>
+              <span>🌸</span> SEN KİMSİN?
             </div>
 
+            {/* Anime/Z Rol Kartları */}
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:8}}>
+              {(["Öğrenci","Öğretmen","Personel","Misafir"] as UserRole[]).map(r=>{
+                const active = wRole === r;
+                const emoji = r==="Öğrenci"?"🎒":r==="Öğretmen"?"👓":r==="Personel"?"💼":"✨";
+                return(
+                  <button key={r} onClick={()=>{setWRole(r);setWExtra("");}}
+                    style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,padding:"14px 4px",borderRadius:18,
+                      border:active?"2px solid #f472b6":"1.5px solid rgba(255,255,255,0.08)",
+                      background:active?"linear-gradient(145deg, rgba(236,72,153,0.25), rgba(168,85,247,0.25))":"rgba(255,255,255,0.03)",
+                      color:active?"#fff":"rgba(255,255,255,0.55)",cursor:"pointer",transition:"all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                      transform:active?"scale(1.04)":"scale(1)",boxShadow:active?"0 6px 20px rgba(236,72,153,0.3)":"none"}}>
+                    <span style={{fontSize:24}}>{emoji}</span>
+                    <span style={{fontSize:10.5,fontWeight:700,textAlign:"center",lineHeight:1.2}}>
+                      {r==="Öğretmen"?(isEN()?"Faculty":"Öğretim Üyesi"):r}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* İsim Girişi */}
             <input value={wName} onChange={e=>setWName(e.target.value)} placeholder={t('namePlaceholder')}
-              style={{width:"100%",padding:"16px",borderRadius:16,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:14,outline:"none",marginTop:8,boxSizing:"border-box"}}/>
+              style={{width:"100%",padding:"15px 18px",borderRadius:20,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",border:"1.5px solid rgba(255,255,255,0.14)",color:"#fff",fontSize:14,outline:"none",boxSizing:"border-box",transition:"all 0.2s"}}/>
 
             {wRole==="Öğretmen"&&(
               <input value={wExtra} onChange={e=>setWExtra(e.target.value)} placeholder={t('facultyPlaceholder')}
-                style={{width:"100%",padding:"16px",borderRadius:16,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",color:"#fff",fontSize:14,outline:"none",boxSizing:"border-box"}}/>
+                style={{width:"100%",padding:"15px 18px",borderRadius:20,background:"rgba(255,255,255,0.06)",backdropFilter:"blur(10px)",border:"1.5px solid rgba(255,255,255,0.14)",color:"#fff",fontSize:14,outline:"none",boxSizing:"border-box"}}/>
             )}
 
-            <label style={{display:"flex",alignItems:"flex-start",gap:12,cursor:"pointer",marginTop:8,padding:"0 4px"}}>
-              <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)} style={{marginTop:2,width:18,height:18,accentColor:"#e11d48",cursor:"pointer"}}/>
-              <span style={{color:"rgba(255,255,255,0.4)",fontSize:11,lineHeight:1.6}}>
-                {t('kvkkText')}<strong onClick={e=>{e.preventDefault();setKvkkModal(true);}} style={{color:"#e11d48",textDecoration:"underline",cursor:"pointer"}}>{t('kvkkBold')}</strong>{t('kvkkTextEnd')}
+            {/* KVKK Onayı */}
+            <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",marginTop:2,padding:"0 4px"}}>
+              <input type="checkbox" checked={wKvkk} onChange={e=>setWKvkk(e.target.checked)}
+                style={{marginTop:2,width:17,height:17,accentColor:"#ec4899",cursor:"pointer",borderRadius:6}}/>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:10.5,lineHeight:1.6}}>
+                {t('kvkkText')}<strong onClick={e=>{e.preventDefault();setKvkkModal(true);}} style={{color:"#f472b6",textDecoration:"underline",cursor:"pointer"}}>{t('kvkkBold')}</strong>{t('kvkkTextEnd')}
               </span>
             </label>
 
             {/* KVKK Modal */}
             {kvkkModal&&(
-              <div onClick={()=>setKvkkModal(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(0,0,0,0.8)",display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 20px"}}>
-                <div onClick={e=>e.stopPropagation()} style={{background:"#111827",borderRadius:"24px 24px 12px 12px",padding:"24px",maxWidth:480,width:"100%",border:"1px solid rgba(255,255,255,0.1)",boxShadow:"0 -12px 40px rgba(0,0,0,0.8)"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-                    <div style={{color:"#fff",fontWeight:700,fontSize:15}}>{t('kvkkBold')}</div>
-                    <button onClick={()=>setKvkkModal(false)} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#94a3b8",width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:16}}>✕</button>
+              <div onClick={()=>setKvkkModal(false)} style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(10,14,26,0.85)",backdropFilter:"blur(8px)",display:"flex",alignItems:"flex-end",justifyContent:"center",padding:"0 0 20px"}}>
+                <div onClick={e=>e.stopPropagation()} style={{background:"#171b30",borderRadius:"26px 26px 16px 16px",padding:"24px",maxWidth:440,width:"100%",border:"1.5px solid rgba(255,255,255,0.12)",boxShadow:"0 -12px 48px rgba(0,0,0,0.8)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+                    <div style={{color:"#f472b6",fontWeight:800,fontSize:15}}>{t('kvkkBold')}</div>
+                    <button onClick={()=>setKvkkModal(false)} style={{background:"rgba(255,255,255,0.1)",border:"none",color:"#94a3b8",width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:15}}>✕</button>
                   </div>
-                  <p style={{color:"rgba(255,255,255,0.6)",fontSize:12,lineHeight:1.8,margin:0}}>
+                  <p style={{color:"rgba(255,255,255,0.7)",fontSize:11.5,lineHeight:1.8,margin:0}}>
                     {isEN() ? "Istanbul Bilgi University collects your name and role information solely to measure anonymous usage statistics of the Karpuza Sor campus navigation application. Your data is not shared with third parties and is processed in accordance with Turkey's Personal Data Protection Law No. 6698 (KVKK). By checking this box, you give your explicit consent to this data processing." : "İstanbul Bilgi Üniversitesi, Karpuza Sor kampüs navigasyon uygulamasının anonim kullanım istatistiklerini ölçmek amacıyla adınızı ve rolünüzü toplamaktadır. Verileriniz üçüncü taraflarla paylaşılmaz ve 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında işlenir. Bu kutucuğu işaretleyerek söz konusu veri işlemeye açık rızanızı veriyorsunuz."}
                   </p>
                 </div>
               </div>
             )}
 
+            {/* Canlı Pastel Şekerleme Butonu */}
             {(()=>{
-              const ok=!!(wName.trim()&&wRole&&wKvkk);return(
-              <button onClick={submitWelcome} disabled={!ok}
-                style={{padding:"18px",borderRadius:16,border:"none",marginTop:12,width:"100%",
-                  background:ok?"#e11d48":"rgba(255,255,255,0.05)",color:ok?"#fff":"rgba(255,255,255,0.2)",
-                  fontSize:15,fontWeight:700,cursor:ok?"pointer":"default",transition:"all 0.2s"}}>
-                Haritaya gir →
-              </button>
-            );})()}
+              const ok=!!(wName.trim()&&wRole&&wKvkk);
+              return(
+                <button onClick={submitWelcome} disabled={!ok}
+                  style={{padding:"16px",borderRadius:22,border:"none",marginTop:8,width:"100%",
+                    background:ok?"linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #3b82f6 100%)":"rgba(255,255,255,0.06)",
+                    color:ok?"#fff":"rgba(255,255,255,0.25)",fontSize:15,fontWeight:800,letterSpacing:.5,
+                    cursor:ok?"pointer":"default",boxShadow:ok?"0 8px 28px rgba(236,72,153,0.45)":"none",
+                    transform:ok?"scale(1.01)":"scale(1)",transition:"all 0.25s ease"}}>
+                  Haritaya Işınlan 🐾✨
+                </button>
+              );
+            })()}
           </div>
 
           {/* Sosyal Medya */}
-          <div style={{marginTop:"auto",paddingTop:40,display:"flex",gap:24,alignItems:"center"}}>
-            <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
-              <img src="/instagram-logo.png" alt="Instagram" style={{width:16,opacity:0.5}}/>
-              <span style={{color:"rgba(255,255,255,0.3)",fontSize:11}}>@bilgiedtech</span>
+          <div style={{marginTop:"auto",paddingTop:32,display:"flex",gap:20,alignItems:"center",position:"relative",zIndex:2}}>
+            <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none",background:"rgba(255,255,255,0.04)",padding:"6px 12px",borderRadius:20,border:"1px solid rgba(255,255,255,0.08)"}}>
+              <img src="/instagram-logo.png" alt="Instagram" style={{width:14,opacity:0.7}}/>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:10.5,fontWeight:600}}>@bilgiedtech</span>
             </a>
-            <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none"}}>
-              <img src="/youtube-logo.png" alt="YouTube" style={{width:16,opacity:0.5}}/>
-              <span style={{color:"rgba(255,255,255,0.3)",fontSize:11}}>@bilgiUZEM</span>
+            <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer" style={{display:"flex",alignItems:"center",gap:6,textDecoration:"none",background:"rgba(255,255,255,0.04)",padding:"6px 12px",borderRadius:20,border:"1px solid rgba(255,255,255,0.08)"}}>
+              <img src="/youtube-logo.png" alt="YouTube" style={{width:14,opacity:0.7}}/>
+              <span style={{color:"rgba(255,255,255,0.5)",fontSize:10.5,fontWeight:600}}>@bilgiUZEM</span>
             </a>
           </div>
         </div>

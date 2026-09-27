@@ -1011,7 +1011,7 @@ export default function CampusMap(){
     setUserProfile(profile); setShowWelcome(false);
     setShowTour(true);
     setTourStep(0);
-    setShowKarpuzIntro(true);
+    
     // Onboarding intro kapandıktan sonra başlar (dismissKarpuzIntro içinde)
     if(SHEET_URL){
       fetch(SHEET_URL,{method:"POST",mode:"no-cors",
@@ -1752,48 +1752,6 @@ export default function CampusMap(){
         </MapContainer>
       </div>
 
-      {/* ─── Karpuz tanıtım kartı – footer tooltip ──────────────────── */}
-      {showKarpuzIntro&&(
-        <div style={{position:"fixed",bottom:108,left:0,right:0,zIndex:28,
-          display:"flex",justifyContent:"center",padding:"0 16px",
-          pointerEvents:"none",animation:"onboard-fadein 0.3s ease"}}>
-          <div style={{background:"#fff",borderRadius:20,width:"100%",maxWidth:480,
-            boxShadow:"0 8px 40px rgba(0,0,0,0.28)",
-            display:"flex",alignItems:"center",gap:16,
-            padding:"16px 20px",position:"relative",
-            pointerEvents:"auto"}}>
-
-            {/* Karpuz fotoğrafı – küçük daire */}
-            <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
-              background:"#bbf7d0",flexShrink:0,
-              boxShadow:"0 3px 12px rgba(22,163,74,0.3)"}}>
-              <img src="/karpuz-karsilama.png" alt="Karpuz"
-                style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-            </div>
-
-            {/* Metin */}
-            <p style={{margin:0,fontSize:12.5,color:"#1e293b",lineHeight:1.65,fontWeight:500,flex:1}}>
-              {t('karpuzIntroText')}
-            </p>
-
-            {/* X kapat butonu */}
-            <button onClick={dismissKarpuzIntro}
-              style={{position:"absolute",top:10,right:10,
-                width:28,height:28,borderRadius:"50%",border:"none",
-                background:"#f1f5f9",color:"#64748b",
-                fontSize:14,cursor:"pointer",display:"flex",
-                alignItems:"center",justifyContent:"center",flexShrink:0}}>✕</button>
-
-            {/* Konuşma balonu oku – aşağı, footer'a doğru */}
-            <div style={{position:"absolute",bottom:-11,left:"50%",transform:"translateX(-50%)",
-              width:0,height:0,
-              borderLeft:"11px solid transparent",borderRight:"11px solid transparent",
-              borderTop:"11px solid #fff",
-              filter:"drop-shadow(0 3px 3px rgba(0,0,0,0.08))"}}/>
-          </div>
-        </div>
-      )}
-
       {/* ─── Bina bilgi modalı ──────────────────────────────────────────── */}
       {selectedLoc&&(
         <div onClick={()=>setSelectedLoc(null)}
@@ -2032,65 +1990,36 @@ export default function CampusMap(){
       </div>
 
 
-      {/* ─── Header ─────────────────────────────────────────────────────── */}
-      {mode!=='pickFrom'&&(
-        <div style={{position:"fixed",top:0,left:0,right:0,zIndex:10,
-          background:"linear-gradient(135deg,#154360,#1a6fa8)",
-          padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",
-          boxShadow:"0 2px 12px rgba(0,0,0,0.5)"}}>
-          {/* Sol: BİLGİ logotype + kullanıcı selamı – tıklayınca yenile */}
-          <div onClick={()=>window.location.reload()}
-            style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0,cursor:"pointer"}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} />
-            <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>
-              {userProfile?greetUser(userProfile.name.split(" ")[0]):t('campusName')}
+      {/* ─── Yüzen Üst Arama Çubuğu (Floating Search Bar) ───────────────────── */}
+      {mode !== 'pickFrom' && !showWelcome && (
+        <div style={{
+          position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 10,
+          width: "calc(100% - 32px)", maxWidth: 440,
+          background: isDarkTheme ? "rgba(30, 41, 59, 0.85)" : "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+          borderRadius: 24, padding: "10px 14px", display: "flex", alignItems: "center", gap: 12,
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.15)",
+          border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.05)"
+        }}>
+          <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>
+            <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "#bbf7d0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <img src="/karpuz-mascot.png" alt="Karpuz" onError={(e)=>{ (e.target as any).src = isEN() ? "/karpuza-sor-en.png" : "/karpuza-sor.png"; }} style={{ width: "90%", height: "90%", objectFit: "contain" }} />
             </div>
           </div>
-          {/* Orta: Karpuza logo ortalı — uzun basış turu yeniden başlatır */}
-          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz'a Sor"
-              style={{height:58,width:"auto",objectFit:"contain",borderRadius:8,
-                boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}
-              onTouchStart={handleLogoPress}
-              onTouchEnd={handleLogoRelease}
-              onMouseDown={handleLogoPress}
-              onMouseUp={handleLogoRelease}
-              onContextMenu={e=>e.preventDefault()}
-              draggable={false}/>
+          <div onClick={() => { setMode('pickTo'); setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#1e293b", marginBottom: 2 }}>{isEN() ? "Where to?" : "Nereye gidiyoruz?"}</span>
+            <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}</span>
           </div>
-          {/* Sağ: Dil toggle + konum butonu */}
-          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
-            <div style={{display:"flex",alignItems:"center",gap:2,background:"rgba(0,0,0,0.25)",
-              borderRadius:6,padding:"2px 3px",border:"1px solid rgba(255,255,255,0.12)"}}>
-              {(["TR","EN"] as const).map(l=>(
-                <button key={l} onClick={()=>setLang(l.toLowerCase() as "tr"|"en")}
-                  style={{padding:"2px 7px",borderRadius:4,border:"none",cursor:"pointer",
-                    fontSize:10,fontWeight:700,letterSpacing:.4,lineHeight:1.5,
-                    background:isEN()===(l==="EN")?"rgba(255,255,255,0.22)":"transparent",
-                    color:isEN()===(l==="EN")?"#fff":"rgba(255,255,255,0.45)"}}>
-                  {l}
-                </button>
-              ))}
-            </div>
-            <button id="gps-btn" onClick={toggleGPS} style={{...BTN,
-              background:gpsError?"rgba(239,68,68,0.35)":gpsOn?"rgba(59,130,246,0.35)":"rgba(255,255,255,0.15)",
-              border:`1px solid ${gpsError?"#ef4444":gpsOn?"#3b82f6":"rgba(255,255,255,0.3)"}`,
-              color:"#fff",minHeight:36,padding:"0 12px",fontSize:12,borderRadius:8,gap:4,
-              ...(ONBOARD_STEPS[onboardStep??-1]?.target==="gps-btn"
-                ?{background:"#f97316",border:"2px solid #fff",
-                   animation:"onboard-glow 1.4s ease-in-out infinite",
-                   boxShadow:"0 0 0 4px #f97316,0 0 28px rgba(249,115,22,0.9),0 0 0 8px rgba(249,115,22,0.25)"}
-                :{})}}>
-              {gpsError?t('gpsError'):gpsOn?t('gpsActive'):t('gpsOff')}
-            </button>
-            {gpsError&&(
-              <div style={{background:"rgba(239,68,68,0.92)",color:"#fff",fontSize:10,
-                padding:"5px 8px",borderRadius:6,maxWidth:180,lineHeight:1.4,textAlign:"right",
-                boxShadow:"0 2px 8px rgba(0,0,0,0.4)"}}
-                onClick={()=>setGpsError(null)}>
-                {gpsError}
-              </div>
-            )}
+          <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2, flexShrink: 0 }}>
+            {(["TR", "EN"] as const).map(l => (
+              <button key={l} onClick={() => setLang(l.toLowerCase() as "tr"|"en")}
+                style={{
+                  padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700,
+                  background: isEN() === (l === "EN") ? (isDarkTheme ? "rgba(255,255,255,0.2)" : "#ffffff") : "transparent",
+                  color: isEN() === (l === "EN") ? (isDarkTheme ? "#ffffff" : "#0f172a") : (isDarkTheme ? "#64748b" : "#94a3b8"),
+                  boxShadow: isEN() === (l === "EN") && !isDarkTheme ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
+                }}>{l}</button>
+            ))}
           </div>
         </div>
       )}
@@ -2149,7 +2078,7 @@ export default function CampusMap(){
             :"0 -4px 24px rgba(0,0,0,0.5)",
           height:"185px",maxHeight:"85dvh",
           width:"100%",maxWidth:"100%",boxSizing:"border-box",
-          display:onboardStep!==null?"none":"flex",flexDirection:"column",
+          display:"flex",flexDirection:"column",
           overflow:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
         ref={sheetRef}>
@@ -2191,7 +2120,7 @@ export default function CampusMap(){
               <div style={{position:"relative"}}>
                 <input id="search-input" value={fromSearch}
                   onChange={e=>{setFromSearch(e.target.value);setActiveRouteInput('from');}}
-                  onFocus={e=>{setActiveRouteInput('from');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
+                  onFocus={e=>{setActiveRouteInput('from');window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
                   onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='from'?null:p),160)}
                   placeholder={t('fromPlaceholder')}
                   style={{width:"100%",boxSizing:"border-box",
@@ -2260,7 +2189,7 @@ export default function CampusMap(){
                 <div style={{flex:1,position:"relative",minWidth:0}}>
                   <input id="to-input" value={toSearch}
                     onChange={e=>{setToSearch(e.target.value);setActiveRouteInput('to');}}
-                    onFocus={e=>{setActiveRouteInput('to');if(showKarpuzIntro)dismissKarpuzIntro();window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
+                    onFocus={e=>{setActiveRouteInput('to');window.scrollTo(0,0);document.body.scrollTop=0;setTimeout(()=>e.target.scrollIntoView({behavior:'smooth',block:'nearest'}),300);}}
                     onBlur={()=>setTimeout(()=>setActiveRouteInput(p=>p==='to'?null:p),160)}
                     onKeyDown={e=>{
                       if(e.key!=='Enter')return;
@@ -2661,210 +2590,43 @@ export default function CampusMap(){
         </div>
       </div>
 
-      {/* ─── Onboarding turu ─────────────────────────────────────────────── */}
-      {onboardStep!==null&&typeof document!=="undefined"&&createPortal(
-        <>
-          {/* 4-div spotlight: hedef dışını karartır, buton tam görünür kalır */}
-          {hlRect ? (
-            <>
-              <div style={{position:"fixed",top:0,left:0,right:0,height:hlRect.top,
-                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
-              <div style={{position:"fixed",top:hlRect.bottom,left:0,right:0,bottom:0,
-                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
-              <div style={{position:"fixed",top:hlRect.top,height:hlRect.height,
-                left:0,width:hlRect.left,
-                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
-              <div style={{position:"fixed",top:hlRect.top,height:hlRect.height,
-                left:hlRect.right,right:0,
-                background:"rgba(0,0,0,0.62)",zIndex:9991,pointerEvents:"none"}}/>
-              {/* Turuncu ring – ringRect varsa oraya, yoksa hlRect'e */}
-              {(ringRect??hlRect)&&(()=>{const rr=ringRect??hlRect!;return(
-                <div style={{position:"fixed",
-                  left:rr.left-10,top:rr.top-10,
-                  width:rr.width+20,height:rr.height+20,
-                  borderRadius:16,border:"2.5px solid #f97316",
-                  animation:"onboard-glow 1.4s ease-in-out infinite",
-                  zIndex:9992,pointerEvents:"none"}}/>
-              );})()}
-              {/* Yön oku – ringRect varsa oraya, yoksa hlRect'e */}
-              {(ringRect??hlRect)&&(()=>{const rr=ringRect??hlRect!;return(
-                <div style={{position:"fixed",
-                  left:rr.left+rr.width/2,
-                  top: rr.top<200 ? rr.bottom+14 : rr.top-28,
-                  transform:"translateX(-50%)",
-                  fontSize:26,zIndex:9994,pointerEvents:"none",lineHeight:1,
-                  animation: rr.top<200 ? "arrow-up 0.75s ease-in-out infinite" : "arrow-down 0.75s ease-in-out infinite"}}>
-                  {rr.top<200?"⬆️":"⬇️"}
-                </div>
-              );})()}
-            </>
-          ) : (
-            <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.62)",
-              zIndex:9991,pointerEvents:"none"}}/>
-          )}
-
-          {/* Kart overlay – şeffaf arka plan, sadece kart + tap zone içerir */}
-          <div style={{position:"fixed",inset:0,zIndex:9993,
-            background:"transparent",
-            display:"flex",flexDirection:"column",
-            alignItems:"center",justifyContent:"center",
-            height:"100dvh",
-            padding:"56px 20px 16px"}}>
-
-            {/* Story progress bars */}
-            <div style={{position:"absolute",top:14,left:14,right:14,display:"flex",gap:4}}>
-              {ONBOARD_STEPS.map((_,i)=>(
-                <div key={i} style={{flex:1,height:3,borderRadius:2,
-                  background:"rgba(255,255,255,0.25)",overflow:"hidden"}}>
-                  <div style={{height:"100%",background:"#fff",
-                    width:i<onboardStep?"100%":i===onboardStep?"50%":"0%",
-                    transition:"width 0.3s ease"}}/>
-                </div>
-              ))}
+      {/* ─── YENİ MODERN 5 ADIMLI REHBER KARTI (GERİ BUTONLU) ───────────── */}
+      {!showWelcome && showTour && (
+        <div style={{
+          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: 440,
+          background: isDarkTheme ? "#1e293b" : "#ffffff", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+          borderRadius: 22, padding: "16px 18px 14px", boxShadow: "0 18px 45px rgba(0, 0, 0, 0.22)",
+          border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.08)", zIndex: 9999,
+          display: "flex", flexDirection: "column", gap: 12, animation: "fadeInUp 0.3s ease-out"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 52, height: 52, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: isDarkTheme ? "rgba(255,255,255,0.06)" : "#f1f5f9", border: "2px solid #c8102e", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(200, 16, 46, 0.2)" }}>
+              <img src="/karpuz-mascot.png" alt="Karpuz" onError={(e)=>{ (e.target as any).src = isEN() ? "/karpuza-sor-en.png" : "/karpuza-sor.png"; }} style={{ width: "92%", height: "92%", objectFit: "contain" }} />
             </div>
-
-            {/* Sol/sağ tap zone */}
-            <div style={{position:"absolute",inset:0,display:"flex",zIndex:0}}>
-              <div style={{flex:1}}
-                onClick={()=>onboardStep>0&&setOnboardStep(s=>s!==null?Math.max(0,s-1):null)}/>
-              <div style={{flex:1}} onClick={advanceOnboard}/>
-            </div>
-
-            {/* ── Kart: 3 katmanlı sabit yükseklik ──────────────────────────── */}
-            {/* Katman 1: Fotoğraf + kaydırılabilir metin (flex:1)            */}
-            {/* Katman 2: Preview – sabit 130px (koşullu)                     */}
-            {/* Katman 3: Footer – grid 3 sütun, asla yerinden oynamaz        */}
-            <div key={`ob${onboardStep}`} onClick={(e)=>{
-              const r=e.currentTarget.getBoundingClientRect();
-              if(e.clientX-r.left<r.width*0.33&&onboardStep>0)
-                setOnboardStep(s=>s!==null?Math.max(0,s-1):null);
-              else advanceOnboard();
-            }}
-              style={{background:"#fff",borderRadius:24,width:"100%",maxWidth:400,minWidth:0,
-                boxShadow:"0 16px 56px rgba(0,0,0,0.55)",
-                display:"flex",flexDirection:"column",
-                position:"relative",zIndex:1,cursor:"pointer",
-                animation:"onboard-fadein 0.22s ease",
-                height:"min(460px,calc(100dvh - 110px))",
-                overflow:"hidden"}}>
-
-              {/* ── Katman 1: Fotoğraf + metin – dikeyde ortalanır ───────── */}
-              <div style={{flex:1,minHeight:0,overflow:"hidden",
-                display:"flex",flexDirection:"column",alignItems:"center",
-                justifyContent:"center",
-                padding:"22px 22px 12px",gap:12}}>
-                <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
-                  background:"#bbf7d0",flexShrink:0,
-                  boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
-                  <img src="/karpuz-karsilama.png" alt="Karpuz"
-                    style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                </div>
-                <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
-                  textAlign:"center",whiteSpace:"pre-line",width:"100%"}}>
-                  {ONBOARD_STEPS[onboardStep].text}
-                </div>
-              </div>
-
-              {/* ── Katman 2: Preview – sabit 130px ───────────────────────── */}
-              {ONBOARD_STEPS[onboardStep]?.preview&&(
-                <div style={{height:130,flexShrink:0,overflow:"hidden",
-                  display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
-
-                  {ONBOARD_STEPS[onboardStep].preview==="to-input"&&(
-                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
-                      padding:"10px 14px 14px",display:"flex",flexDirection:"column",gap:6,
-                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                        color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
-                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                        color:"rgba(255,255,255,0.75)",fontSize:12,
-                        border:"2.5px solid #f97316",
-                        boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
-                        animation:"onboard-glow 1.4s ease-in-out infinite"}}>
-                        {t('toPlaceholder')}
-                      </div>
-                    </div>
-                  )}
-
-                  {ONBOARD_STEPS[onboardStep].preview==="cat-row"&&(
-                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
-                      padding:"12px 14px 14px",display:"flex",flexDirection:"column",gap:8,
-                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                      <span style={{color:"#64748b",fontSize:11}}>{t('filterLabel')}</span>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {(['catAll','catEgitsel','catSosyal','catIdari','catIslevsel','catOtopark','catGiris'] as const).map((key,i)=>(
-                          <div key={key} style={{
-                            background:i===2?"#0d9488":"#0f172a",
-                            color:i===2?"#fff":"#94a3b8",
-                            borderRadius:16,padding:"5px 10px",fontSize:11,
-                            border:i===2?"2.5px solid #f97316":"1px solid #1e3a5f",
-                            boxShadow:i===2?"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)":"none",
-                            animation:i===2?"onboard-glow 1.4s ease-in-out infinite":"none"}}>
-                            {t(key)}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {ONBOARD_STEPS[onboardStep].preview==="from-gps-btn"&&(
-                    <div style={{background:"#1e293b",borderRadius:"12px 12px 0 0",
-                      padding:"10px 14px 14px",display:"flex",flexDirection:"column",gap:6,
-                      boxShadow:"0 -4px 16px rgba(0,0,0,0.3)"}}>
-                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                        color:"#475569",fontSize:12}}>{t('fromPlaceholder')}</div>
-                      <div style={{
-                        background:"#0d9488",borderRadius:20,padding:"9px 16px",
-                        display:"flex",alignItems:"center",justifyContent:"center",gap:6,
-                        color:"#fff",fontWeight:700,fontSize:13,
-                        border:"2.5px solid #f97316",
-                        boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
-                        animation:"onboard-glow 1.4s ease-in-out infinite"}}>
-                        <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
-                        {t('startFromLocation')}
-                      </div>
-                      <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",
-                        color:"#475569",fontSize:12}}>{t('toPlaceholder')}</div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ── Katman 3: Footer – 3 sütun grid, asla kayamaz ────────── */}
-              <div style={{flexShrink:0,padding:"10px 18px 16px",
-                borderTop:"1px solid #f1f5f9",
-                display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center"}}>
-                <div style={{justifySelf:"start" as const,display:"flex",flexDirection:"row",alignItems:"center",gap:12}}>
-                  {onboardStep>0&&(
-                    <button onClick={e=>{e.stopPropagation();
-                      setOnboardStep(s=>s!==null?Math.max(0,s-1):null);}}
-                      style={{background:"transparent",color:"#94a3b8",border:"none",
-                        fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('onboardBack')}</button>
-                  )}
-                  <button onClick={e=>{e.stopPropagation();
-                    localStorage.setItem("karpuza_onboard","1");setOnboardStep(null);}}
-                    style={{background:"transparent",color:"#94a3b8",border:"none",
-                      fontSize:12,cursor:"pointer",padding:"4px 0"}}>{t('btnSkip')}</button>
-                </div>
-                <div style={{justifySelf:"center" as const,display:"flex",gap:5}}>
-                  {ONBOARD_STEPS.map((_,i)=>(
-                    <div key={i} style={{height:6,borderRadius:3,
-                      width:i===onboardStep?20:6,
-                      background:i===onboardStep?"#0d9488":i<onboardStep?"#94a3b8":"#e2e8f0",
-                      transition:"all 0.2s ease"}}/>
-                  ))}
-                </div>
-                <div style={{justifySelf:"end" as const}}>
-                  <span style={{color:"#0d9488",fontSize:12,fontWeight:600}}>
-                    {onboardStep===ONBOARD_STEPS.length-1?t('onboardTapStart'):t('onboardTapRight')}
-                  </span>
-                </div>
-              </div>
+            <div style={{ flex: 1, fontSize: 13.5, lineHeight: 1.45, fontWeight: 600, color: isDarkTheme ? "#f8fafc" : "#1e293b" }}>
+              {tourStep === 0 && (isEN() ? "Ready? Let's explore the campus together." : "Hazır mısın? Kampüsü birlikte keşfedelim.")}
+              {tourStep === 1 && (isEN() ? "Type here to search buildings, rooms or units. I also understand room codes like 'E1 203'." : "Bina, oda ya da birim aramak için buraya yaz, 'E1 203' gibi oda numaralarını da anlıyorum.")}
+              {tourStep === 2 && (isEN() ? "Filter by categories: Educational, Social, Administrative..." : "Kategorilere göre filtrele: Eğitsel, Sosyal, İdari...")}
+              {tourStep === 3 && (isEN() ? "Enable your location so I can show nearby places and guide you live." : "Konumunu aç; sana en yakın yerleri göstereyim ve seni canlı yönlendireyim.")}
+              {tourStep === 4 && (isEN() ? "Tap any spot on the map, open its card, and select 'Go here'. Leave the rest to me." : "Haritadaki bir noktaya dokun, kartını aç ve 'Buraya git' de. Gerisini bana bırak.")}
             </div>
           </div>
-        </>,
-        document.body
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+            <button onClick={() => setShowTour(false)} style={{ background: "none", border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b", fontSize: 12.5, fontWeight: 600, cursor: "pointer", padding: "6px 4px" }}>{isEN() ? "Skip tour" : "Turu atla"}</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              {[0, 1, 2, 3, 4].map(idx => (
+                <div key={idx} style={{ width: tourStep === idx ? 16 : 6, height: 6, borderRadius: 3, background: tourStep === idx ? "#c8102e" : (isDarkTheme ? "rgba(255,255,255,0.2)" : "#cbd5e1"), transition: "all 0.2s ease" }} />
+              ))}
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {tourStep > 0 && (
+                <button onClick={() => setTourStep(tourStep - 1)} style={{ background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9", border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.12)" : "#cbd5e1"}`, color: isDarkTheme ? "#e2e8f0" : "#475569", borderRadius: 18, padding: "6px 12px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", transition: "all 0.15s" }}>← {isEN() ? "Back" : "Geri"}</button>
+              )}
+              <button onClick={() => { if (tourStep < 4) setTourStep(tourStep + 1); else setShowTour(false); }} style={{ background: "#c8102e", border: "none", color: "#ffffff", borderRadius: 18, padding: "6px 16px", fontSize: 12.5, fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(200, 16, 46, 0.3)", transition: "all 0.15s" }}>{tourStep === 4 ? (isEN() ? "Start" : "Başla") : (isEN() ? "Next →" : "İleri →")}</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
-}  
+}

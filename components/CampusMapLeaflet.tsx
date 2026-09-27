@@ -1362,9 +1362,12 @@ export default function CampusMap(){
               <div style={{display:"inline-block",padding:"2px 8px",borderRadius:12,background:"rgba(236,72,153,0.2)",border:"1px solid rgba(236,72,153,0.4)",color:"#f472b6",fontSize:10,fontWeight:800,marginBottom:4}}>
                 SANTRAL'İN REHBERİ ✨
               </div>
-              <div style={{color:"#fff",fontWeight:800,fontSize:19,lineHeight:1.2,marginBottom:4,display:"flex",alignItems:"center",gap:8}}>
-                <span>Merhaba, ben Karpuz</span>
-                <img src="/karpuz-icon.png" alt="Karpuz" style={{width:28,height:28,objectFit:"contain"}}/>
+              <div style={{color:"#fff",fontWeight:800,fontSize:19,lineHeight:1.2,marginBottom:6}}>
+                <div>Merhaba, ben</div>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginTop:2}}>
+                  <span style={{fontSize:22,background:"linear-gradient(135deg, #ffffff, #fbcfe8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>Karpuz</span>
+                  <img src="/karpuz-icon.png" alt="Karpuz" style={{height:38,width:"auto",objectFit:"contain",filter:"drop-shadow(0 4px 8px rgba(0,0,0,0.45))"}}/>
+                </div>
               </div>
               <div style={{color:"rgba(255,255,255,0.7)",fontSize:11.5,lineHeight:1.5}}>
                 {t('welcomeDesc')}

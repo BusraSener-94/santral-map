@@ -1310,8 +1310,7 @@ export default function CampusMap(){
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
           <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
-              style={{height:36,width:"auto",maxWidth:"72vw",objectFit:"contain",opacity:.95}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-light.png"} alt="BİLGİ" style={{height:26,objectFit:"contain"}}/>
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               {t('campusName')}
             </div>

@@ -609,7 +609,11 @@ export default function CampusMap(){
     const bRooms=ROOMS[String(to.num)];
     if(!bRooms)return;
     for(const[floor,rooms]of Object.entries(bRooms)){
-      const idx=(rooms as RoomEntry[]).findIndex(r=>r.oda===targetRoom||r.oda.includes(targetRoom));
+      const idx=(rooms as RoomEntry[]).findIndex(r => {
+        if (r.oda === targetRoom) return true;
+        const roomNumbers = r.oda.split(/[-\s,]+/);
+        return roomNumbers.includes(targetRoom);
+      });
       if(idx>=0){
         const rk=`${to.num}_${floor}_${idx}`;
         setExpandedRoomKey(rk);
@@ -879,11 +883,21 @@ export default function CampusMap(){
   },[gd,adList]);
 
   // FROM veya GPS değişince rota yeniden hesapla (arrived/nav/sim'de tekrar hesaplanmasın)
+  const prevGpsCalcRef = useRef<[number, number] | null>(null);
   useEffect(()=>{
     if(!to||mode==='arrived'||mode==='nav'||mode==='sim')return;
-    if(fromGPS&&userPos)calcRoute(userPos[0],userPos[1],to);
-    else if(from&&!fromGPS)calcRoute(from.gps[0],from.gps[1],to);
-  },[from,fromGPS,userPos,to,mode,calcRoute]);// eslint-disable-line
+    
+    if(fromGPS&&userPos){
+      if(!prevGpsCalcRef.current || hav(prevGpsCalcRef.current[0], prevGpsCalcRef.current[1], userPos[0], userPos[1]) > 3) {
+        calcRoute(userPos[0],userPos[1],to);
+        prevGpsCalcRef.current = userPos;
+      }
+    }
+    else if(from&&!fromGPS){
+       calcRoute(from.gps[0],from.gps[1],to);
+       prevGpsCalcRef.current = null;
+    }
+  },[from,fromGPS,userPos,to,mode,calcRoute]);
 
   // GPS başlangıç + varış noktasına çok yakınsa → "Zaten buradasınız" (bir kez göster)
   const arrivedAlertedRef=useRef(false);
@@ -1120,7 +1134,7 @@ export default function CampusMap(){
       sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
     } else if(activeRouteInput){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height="185px";
+      sheetRef.current.style.height="310px";
       sheetRef.current.scrollTop=0;
     }
   },[activeRouteInput,panelLoc]);
@@ -1131,12 +1145,8 @@ export default function CampusMap(){
     if(!vv)return;
     const onVVChange=()=>{
       if(!sheetRef.current)return;
-      // interactiveWidget:resizes-content cihazlarda kbH≈0, eski Android'lerde >0
       const kbH=Math.max(0,window.innerHeight-vv.offsetTop-vv.height);
-      if(kbH<50){
-        sheetRef.current.style.bottom='0px';
-      }
-      // Yükseklik veya bottom manipülasyonu YOK – CSS max-height:85dvh halleder
+      sheetRef.current.style.bottom = kbH >= 50 ? `${kbH}px` : '0px';
     };
     vv.addEventListener('resize',onVVChange);
     vv.addEventListener('scroll',onVVChange);

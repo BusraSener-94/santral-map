@@ -1294,7 +1294,7 @@ export default function CampusMap(){
 
       {/* Haritayı giriş ekranı gelene kadar gizle */}
       {splash!=="hidden"&&!showWelcome&&(
-        <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0c1828",pointerEvents:"none"}}/>
+        <div style={{position:"fixed",inset:0,zIndex:9998,background:"#0f172a",pointerEvents:"none"}}/>
       )}
 
       {/* ─── Splash ekranı ─────────────────────────────────────────────── */}
@@ -1310,7 +1310,7 @@ export default function CampusMap(){
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
           <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.svg"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} onError={(e)=>{e.currentTarget.src="/bilgi-logotype.png";}}/>{e.currentTarget.src="/bilgi-logotype.png";}}/>{e.currentTarget.src="/bilgi-logotype.png";}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} />
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               {t('campusName')}
             </div>
@@ -1330,14 +1330,13 @@ export default function CampusMap(){
       {/* ─── Kayıt ekranı – Sade, Yüksek Kontrast, Gece/Gündüz & Tam i18n ────────── */}
       {showWelcome&&(
         <div style={{position:"fixed",inset:0,zIndex:9998,
-          background:isDarkTheme?"#090d16":"#f8fafc",
+          background:isDarkTheme?"#0f172a":"#f8fafc",
           overflowY:"auto",display:"flex",flexDirection:"column",alignItems:"center",
           padding:"36px 20px 40px",transition:"background 0.25s ease"}}>
 
           {/* Üst Bar: Logo, Gece/Gündüz & Dil */}
           <div style={{width:"100%",maxWidth:380,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
-            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.svg"} alt="BİLGİ" style={{height:26,objectFit:"contain"}}/>
-            
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} />
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {/* Gece / Gündüz Toggle */}
               <button onClick={()=>setIsDarkTheme(!isDarkTheme)}
@@ -1827,8 +1826,7 @@ export default function CampusMap(){
           {/* Sol: BİLGİ logotype + kullanıcı selamı – tıklayınca yenile */}
           <div onClick={()=>window.location.reload()}
             style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0,cursor:"pointer"}}>
-            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
-              style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
+            <img src={isDarkTheme ? "/bilgi-logotype.png" : "/bilgi-logo-day.png"} alt="BİLGİ" style={{height:26,objectFit:"contain"}} />
             <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>
               {userProfile?greetUser(userProfile.name.split(" ")[0]):t('campusName')}
             </div>

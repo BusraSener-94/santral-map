@@ -2378,12 +2378,8 @@ export default function CampusMap(){
             {...({rotate:true,touchRotate:true} as object)}>
             <DisableCompassAutoRotate/>
             <TileLayer
-              key={isDarkTheme ? "carto-dark" : "carto-light"}
-              url={isDarkTheme
-                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-              subdomains="abcd"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap'
               maxZoom={19}
               keepBuffer={6}/>
           {route&&<>

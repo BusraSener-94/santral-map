@@ -184,6 +184,17 @@ const TR = {
   view2D: "2D Görünüm",
   resetNorth: "Kuzeye Dön",
   campusOverview: "Tüm Kampüs",
+
+  // Hızlı Kısayol Çipleri
+  chipFood: "Kahve & Yemek",
+  chipLibrary: "Kütüphane & Çalışma",
+  chipWc: "WC / Tuvalet",
+  chipAtm: "ATM & Banka",
+  chipStudent: "Öğrenci İşleri",
+  chipFaculty: "Fakülteler",
+  chipAll: "Tümü",
+  chipNearTitle: "Mekanlar",
+  chipWcSubtitle: "Bu binada tuvalet bulunmaktadır",
 } as const;
 
 const EN: { [K in keyof typeof TR]: string } = {
@@ -351,6 +362,17 @@ const EN: { [K in keyof typeof TR]: string } = {
   view2D: "2D View",
   resetNorth: "Reset North",
   campusOverview: "Campus Overview",
+
+  // Quick Action Chips
+  chipFood: "Food & Coffee",
+  chipLibrary: "Library & Study",
+  chipWc: "Restrooms (WC)",
+  chipAtm: "ATM & Banking",
+  chipStudent: "Student Services",
+  chipFaculty: "Faculties",
+  chipAll: "All",
+  chipNearTitle: "Places",
+  chipWcSubtitle: "Restroom available in this building",
 };
 
 type TKeys = keyof typeof TR;

@@ -125,16 +125,16 @@ function FitOnRoute({route,fromPos,toPos}:{route:[number,number][]|null;fromPos:
   return null;
 }
 
-function FitOnCat({cat,locs}:{cat:string|null;locs:Loc[]}){
+function FitOnCat({cat,visibleLocs}:{cat:string|null;visibleLocs:Loc[]}){
   const m=useMap();
   useEffect(()=>{
-    if(cat===null){m.fitBounds(CAMPUS_BOUNDS,{padding:[30,30],animate:true,duration:0.5});return;}
-    const pts=locs.filter(l=>l.cats.includes(cat)).map(l=>l.gps);
+    if(cat===null){return;}
+    const pts=visibleLocs.map(l=>l.gps);
     if(pts.length===0)return;
     const lats=pts.map(p=>p[0]),lons=pts.map(p=>p[1]);
     m.fitBounds([[Math.min(...lats),Math.min(...lons)],[Math.max(...lats),Math.max(...lons)]],
       {padding:[60,60],animate:true,duration:0.5,maxZoom:18});
-  },[cat,m]); // eslint-disable-line
+  },[cat,m,visibleLocs]);
   return null;
 }
 
@@ -1513,6 +1513,18 @@ export default function CampusMap(){
         if (!recents.includes(l.num)) return false;
       } else if (cat === "nearby") {
         // nearby tüm binaları tutar, mesafe sıralaması aşağıda yapılır
+      } else if (cat === "food") {
+        if (![4, 5, 38, 23, 24, 37, 39].includes(l.num)) return false;
+      } else if (cat === "library") {
+        if (![20, 13, 43].includes(l.num)) return false;
+      } else if (cat === "wc") {
+        if (![2, 3, 4, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 8].includes(l.num)) return false;
+      } else if (cat === "atm") {
+        if (![40, 46, 47].includes(l.num)) return false;
+      } else if (cat === "student") {
+        if (![36, 30, 32, 29, 45, 10].includes(l.num)) return false;
+      } else if (cat === "faculty") {
+        if (![2, 3, 11, 12, 16, 17, 18, 19, 21].includes(l.num)) return false;
       } else if (cat && CAT[cat]) {
         if (!l.cats.includes(cat)) return false;
       }
@@ -1526,7 +1538,7 @@ export default function CampusMap(){
 
     if (cat === "recents") {
       list = [...list].sort((a,b) => recents.indexOf(a.num) - recents.indexOf(b.num));
-    } else if (cat === "nearby") {
+    } else if (cat === "nearby" || cat === "food" || cat === "wc" || cat === "atm") {
       const center = (gpsOn && userPos) ? userPos : CAMPUS_CENTER;
       list = [...list].sort((a,b) => {
         const da = hav(center[0], center[1], a.gps[0], a.gps[1]);
@@ -2427,7 +2439,7 @@ export default function CampusMap(){
           })}
           <FitMap/>
           <MapRefCapture mapRef={mapInstanceRef}/>
-          <FitOnCat cat={cat} locs={LOCS}/>
+          <FitOnCat cat={cat} visibleLocs={visible}/>
           <FitOnRoute route={route} fromPos={fromGPS&&userPos?userPos:from?.gps??null} toPos={to?.gps??null}/>
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
@@ -3538,48 +3550,202 @@ export default function CampusMap(){
             </div>
           )}
 
-          {/* Kategori filtreleri – sadece idle modda ve klavye kapalıyken */}
+          {/* Hızlı Kısayol Çipleri – sadece idle modda ve klavye kapalıyken */}
           {mode==='idle'&&!activeRouteInput&&(
-            <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4, borderRadius: 12, padding: (showTour && tourStep === 2) ? 8 : 0, animation: (showTour && tourStep === 2) ? "onboard-glow 1.4s ease-in-out infinite" : "none", boxShadow: (showTour && tourStep === 2) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.6)" : "none", transition: "all 0.3s"}}>
-              <span style={{color: isDarkTheme ? "#94a3b8" : "#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
-              <button onClick={()=>setCat(null)}
-                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border: isDarkTheme ? "1px solid #475569" : "1px solid #cbd5e1",
-                  background:cat===null?"#3b82f6":"transparent",color:cat===null?"#fff":(isDarkTheme?"#cbd5e1":"#475569")}}>{t('catAll')}</button>
-              
-              {/* Favoriler butonu */}
-              <button onClick={()=>setCat(p=>p==='favorites'?null:'favorites')}
-                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border: cat==='favorites'?"1px solid #eab308": (isDarkTheme ? "1px solid rgba(234,179,8,0.4)" : "1px solid #fde047"),
-                  background: cat==='favorites'?"#eab308":"transparent",
-                  color: cat==='favorites'?"#000":(isDarkTheme?"#fde047":"#ca8a04")}}>
-                ⭐ {t('catFavorites')} {favorites.length>0 ? `(${favorites.length})` : ''}
-              </button>
+            <div id="cat-row" style={{display:"flex",flexDirection:"column",gap:8,paddingBottom:4}}>
+              <div style={{
+                display:"flex",alignItems:"center",gap:6,overflowX:"auto",
+                paddingBottom:4,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"
+              }}>
+                {[
+                  { id: 'food', icon: '☕', label: t('chipFood'), color: '#f59e0b', bg: '#f59e0b', fg: '#fff' },
+                  { id: 'library', icon: '📚', label: t('chipLibrary'), color: '#6366f1', bg: '#6366f1', fg: '#fff' },
+                  { id: 'wc', icon: '🚻', label: t('chipWc'), color: '#06b6d4', bg: '#06b6d4', fg: '#fff' },
+                  { id: 'atm', icon: '🏧', label: t('chipAtm'), color: '#10b981', bg: '#10b981', fg: '#fff' },
+                  { id: 'student', icon: '🏢', label: t('chipStudent'), color: '#ec4899', bg: '#ec4899', fg: '#fff' },
+                  { id: 'faculty', icon: '🎓', label: t('chipFaculty'), color: '#3b82f6', bg: '#3b82f6', fg: '#fff' },
+                  { id: 'favorites', icon: '⭐', label: t('catFavorites'), color: '#eab308', bg: '#eab308', fg: '#000', count: favorites.length },
+                  { id: 'recents', icon: '🕒', label: t('catRecents'), color: '#8b5cf6', bg: '#8b5cf6', fg: '#fff', count: recents.length },
+                ].map(chip => {
+                  const isActive = cat === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      onClick={() => {
+                        const next = isActive ? null : chip.id;
+                        setCat(next);
+                        if (next && sheetRef.current) {
+                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
+                          sheetRef.current.style.height = `${Math.min(340, Math.round(window.innerHeight * 0.44))}px`;
+                        } else if (!next && sheetRef.current) {
+                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
+                          sheetRef.current.style.height = "185px";
+                        }
+                      }}
+                      style={{
+                        ...BTN,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: "6px 12px",
+                        minHeight: 32,
+                        borderRadius: 20,
+                        flexShrink: 0,
+                        border: isActive ? `1.5px solid ${chip.color}` : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
+                        background: isActive ? chip.bg : (isDarkTheme ? "rgba(255,255,255,0.05)" : "#f8fafc"),
+                        color: isActive ? chip.fg : (isDarkTheme ? "#cbd5e1" : "#475569"),
+                        boxShadow: isActive ? `0 2px 8px ${chip.color}55` : "none",
+                        transition: "all 0.15s ease",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 5
+                      }}
+                    >
+                      <span style={{ fontSize: 13 }}>{chip.icon}</span>
+                      <span>{chip.label}</span>
+                      {typeof chip.count === 'number' && chip.count > 0 && (
+                        <span style={{
+                          fontSize: 10,
+                          background: isActive ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.12)",
+                          padding: "1px 5px",
+                          borderRadius: 10,
+                          fontWeight: 700
+                        }}>
+                          {chip.count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
 
-              {/* Son Gezilenler butonu */}
-              <button onClick={()=>setCat(p=>p==='recents'?null:'recents')}
-                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border: cat==='recents'?"1px solid #06b6d4": (isDarkTheme ? "1px solid rgba(6,182,212,0.4)" : "1px solid #67e8f9"),
-                  background: cat==='recents'?"#06b6d4":"transparent",
-                  color: cat==='recents'?"#fff":(isDarkTheme?"#67e8f9":"#0891b2")}}>
-                🕒 {t('catRecents')} {recents.length>0 ? `(${recents.length})` : ''}
-              </button>
+              {/* Seçili Kategori / Çip Listesi */}
+              {cat && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 2 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2px" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                      {visible.length} {t('chipNearTitle')}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setCat(null);
+                        if (sheetRef.current) {
+                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
+                          sheetRef.current.style.height = "185px";
+                        }
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: isDarkTheme ? "#64748b" : "#94a3b8",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        padding: "2px 4px"
+                      }}
+                    >
+                      ✕ {isEN() ? "Close" : "Kapat"}
+                    </button>
+                  </div>
 
-              {/* Yakındakiler butonu */}
-              <button onClick={()=>setCat(p=>p==='nearby'?null:'nearby')}
-                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border: cat==='nearby'?"1px solid #10b981": (isDarkTheme ? "1px solid rgba(16,185,129,0.4)" : "1px solid #6ee7b7"),
-                  background: cat==='nearby'?"#10b981":"transparent",
-                  color: cat==='nearby'?"#fff":(isDarkTheme?"#6ee7b7":"#059669")}}>
-                📍 {t('catNearby')}
-              </button>
-              {(Object.entries(CAT) as [keyof typeof CAT_LABELS,{c:string;l:string}][]).map(([k,v])=>(
-                <button key={k} onClick={()=>setCat(p=>p===k?null:k)}
-                  style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                    border:`1px solid ${v.c}55`,background:cat===k?v.c:"transparent",color:cat===k?"#fff":v.c}}>
-                  {CAT_LABELS[k]}
-                </button>
-              ))}
+                  <div style={{ maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+                    {visible.length === 0 ? (
+                      <div style={{ padding: "12px", textAlign: "center", color: isDarkTheme ? "#64748b" : "#94a3b8", fontSize: 12 }}>
+                        {isEN() ? "No places found" : "Bu kategoride henüz mekan bulunamadı"}
+                      </div>
+                    ) : (
+                      visible.slice(0, 10).map(loc => {
+                        const center = (gpsOn && userPos) ? userPos : CAMPUS_CENTER;
+                        const dM = Math.round(hav(center[0], center[1], loc.gps[0], loc.gps[1]));
+                        const isFav = favorites.includes(loc.num);
+                        return (
+                          <div
+                            key={loc.num}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 10,
+                              padding: "7px 10px",
+                              background: isDarkTheme ? "rgba(255,255,255,0.04)" : "#f8fafc",
+                              border: `1px solid ${isDarkTheme ? "rgba(255,255,255,0.06)" : "#e2e8f0"}`,
+                              borderRadius: 10,
+                              cursor: "pointer"
+                            }}
+                            onClick={() => handlePinClick(loc)}
+                          >
+                            <span style={{ fontSize: 18, flexShrink: 0 }}>{loc.emoji}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{
+                                fontSize: 13,
+                                fontWeight: 700,
+                                color: isDarkTheme ? "#f1f5f9" : "#0f172a",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap"
+                              }}>
+                                {locName(loc)}
+                              </div>
+                              <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                                {cat === 'wc' ? t('chipWcSubtitle') : `~${dM}m`}
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleFavorite(loc.num);
+                              }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 15,
+                                padding: "2px",
+                                opacity: isFav ? 1 : 0.35
+                              }}
+                              title={isFav ? "Favorilerden Çıkar" : "Favorilere Ekle"}
+                            >
+                              ⭐
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const targetLoc = loc;
+                                setTo(targetLoc);
+                                setToSearch(locName(targetLoc));
+                                setPanelLoc(null);
+                                if (gpsOn && userPos) {
+                                  setFromGPS(true);
+                                  calcRoute(userPos[0], userPos[1], targetLoc);
+                                  setMode('ready');
+                                } else if (from) {
+                                  calcRoute(from.gps[0], from.gps[1], targetLoc);
+                                  setMode('ready');
+                                } else {
+                                  setMode('pickFrom');
+                                }
+                              }}
+                              style={{
+                                ...BTN,
+                                background: "#0d9488",
+                                color: "#fff",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                padding: "5px 10px",
+                                borderRadius: 7,
+                                minHeight: 28,
+                                flexShrink: 0
+                              }}
+                            >
+                              {t('btnGoHereArrow')}
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

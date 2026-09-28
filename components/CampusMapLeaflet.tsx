@@ -1450,9 +1450,9 @@ export default function CampusMap(){
   useEffect(()=>{
     if(!sheetRef.current)return;
     if(panelLoc){
-      // Bina seçimi: 72vh aç (klavye kapalı)
+      // Bina seçimi: haritayı kapatmayacak dengeli yükseklik
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
-      sheetRef.current.style.height=`${Math.round(window.innerHeight*0.72)}px`;
+      sheetRef.current.style.height=`${Math.min(420, Math.round(window.innerHeight*0.48))}px`;
     } else if(activeRouteInput){
       sheetRef.current.style.transition="height 0.25s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height="310px";
@@ -1474,17 +1474,20 @@ export default function CampusMap(){
     return()=>{vv.removeEventListener('resize',onVVChange);vv.removeEventListener('scroll',onVVChange);};
   },[]);
 
-  // Sim başlayınca panel default'a dönsün; arrived modunda içeriğe göre büyüsün
+  // Mode değişimlerinde panel boyutu kontrolü
   useEffect(()=>{
     if(!sheetRef.current)return;
-    if(mode==='sim'){
-      sheetRef.current.style.transition="height 0.4s cubic-bezier(0.32,0.72,0,1)";
+    sheetRef.current.style.transition="height 0.3s cubic-bezier(0.32,0.72,0,1)";
+    if(mode==='sim'||mode==='nav'){
       sheetRef.current.style.height="185px";
     } else if(mode==='arrived'){
-      sheetRef.current.style.transition="height 0.35s cubic-bezier(0.32,0.72,0,1)";
       sheetRef.current.style.height="280px";
+    } else if(mode==='pickTo'||mode==='pickFrom'){
+      sheetRef.current.style.height=`${Math.min(320, Math.round(window.innerHeight*0.42))}px`;
+    } else if(mode==='idle'&&!panelLoc){
+      sheetRef.current.style.height="185px";
     }
-  },[mode]);
+  },[mode, panelLoc]);
 
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
   useEffect(()=>{
@@ -3018,13 +3021,14 @@ export default function CampusMap(){
 
       {/* ─── Alt panel ───────────────────────────────────────────────────── */}
       <div
-        style={{position:"fixed",bottom:0,left:0,right:0,zIndex:10,
-          background:"#1e293b",borderRadius:"16px 16px 0 0",
+        style={{position:"fixed",bottom:0,left:0,right:0,margin:"0 auto",zIndex:10,
+          background: isDarkTheme ? "#1e293b" : "#ffffff",
+          borderRadius:"18px 18px 0 0",
           boxShadow:showKarpuzIntro
             ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
-            :"0 -4px 24px rgba(0,0,0,0.5)",
-          height:"185px",maxHeight:"85dvh",
-          width:"100%",maxWidth:"100%",boxSizing:"border-box",
+            :"0 -4px 24px rgba(0,0,0,0.35)",
+          height:"185px",maxHeight:"78dvh",
+          width:"100%",maxWidth: 480,boxSizing:"border-box",
           display: (showTour) ? "none" : "flex",flexDirection:"column",
           overflow:"hidden",
           transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
@@ -3580,7 +3584,7 @@ export default function CampusMap(){
           )}
 
           {/* Panel içi bina detay kartı – klavye kapalıyken */}
-          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready'||mode==='pickTo'||mode==='pickFrom')&&(
+          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready')&&(
             <div style={{marginTop:8,borderTop:"1px solid #334155",paddingTop:10}}>
               <PhotoGallery loc={panelLoc} height={110}/>
               <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
@@ -3618,16 +3622,18 @@ export default function CampusMap(){
               )}
               <div style={{display:"flex",gap:8}}>
                 {panelLoc?.num!==from?.num&&panelLoc?.num!==to?.num&&(
-                  <button onClick={()=>{setPanelLoc(loc=>loc);setFrom(panelLoc);setFromGPS(false);setMode('pickTo');}}
+                  <button onClick={()=>{const sel=panelLoc;setPanelLoc(null);setFrom(sel);setFromGPS(false);setMode('pickTo');}}
                     style={{...BTN,flex:1,background:"#16a34a",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
                     {t('btnStartHere')}
                   </button>
                 )}
                 {panelLoc?.num!==from?.num&&panelLoc?.num!==to?.num&&(
                   <button onClick={()=>{
-                    setPanelLoc(loc=>loc);setTo(panelLoc);
-                    if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],panelLoc);}
-                    else if(from){calcRoute(from.gps[0],from.gps[1],panelLoc);}
+                    const sel=panelLoc;
+                    setPanelLoc(null);
+                    setTo(sel);
+                    if(gpsOn&&userPos){setFromGPS(true);calcRoute(userPos[0],userPos[1],sel);}
+                    else if(from){calcRoute(from.gps[0],from.gps[1],sel);}
                     else setMode('pickFrom');}}
                     style={{...BTN,flex:1,background:"#dc2626",color:"#fff",fontSize:13,padding:"10px 0",borderRadius:10}}>
                     {t('btnGoHere')}

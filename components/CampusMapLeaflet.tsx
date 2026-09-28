@@ -185,13 +185,7 @@ function ZoomCtrl(){
   },[m]);
   return null;
 }
-function CenterCtrl({userPos}:{userPos:[number,number]|null}){
-  const m=useMap();
-  useEffect(()=>{
-    const btn=document.getElementById("center-me");
-    if(!btn)return;
-    btn.onclick=()=>{if(userPos)m.setView(userPos,18,{animate:true,duration:0.5});};
-  },[m,userPos]);
+function CenterCtrl(){
   return null;
 }
 
@@ -698,8 +692,8 @@ function mkIcon(loc:Loc,isF:boolean,isT:boolean,showLabel:boolean):L.DivIcon{
 }
 function ZoomWatcher({setShowLabels}:{setShowLabels:(v:boolean)=>void}){
   const map=useMap();
-  useMapEvents({zoomend:()=>setShowLabels(map.getZoom()>=17)});
-  useEffect(()=>{setShowLabels(map.getZoom()>=17);},[map,setShowLabels]);
+  useMapEvents({zoomend:()=>setShowLabels(map.getZoom()>=17.8)});
+  useEffect(()=>{setShowLabels(map.getZoom()>=17.8);},[map,setShowLabels]);
   return null;
 }
 // Karpuz – kullanıcı konumu simgesi
@@ -1056,15 +1050,60 @@ export default function CampusMap(){
     });
   }, []);
 
+  // Ses motorlarını (özellikle Türkçe sesleri) önceden hafızaya al
+  const ttsVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  useEffect(() => {
+    if (typeof window === "undefined" || !('speechSynthesis' in window)) return;
+    const populateVoices = () => {
+      try {
+        const v = window.speechSynthesis.getVoices();
+        if (v && v.length > 0) {
+          ttsVoicesRef.current = v;
+        }
+      } catch (e) {}
+    };
+    populateVoices();
+    window.speechSynthesis.onvoiceschanged = populateVoices;
+    return () => {
+      if (typeof window !== "undefined" && 'speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
+  }, []);
+
   const speakText = useCallback((text: string) => {
     if (typeof window === "undefined" || !('speechSynthesis' in window)) return;
     if (isMuted) return;
     try {
       window.speechSynthesis.cancel();
-      const clean = text.replace(/^[↑↗→↘↓↙←↖🏁⚠️📍🚶🟢🔴s]+/, '').trim();
+      let clean = text.replace(/^[↑↗→↘↓↙←↖🏁⚠️📍🚶🟢🔴🐶🐾s]+/, '').trim();
       if (!clean) return;
+      clean = clean.replace(/(\d+)\s*m\b/gi, '$1 metre');
+
       const u = new SpeechSynthesisUtterance(clean);
-      u.lang = isEN() ? "en-US" : "tr-TR";
+      const voices = ttsVoicesRef.current.length > 0 ? ttsVoicesRef.current : window.speechSynthesis.getVoices();
+
+      if (!isEN()) {
+        u.lang = "tr-TR";
+        const trVoice = voices.find(v => {
+          const l = (v.lang || "").toLowerCase().replace('_', '-');
+          const n = (v.name || "").toLowerCase();
+          return l === 'tr-tr' || l === 'tr' || l.startsWith('tr-') || l.startsWith('tr_') ||
+                 n.includes('turkish') || n.includes('türkçe') || n.includes('yelda') || 
+                 n.includes('tolga') || n.includes('filiz') || n.includes('emel') || n.includes('ahmet');
+        });
+        if (trVoice) {
+          u.voice = trVoice;
+          u.lang = trVoice.lang;
+        }
+      } else {
+        u.lang = "en-US";
+        const enVoice = voices.find(v => (v.lang || "").toLowerCase().startsWith('en'));
+        if (enVoice) {
+          u.voice = enVoice;
+          u.lang = enVoice.lang;
+        }
+      }
       u.rate = 1.0;
       u.pitch = 1.0;
       window.speechSynthesis.speak(u);
@@ -2675,7 +2714,7 @@ export default function CampusMap(){
           <FitOnRoute route={route} fromPos={fromGPS&&userPos?userPos:from?.gps??null} toPos={to?.gps??null}/>
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
-          <CenterCtrl userPos={userPos}/>
+          <CenterCtrl/>
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} autoTrack={autoTrack} onDrag={handleMapDrag}/>
           <MapBearingWatcher onBearingChange={setMapBearing}/>
         </MapContainer>
@@ -3062,7 +3101,31 @@ export default function CampusMap(){
 
 
       {/* ─── Yüzen Üst Arama / Rota Başlığı ───────────────────── */}
-      {(mode === 'idle' || mode === 'ready') && !showWelcome && (
+      {/* ─── READY Modunda Sol Üst Minimal Geri Butonu (Harita Görünümünü Kapatmaz) ─── */}
+      {mode === 'ready' && !showWelcome && (
+        <button
+          onClick={reset}
+          style={{
+            position: "fixed", top: 16, left: 16, zIndex: 1000,
+            background: isDarkTheme ? "rgba(30, 41, 59, 0.92)" : "rgba(255, 255, 255, 0.95)",
+            backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid rgba(0, 0, 0, 0.1)",
+            borderRadius: 20, padding: "8px 14px",
+            color: isDarkTheme ? "#f8fafc" : "#0f172a",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
+            display: "flex", alignItems: "center", gap: 6,
+            fontSize: 13, fontWeight: 700, cursor: "pointer",
+            transition: "all 0.2s ease"
+          }}
+          title={isEN() ? "Back to map" : "Haritaya dön"}
+        >
+          <span>←</span>
+          <span>{isEN() ? "Map" : "Harita"}</span>
+        </button>
+      )}
+
+      {/* ─── Yüzen Üst Arama Çubuğu (Sadece Keşif Modunda, Kart Açık Değilken) ─── */}
+      {mode === 'idle' && !showWelcome && !selectedLoc && !panelLoc && (
         <div style={{
           position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
           width: "calc(100% - 32px)", maxWidth: 440,
@@ -3070,87 +3133,56 @@ export default function CampusMap(){
           <div style={{
             background: isDarkTheme ? "rgba(30, 41, 59, 0.92)" : "rgba(255, 255, 255, 0.95)",
             backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-            borderRadius: 24, padding: mode === 'ready' ? "8px 12px" : "10px 14px", display: "flex", alignItems: "center", gap: 10,
+            borderRadius: 24, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10,
             animation: (showTour && tourStep === 1) ? "onboard-glow 1.4s ease-in-out infinite" : "none",
             boxShadow: (showTour && tourStep === 1) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.9)" : "0 8px 32px rgba(0, 0, 0, 0.18)",
             border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.08)"
           }}>
-            {mode === 'ready' ? (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-                <button
-                  onClick={reset}
-                  style={{
-                    background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
-                    border: "none", borderRadius: "50%", width: 34, height: 34,
-                    color: isDarkTheme ? "#f1f5f9" : "#0f172a", fontSize: 16, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
-                  }}
-                  title={isEN() ? "Back to map" : "Haritaya dön"}
-                >
-                  ←
-                </button>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 13.5, fontWeight: 800,
-                    color: isDarkTheme ? "#f8fafc" : "#1e293b",
-                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-                  }}>
-                    📍 {to ? locName(to) : (isEN() ? "Route" : "Rota")}
-                  </div>
-                  <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", marginTop: 1 }}>
-                    ~{mins} {t('minLabel')} · {routeM}m
-                  </div>
-                </div>
+            <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>
+              <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#fef08a", border: "2px solid #eab308", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "95%", height: "95%", objectFit: "contain" }} />
               </div>
-            ) : (
-              <>
-                <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#fef08a", border: "2px solid #eab308", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "95%", height: "95%", objectFit: "contain" }} />
-                  </div>
-                </div>
-                <div onClick={() => { setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text", minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <input
-                      type="text"
-                      value={toSearch}
-                      onChange={(e) => { setToSearch(e.target.value); setActiveRouteInput('to'); }}
-                      onFocus={() => { setActiveRouteInput('to'); }}
-                      placeholder={isEN() ? "Where to?" : "Nereye gidiyoruz?"}
-                      style={{
-                        background: "transparent",
-                        border: "none",
-                        outline: "none",
-                        fontSize: 13.5,
-                        fontWeight: 700,
-                        color: isDarkTheme ? "#f8fafc" : "#1e293b",
-                        width: "100%",
-                        padding: 0
-                      }}
-                    />
-                    {toSearch && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setToSearch("");
-                          setTargetRoom(null);
-                          setTargetRoomInfo(null);
-                        }}
-                        style={{
-                          background: "none", border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b",
-                          cursor: "pointer", fontSize: 13, padding: "0 4px"
-                        }}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                  <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}
-                  </span>
-                </div>
-              </>
-            )}
+            </div>
+            <div onClick={() => { setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text", minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <input
+                  type="text"
+                  value={toSearch}
+                  onChange={(e) => { setToSearch(e.target.value); setActiveRouteInput('to'); }}
+                  onFocus={() => { setActiveRouteInput('to'); }}
+                  placeholder={isEN() ? "Where to?" : "Nereye gidiyoruz?"}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    color: isDarkTheme ? "#f8fafc" : "#1e293b",
+                    width: "100%",
+                    padding: 0
+                  }}
+                />
+                {toSearch && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setToSearch("");
+                      setTargetRoom(null);
+                      setTargetRoomInfo(null);
+                    }}
+                    style={{
+                      background: "none", border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b",
+                      cursor: "pointer", fontSize: 13, padding: "0 4px"
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}
+              </span>
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
               <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2 }}>
                 {(["TR", "EN"] as const).map(l => (
@@ -3562,21 +3594,70 @@ export default function CampusMap(){
           🏫
         </button>
 
-        {/* Konuma git butonu – GPS açıksa görünür */}
-        {gpsOn&&userPos&&(
-          <button id="center-me"
-            style={{
-              ...BTN,
-              width: 40,
-              height: 40,
-              minHeight: 40,
-              background: isDarkTheme ? "#1e293b" : "#ffffff",
-              border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
-              borderRadius: 10,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              fontSize: 18
-            }}>📍</button>
-        )}
+        {/* Konumu Aktifleştir / Konumuma Odaklan (Her zaman görünür) */}
+        <button
+          id="center-me"
+          onClick={() => {
+            triggerHaptic(40);
+            if (!gpsOn) {
+              toggleGPS();
+              setVoiceHint(isEN() ? "📍 Requesting GPS location..." : "📍 GPS konumu açılıyor...");
+              setTimeout(() => setVoiceHint(null), 2500);
+            } else if (userPos && mapInstanceRef.current) {
+              mapInstanceRef.current.setView(userPos, 18, { animate: true });
+              setVoiceHint(isEN() ? "🎯 Centered on your location" : "🎯 Konumunuza odaklandı");
+              setTimeout(() => setVoiceHint(null), 2000);
+            } else {
+              setVoiceHint(isEN() ? "📍 Waiting for GPS signal..." : "📍 GPS sinyali bekleniyor...");
+              setTimeout(() => setVoiceHint(null), 2500);
+            }
+          }}
+          title={!gpsOn ? (isEN() ? "Turn on GPS / My Location" : "Konumumu Aç (GPS)") : (isEN() ? "Center on My Location" : "Konumuma Odaklan")}
+          aria-label="GPS Konum"
+          style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: gpsOn ? (isDarkTheme ? "#064e3b" : "#ecfdf5") : (isDarkTheme ? "#1e293b" : "#ffffff"),
+            color: gpsOn ? "#10b981" : (isDarkTheme ? "#f8fafc" : "#0f172a"),
+            border: gpsOn ? "2px solid #10b981" : `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+            borderRadius: 10,
+            boxShadow: gpsOn ? "0 0 12px rgba(16,185,129,0.4)" : "0 2px 8px rgba(0,0,0,0.2)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            position: "relative",
+            transition: "all 0.2s ease"
+          }}
+        >
+          {gpsOn ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="7" />
+              <polyline points="12 2 12 5" />
+              <polyline points="12 19 12 22" />
+              <polyline points="2 12 5 12" />
+              <polyline points="19 12 22 12" />
+              <circle cx="12" cy="12" r="2.5" fill="#10b981" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isDarkTheme ? "#94a3b8" : "#475569"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="7" />
+              <polyline points="12 2 12 5" />
+              <polyline points="12 19 12 22" />
+              <polyline points="2 12 5 12" />
+              <polyline points="19 12 22 12" />
+            </svg>
+          )}
+          {gpsOn && (
+            <span style={{
+              position: "absolute", top: 3, right: 3,
+              width: 6, height: 6, borderRadius: "50%",
+              background: "#10b981", boxShadow: "0 0 6px #10b981"
+            }} />
+          )}
+        </button>
         {/* Konumu paylaş / gruba ekle – GPS açık ve konum alındıysa görünür */}
         {gpsOn&&userPos&&(
           <button

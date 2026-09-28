@@ -190,6 +190,25 @@ function MapRefCapture({mapRef}:{mapRef:MutableRefObject<L.Map|null>}){
   return null;
 }
 
+function MapBearingWatcher({onBearingChange}:{onBearingChange:(b:number)=>void}){
+  const m=useMap();
+  useEffect(()=>{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyMap=m as any;
+    const update=()=>{
+      if(typeof anyMap.getBearing==='function'){
+        onBearingChange(Math.round(anyMap.getBearing()||0));
+      }
+    };
+    update();
+    m.on('rotate' as any,update);
+    return ()=>{
+      m.off('rotate' as any,update);
+    };
+  },[m,onBearingChange]);
+  return null;
+}
+
 // ── Veri ─────────────────────────────────────────────────────────────────────
 interface Loc{num:number;name:string;nameEN?:string;gps:[number,number];cats:string[];desc:string;descEN?:string;emoji:string;photo?:string;photos?:string[];hidden?:boolean;logo?:string;logoSize?:number;keywords?:string[];}
 
@@ -556,7 +575,221 @@ export default function CampusMap(){
   const[panelLoc,setPanelLoc]=useState<Loc|null>(null);
   const [tourStep, setTourStep] = useState<number>(0);
   const [showTour, setShowTour] = useState<boolean>(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+
+  // Favoriler, Son Gezilenler ve Tema
+  const [favorites, setFavorites] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const s = localStorage.getItem("ks_favorites");
+      return s ? JSON.parse(s) : [];
+    } catch (e) { return []; }
+  });
+
+  const toggleFavorite = useCallback((num: number) => {
+    setFavorites(prev => {
+      const next = prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num];
+      try { localStorage.setItem("ks_favorites", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const [recents, setRecents] = useState<number[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const s = localStorage.getItem("ks_recents");
+      return s ? JSON.parse(s) : [];
+    } catch (e) { return []; }
+  });
+
+  const addRecent = useCallback((num: number) => {
+    setRecents(prev => {
+      const next = [num, ...prev.filter(n => n !== num)].slice(0, 15);
+      try { localStorage.setItem("ks_recents", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      const s = localStorage.getItem("ks_theme");
+      if (s === "light") return false;
+      if (s === "dark") return true;
+    } catch (e) {}
+    return true;
+  });
+
+  const toggleTheme = useCallback(() => {
+    setIsDarkTheme(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem("ks_theme", next ? "dark" : "light");
+        if (typeof document !== "undefined") {
+          document.documentElement.dataset.theme = next ? "dark" : "light";
+        }
+      } catch (e) {}
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.dataset.theme = isDarkTheme ? "dark" : "light";
+    }
+  }, [isDarkTheme]);
+
+  // ── 3D Perspektif ve Harita Kontrolleri ──
+  const [is3D, setIs3D] = useState(false);
+  const [mapBearing, setMapBearing] = useState(0);
+
+  const toggle3D = useCallback(() => {
+    setIs3D(prev => !prev);
+    setTimeout(() => {
+      mapInstanceRef.current?.invalidateSize({ animate: false });
+    }, 420);
+  }, []);
+
+  const resetNorth = useCallback(() => {
+    if (mapInstanceRef.current) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const anyMap = mapInstanceRef.current as any;
+      if (typeof anyMap.setBearing === 'function') {
+        anyMap.setBearing(0);
+      }
+    }
+    setMapBearing(0);
+  }, []);
+
+  const fitCampus = useCallback(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.fitBounds(CAMPUS_BOUNDS, { padding: [30, 30], animate: true });
+    }
+  }, []);
+
+  // ── AR (Artırılmış Gerçeklik) Modu ──
+  const [isArActive, setIsArActive] = useState(false);
+  const [arCameraError, setArCameraError] = useState<string | null>(null);
+  const [deviceHeading, setDeviceHeading] = useState<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+
+  const startAr = useCallback(async () => {
+    setIsArActive(true);
+    setArCameraError(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setArCameraError(t('arNoCamera'));
+      return;
+    }
+    try {
+      // iOS Pusula / Jiroskop izni talebi
+      if (typeof (DeviceOrientationEvent as any)?.requestPermission === 'function') {
+        try {
+          const res = await (DeviceOrientationEvent as any).requestPermission();
+          if (res !== 'granted') {
+            console.warn("Device orientation izni verilmedi");
+          }
+        } catch (e) {}
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false
+      });
+      mediaStreamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(() => {});
+      }
+    } catch (err: any) {
+      console.error("Camera error:", err);
+      setArCameraError(t('arNoCamera'));
+    }
+  }, []);
+
+  const stopAr = useCallback(() => {
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(tr => tr.stop());
+      mediaStreamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsArActive(false);
+    setArCameraError(null);
+  }, []);
+
+  // AR pusula / yön dinleyici
+  useEffect(() => {
+    if (!isArActive) return;
+    const onOrientation = (e: DeviceOrientationEvent) => {
+      let h: number | null = null;
+      if (typeof (e as any).webkitCompassHeading === 'number') {
+        h = (e as any).webkitCompassHeading;
+      } else if (e.alpha !== null) {
+        h = (360 - e.alpha) % 360;
+      }
+      if (h !== null) {
+        setDeviceHeading(Math.round(h));
+      }
+    };
+
+    window.addEventListener('deviceorientation', onOrientation, true);
+    return () => {
+      window.removeEventListener('deviceorientation', onOrientation, true);
+    };
+  }, [isArActive]);
+
+  // Sayfa kapanırken veya unmount olurken kamerayı kapat
+  useEffect(() => {
+    return () => {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(tr => tr.stop());
+      }
+    };
+  }, []);
+
+  // Geri Bildirim Formu (Feedback)
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [fbType, setFbType] = useState<"bug"|"info"|"suggest"|"other">("suggest");
+  const [fbMsg, setFbMsg] = useState("");
+  const [fbContact, setFbContact] = useState("");
+  const [fbSending, setFbSending] = useState(false);
+  const [fbSent, setFbSent] = useState(false);
+
+  const sendFeedback = useCallback(async () => {
+    if (!fbMsg.trim()) return;
+    setFbSending(true);
+    try {
+      if (SHEET_URL) {
+        await fetch(SHEET_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "feedback",
+            feedbackType: fbType,
+            message: fbMsg.trim(),
+            contact: fbContact.trim() || "-",
+            name: userProfile?.name || "Anonim",
+            role: userProfile?.role || "-",
+            ts: new Date().toLocaleString("tr-TR"),
+            token: SHEET_TOKEN
+          })
+        });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFbSending(false);
+      setFbSent(true);
+      setTimeout(() => {
+        setFbSent(false);
+        setShowFeedback(false);
+        setFbMsg("");
+        setFbContact("");
+      }, 2000);
+    }
+  }, [fbMsg, fbType, fbContact, userProfile]);
   const[wRole,setWRole]=useState<UserRole|null>(null);
   const[wName,setWName]=useState("");
   const[wExtra,setWExtra]=useState(""); // Öğretmen→fakülte, Personel→görev
@@ -597,7 +830,47 @@ export default function CampusMap(){
   const[fromSearch,setFromSearch]=useState("");
   const[toSearch,setToSearch]=useState("");
   const[activeRouteInput,setActiveRouteInput]=useState<'from'|'to'|null>(null);
-  const[isMuted,setIsMuted]=useState(false);
+  const [isMuted, setIsMuted] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const saved = localStorage.getItem("ks_voice_enabled");
+      if (saved === "0") return true;
+      if (saved === "1") return false;
+    } catch (e) {}
+    return false;
+  });
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem("ks_voice_enabled", next ? "0" : "1");
+        if (next && typeof window !== "undefined" && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+        }
+      } catch (e) {}
+      setVoiceHint(next ? t('voiceOff') : t('voiceOn'));
+      setTimeout(() => setVoiceHint(null), 2500);
+      return next;
+    });
+  }, []);
+
+  const speakText = useCallback((text: string) => {
+    if (typeof window === "undefined" || !('speechSynthesis' in window)) return;
+    if (isMuted) return;
+    try {
+      window.speechSynthesis.cancel();
+      const clean = text.replace(/^[↑↗→↘↓↙←↖🏁⚠️📍🚶🟢🔴s]+/, '').trim();
+      if (!clean) return;
+      const u = new SpeechSynthesisUtterance(clean);
+      u.lang = isEN() ? "en-US" : "tr-TR";
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      window.speechSynthesis.speak(u);
+    } catch (e) {
+      console.warn("TTS error:", e);
+    }
+  }, [isMuted]);
   const[listening,setListening]=useState(false);
   const[voiceHint,setVoiceHint]=useState<string|null>(null);
   const voiceHintTextRef=useRef<string>('');
@@ -706,6 +979,19 @@ export default function CampusMap(){
     const t2=setTimeout(()=>setSplash("hidden"),3900);
     return()=>{clearTimeout(t1);clearTimeout(t2);};
   },[]);
+
+  // ?loc=15 → doğrudan o binayı seç ve aç
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const locId = sp.get("loc");
+    if (locId) {
+      const found = LOCS.find(l => l.num === Number(locId));
+      if (found) {
+        setSelectedLoc(found);
+        addRecent(found.num);
+      }
+    }
+  }, [addRecent]);
 
   // ?pins=lat1,lon1|lat2,lon2 (veya eski ?pin=lat,lon) → arkadaşların konumlarını haritada göster
   useEffect(()=>{
@@ -921,6 +1207,29 @@ export default function CampusMap(){
     setSimPos(null);setSimPct(0);setSimPaused(false);simTravRef.current=0;
   },[]);
 
+  const seekSim = useCallback((pct: number) => {
+    if (!route || route.length < 2) return;
+    const cum = cumRef.current, total = cum[cum.length - 1] ?? 0;
+    if (total <= 0) return;
+    const clamped = Math.max(0, Math.min(100, pct));
+    const targetTrav = total * (clamped / 100);
+    simTravRef.current = targetTrav;
+    setSimPct(clamped);
+    const r = route as [number, number][];
+    for (let i = 1; i < cum.length; i++) {
+      if (cum[i] >= targetTrav) {
+        const t = (targetTrav - cum[i - 1]) / (cum[i] - cum[i - 1]);
+        setSimPos([r[i - 1][0] + t * (r[i - 1][0] - r[i - 1][0]), r[i - 1][1] + t * (r[i][1] - r[i - 1][1])]);
+        break;
+      }
+    }
+    let cumStep = 0;
+    for (let i = 0; i < navSteps.length; i++) {
+      cumStep += navSteps[i].dist;
+      if (cumStep >= targetTrav) { setCurStepIdx(i); break; }
+    }
+  }, [route, navSteps]);
+
   const runSimInterval=useCallback((cum:number[],r:[number,number][],total:number)=>{
     const TICK=50;
     simRef.current=setInterval(()=>{
@@ -936,8 +1245,14 @@ export default function CampusMap(){
           break;
         }
       }
+      // Simülasyon sırasında adımları da senkronize ilerlet
+      let cumStep = 0;
+      for (let i = 0; i < navSteps.length; i++) {
+        cumStep += navSteps[i].dist;
+        if (cumStep >= trav) { setCurStepIdx(i); break; }
+      }
     },TICK);
-  },[]);
+  },[navSteps]);
 
   const startSim=useCallback(()=>{
     if(!route||route.length<2)return;
@@ -1024,6 +1339,7 @@ export default function CampusMap(){
   },[wRole,wName,wExtra,wKvkk]);
 
   const handlePinClick=useCallback((loc:Loc)=>{
+    addRecent(loc.num);
     if(mode==='pickFrom'){setPanelLoc(loc);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
     if(mode==='pickTo'){
       setPanelLoc(loc);setTo(loc);
@@ -1186,14 +1502,38 @@ export default function CampusMap(){
     return()=>window.removeEventListener('popstate',handler);
   },[showSteps,reset]);
 
-  const visible=useMemo(()=>LOCS.filter(l=>{
-    if(cat&&!l.cats.includes(cat))return false;
-    if(!search)return true;
-    const lq=search.toLocaleLowerCase();
-    return locName(l).toLocaleLowerCase().includes(lq)||
-      l.name.toLocaleLowerCase().includes(lq)||
-      l.keywords?.some(k=>k.toLocaleLowerCase().includes(lq)||lq.includes(k.toLocaleLowerCase()));
-  }),[search,cat]);
+  const visible=useMemo(()=>{
+    let list = LOCS.filter(l=>{
+      if (cat === "favorites") {
+        if (!favorites.includes(l.num)) return false;
+      } else if (cat === "recents") {
+        if (!recents.includes(l.num)) return false;
+      } else if (cat === "nearby") {
+        // nearby tüm binaları tutar, mesafe sıralaması aşağıda yapılır
+      } else if (cat && CAT[cat]) {
+        if (!l.cats.includes(cat)) return false;
+      }
+
+      if(!search) return true;
+      const lq=search.toLocaleLowerCase();
+      return locName(l).toLocaleLowerCase().includes(lq)||
+        l.name.toLocaleLowerCase().includes(lq)||
+        l.keywords?.some(k=>k.toLocaleLowerCase().includes(lq)||lq.includes(k.toLocaleLowerCase()));
+    });
+
+    if (cat === "recents") {
+      list = [...list].sort((a,b) => recents.indexOf(a.num) - recents.indexOf(b.num));
+    } else if (cat === "nearby") {
+      const center = (gpsOn && userPos) ? userPos : CAMPUS_CENTER;
+      list = [...list].sort((a,b) => {
+        const da = hav(center[0], center[1], a.gps[0], a.gps[1]);
+        const db = hav(center[0], center[1], b.gps[0], b.gps[1]);
+        return da - db;
+      });
+    }
+
+    return list;
+  },[search,cat,favorites,recents,gpsOn,userPos]);
   const mapVisible=useMemo(()=>visible.filter(l=>!l.hidden),[visible]);
 
   const mins=Math.max(1,Math.round(routeM/83));
@@ -1202,7 +1542,27 @@ export default function CampusMap(){
   const activeStep=navSteps[curStepIdx];
   const nextStep=navSteps[curStepIdx+1]??null;
 
-  // TTS navigasyon sesi kaldırıldı – ileride ses seçeneği eklenebilir
+  // ── Adım adım sesli yönlendirme (TTS / SpeechSynthesis) ──
+  const prevStepAnnouncedRef = useRef<number>(-1);
+  useEffect(() => {
+    if ((mode === 'nav' || mode === 'sim') && navSteps[curStepIdx] && prevStepAnnouncedRef.current !== curStepIdx) {
+      prevStepAnnouncedRef.current = curStepIdx;
+      speakText(navSteps[curStepIdx].text);
+    }
+    if (mode !== 'nav' && mode !== 'sim') {
+      prevStepAnnouncedRef.current = -1;
+      if (typeof window !== "undefined" && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+  }, [curStepIdx, mode, navSteps, speakText]);
+
+  // Varış anında tebrik sesi
+  useEffect(() => {
+    if (mode === 'arrived') {
+      speakText(isEN() ? "You have arrived! Karpuz wishes you a great day 🍉" : "Hedefe ulaştınız! Karpuz iyi günler diler 🍉");
+    }
+  }, [mode, speakText]);
 
   // Yakın binalara görsel bildirim (sim + nav)
   useEffect(()=>{
@@ -1558,6 +1918,317 @@ export default function CampusMap(){
 
       
       {/* ─── Modern 5-Adımlı İnteraktif Rehber Kartı (Geri Butonlu & Karpuz Maskotlu) ─── */}
+      {/* ─── AR (Artırılmış Gerçeklik) Görünümü ───────────────────────── */}
+      {isArActive && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 99999, background: "#000",
+          display: "flex", flexDirection: "column", overflow: "hidden"
+        }}>
+          {/* Canlı Kamera Video Akışı */}
+          <video
+            ref={videoRef}
+            playsInline
+            autoPlay
+            muted
+            style={{
+              position: "absolute", inset: 0, width: "100%", height: "100%",
+              objectFit: "cover"
+            }}
+          />
+
+          {/* Kamera İzni Hatası varsa */}
+          {arCameraError ? (
+            <div style={{
+              position: "relative", zIndex: 10, margin: "auto", maxWidth: 340,
+              background: "rgba(15,23,42,0.9)", backdropFilter: "blur(12px)",
+              padding: "24px 20px", borderRadius: 20, textAlign: "center", color: "#fff",
+              border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+            }}>
+              <div style={{fontSize: 42, marginBottom: 12}}>📷⚠️</div>
+              <div style={{fontSize: 15, fontWeight: 700, marginBottom: 8}}>{arCameraError}</div>
+              <p style={{fontSize: 12, color: "#94a3b8", lineHeight: 1.5, margin: "0 0 16px"}}>
+                {isEN() ? "Please check your browser camera permissions or continue using the 2D map." : "Lütfen tarayıcı kamera izinlerini kontrol edin veya 2D harita ile devam edin."}
+              </p>
+              <button onClick={stopAr}
+                style={{...BTN, background: "#3b82f6", color: "#fff", padding: "12px 24px", borderRadius: 12, width: "100%", fontSize: 14, fontWeight: 700}}>
+                {t('arClose')}
+              </button>
+            </div>
+          ) : (
+            (() => {
+              // Hedefe göre göreceli AR yönü hesapla
+              const curPos = (mode === 'sim' ? simPos : userPos) || (from ? from.gps : CAMPUS_CENTER);
+              const targetGps = to ? to.gps : CAMPUS_CENTER;
+              const targetBearing = brng(curPos[0], curPos[1], targetGps[0], targetGps[1]);
+              const curHeading = deviceHeading ?? heading ?? 0;
+              let diff = (targetBearing - curHeading + 360) % 360;
+              let diffSigned = diff > 180 ? diff - 360 : diff;
+              const targetDist = hav(curPos[0], curPos[1], targetGps[0], targetGps[1]);
+
+              let guideText = isEN() ? "GO STRAIGHT" : "DÜZ İLERLEYİN";
+              let guideColor = "#10b981";
+              if (diffSigned > 25 && diffSigned <= 80) { guideText = isEN() ? "BEAR RIGHT ↗" : "SAĞA YÖNELİN ↗"; guideColor = "#38bdf8"; }
+              else if (diffSigned > 80) { guideText = isEN() ? "TURN RIGHT ➔" : "SAĞA DÖNÜN ➔"; guideColor = "#f59e0b"; }
+              else if (diffSigned < -25 && diffSigned >= -80) { guideText = isEN() ? "↖ BEAR LEFT" : "↖ SOLA YÖNELİN"; guideColor = "#38bdf8"; }
+              else if (diffSigned < -80) { guideText = isEN() ? "⬅ TURN LEFT" : "⬅ SOLA DÖNÜN"; guideColor = "#f59e0b"; }
+
+              return (
+                <div style={{
+                  position: "relative", zIndex: 10, flex: 1,
+                  display: "flex", flexDirection: "column", justifyContent: "space-between",
+                  padding: "16px 16px calc(env(safe-area-inset-bottom, 16px) + 16px)",
+                  boxSizing: "border-box"
+                }}>
+                  {/* AR Üst Bilgi Kartı */}
+                  <div style={{
+                    background: "rgba(15,23,42,0.85)", backdropFilter: "blur(16px)",
+                    border: "1px solid rgba(255,255,255,0.15)", borderRadius: 20,
+                    padding: "12px 16px", display: "flex", alignItems: "center", gap: 12,
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.4)"
+                  }}>
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 12, overflow: "hidden",
+                      background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 24, flexShrink: 0
+                    }}>
+                      {to?.emoji || "📍"}
+                    </div>
+                    <div style={{flex: 1, minWidth: 0}}>
+                      <div style={{fontSize: 11, color: "#38bdf8", fontWeight: 700, letterSpacing: 0.5}}>
+                        {t('arDestination').toUpperCase()}
+                      </div>
+                      <div style={{fontSize: 16, fontWeight: 800, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}>
+                        {to ? locName(to) : t('campusName')}
+                      </div>
+                      <div style={{fontSize: 12, color: "rgba(255,255,255,0.75)", marginTop: 1}}>
+                        ~{Math.round(targetDist)}m · {remMins} {t('minRemaining')}
+                      </div>
+                    </div>
+                    <button onClick={toggleMute}
+                      style={{
+                        ...BTN, width: 36, height: 36, borderRadius: 10,
+                        background: isMuted ? "rgba(239,68,68,0.3)" : "rgba(255,255,255,0.12)",
+                        color: "#fff", fontSize: 16, padding: 0
+                      }}>
+                      {isMuted ? "🔇" : "🔊"}
+                    </button>
+                  </div>
+
+                  {/* Merkez: 3D AR Neon Yön Oku ve Pusula */}
+                  <div style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    position: "relative", margin: "auto 0"
+                  }}>
+                    {/* Dış Pusula Halkası */}
+                    <div style={{
+                      width: 220, height: 220, borderRadius: "50%",
+                      border: "2px dashed rgba(255,255,255,0.25)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      position: "relative",
+                      boxShadow: "0 0 40px rgba(56,189,248,0.2), inset 0 0 30px rgba(56,189,248,0.1)"
+                    }}>
+                      {/* Dönen 3D AR Oku */}
+                      <div style={{
+                        position: "absolute", width: "100%", height: "100%",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transform: `rotate(${diff}deg)`,
+                        transition: "transform 0.25s cubic-bezier(0.2, 0.8, 0.4, 1)"
+                      }}>
+                        <div style={{
+                          width: 0, height: 0,
+                          borderLeft: "26px solid transparent",
+                          borderRight: "26px solid transparent",
+                          borderBottom: "70px solid #38bdf8",
+                          filter: "drop-shadow(0 0 16px #38bdf8) drop-shadow(0 4px 12px rgba(0,0,0,0.6))",
+                          transform: "translateY(-48px)"
+                        }} />
+                      </div>
+
+                      {/* Merkez Mesafe Rozeti */}
+                      <div style={{
+                        background: "rgba(15,23,42,0.9)", backdropFilter: "blur(10px)",
+                        border: "2px solid #38bdf8", borderRadius: "50%",
+                        width: 86, height: 86, display: "flex", flexDirection: "column",
+                        alignItems: "center", justifyContent: "center",
+                        boxShadow: "0 0 20px rgba(56,189,248,0.4)"
+                      }}>
+                        <span style={{fontSize: 20, fontWeight: 900, color: "#fff", lineHeight: 1}}>
+                          {Math.round(targetDist)}
+                        </span>
+                        <span style={{fontSize: 10, fontWeight: 700, color: "#38bdf8", textTransform: "uppercase", marginTop: 2}}>
+                          metre
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Canlı AR Yönlendirici Rozet */}
+                    <div style={{
+                      marginTop: 24, padding: "8px 20px", borderRadius: 20,
+                      background: "rgba(15,23,42,0.85)", backdropFilter: "blur(12px)",
+                      border: `1.5px solid ${guideColor}`,
+                      color: guideColor, fontSize: 13, fontWeight: 800, letterSpacing: 0.8,
+                      boxShadow: `0 0 20px ${guideColor}40`
+                    }}>
+                      {guideText}
+                    </div>
+
+                    {/* Pusula kalibrasyon uyarısı */}
+                    {deviceHeading === null && (
+                      <div style={{marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.7)", textAlign: "center", maxWidth: 260}}>
+                        {t('arNoCompass')}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* AR Alt Kontrol Paneli */}
+                  <div style={{display: "flex", flexDirection: "column", gap: 10}}>
+                    {/* Aktif adım bildirimi */}
+                    {activeStep && (
+                      <div style={{
+                        background: "rgba(15,23,42,0.8)", backdropFilter: "blur(10px)",
+                        border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14,
+                        padding: "10px 14px", display: "flex", alignItems: "center", gap: 10
+                      }}>
+                        <span style={{fontSize: 20, color: "#38bdf8"}}>{activeStep.arrow}</span>
+                        <span style={{fontSize: 13, color: "#fff", fontWeight: 600, flex: 1}}>
+                          {activeStep.text}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Haritaya Dön Butonu */}
+                    <button onClick={stopAr}
+                      style={{
+                        ...BTN, background: "#c8102e", color: "#fff",
+                        padding: "14px 0", borderRadius: 14, width: "100%",
+                        fontSize: 15, fontWeight: 800, gap: 8,
+                        boxShadow: "0 8px 24px rgba(200,16,46,0.5)"
+                      }}>
+                      🗺️ {t('arClose')}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
+          )}
+        </div>
+      )}
+
+      {/* ─── Geri Bildirim (Feedback) Modalı ───────────────────────────── */}
+      {showFeedback && (
+        <div onClick={() => setShowFeedback(false)}
+          style={{position: "fixed", inset: 0, zIndex: 10000,
+            background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "20px 16px"}}>
+          <div onClick={e => e.stopPropagation()}
+            style={{background: isDarkTheme ? "#1e293b" : "#ffffff",
+              borderRadius: 20, width: "100%", maxWidth: 400,
+              padding: "22px", boxSizing: "border-box",
+              border: isDarkTheme ? "1px solid rgba(255,255,255,0.12)" : "1px solid #e2e8f0",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.5)"}}>
+            
+            {/* Modal Header */}
+            <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14}}>
+              <div style={{display: "flex", alignItems: "center", gap: 10}}>
+                <span style={{fontSize: 24}}>🍉</span>
+                <div>
+                  <div style={{fontWeight: 800, fontSize: 16, color: isDarkTheme ? "#fff" : "#0f172a"}}>
+                    {t('feedbackTitle')}
+                  </div>
+                  <div style={{fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b"}}>
+                    {t('feedbackDesc')}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setShowFeedback(false)}
+                style={{background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                  border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b",
+                  width: 30, height: 30, borderRadius: "50%", cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14}}>✕</button>
+            </div>
+
+            {fbSent ? (
+              <div style={{textAlign: "center", padding: "24px 8px"}}>
+                <div style={{fontSize: 40, marginBottom: 10}}>🍉🎉</div>
+                <div style={{fontSize: 15, fontWeight: 700, color: "#16a34a", marginBottom: 6}}>
+                  {t('feedbackSent')}
+                </div>
+              </div>
+            ) : (
+              <div style={{display: "flex", flexDirection: "column", gap: 12}}>
+                {/* Tür Seçimi */}
+                <div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6}}>
+                  {[
+                    {key: "bug", label: `🐞 ${t('feedbackTypeBug')}`},
+                    {key: "info", label: `ℹ️ ${t('feedbackTypeInfo')}`},
+                    {key: "suggest", label: `💡 ${t('feedbackTypeSuggest')}`},
+                    {key: "other", label: `💬 ${t('feedbackTypeOther')}`}
+                  ].map(item => (
+                    <button key={item.key}
+                      onClick={() => setFbType(item.key as any)}
+                      style={{
+                        padding: "8px 10px", borderRadius: 8, fontSize: 12, fontWeight: 600,
+                        border: fbType === item.key ? "1.5px solid #38bdf8" : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
+                        background: fbType === item.key ? (isDarkTheme ? "rgba(56,189,248,0.15)" : "#e0f2fe") : "transparent",
+                        color: fbType === item.key ? (isDarkTheme ? "#38bdf8" : "#0284c7") : (isDarkTheme ? "#94a3b8" : "#64748b"),
+                        cursor: "pointer", textAlign: "center"
+                      }}>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Mesaj Textarea */}
+                <textarea
+                  value={fbMsg}
+                  onChange={e => setFbMsg(e.target.value)}
+                  placeholder={t('feedbackMsgPlaceholder')}
+                  rows={4}
+                  style={{
+                    width: "100%", boxSizing: "border-box", borderRadius: 10,
+                    padding: "10px 12px", fontSize: 13,
+                    background: isDarkTheme ? "#0f172a" : "#f8fafc",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    color: isDarkTheme ? "#fff" : "#0f172a",
+                    outline: "none", resize: "none"
+                  }}
+                />
+
+                {/* İletişim Input */}
+                <input
+                  type="text"
+                  value={fbContact}
+                  onChange={e => setFbContact(e.target.value)}
+                  placeholder={t('feedbackContactPlaceholder')}
+                  style={{
+                    width: "100%", boxSizing: "border-box", borderRadius: 10,
+                    padding: "10px 12px", fontSize: 13,
+                    background: isDarkTheme ? "#0f172a" : "#f8fafc",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    color: isDarkTheme ? "#fff" : "#0f172a",
+                    outline: "none"
+                  }}
+                />
+
+                {/* Gönder Butonu */}
+                <button
+                  disabled={!fbMsg.trim() || fbSending}
+                  onClick={sendFeedback}
+                  style={{
+                    ...BTN, width: "100%", padding: "12px 0", borderRadius: 12,
+                    fontSize: 14, fontWeight: 700,
+                    background: fbMsg.trim() && !fbSending ? "#c8102e" : (isDarkTheme ? "#334155" : "#cbd5e1"),
+                    color: "#fff", cursor: fbMsg.trim() && !fbSending ? "pointer" : "not-allowed"
+                  }}>
+                  {fbSending ? t('feedbackSending') : t('feedbackSend')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {!showWelcome && showTour && (
         <div style={{
           position: "fixed",
@@ -1692,15 +2363,29 @@ export default function CampusMap(){
       )}
 
       {/* ─── Harita ─────────────────────────────────────────────────────── */}
-      <div style={{position:"absolute",inset:0,zIndex:1}}>
-        <MapContainer center={CAMPUS_CENTER} zoom={17}
-          style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
-          zoomControl={false} zoomSnap={0.1}
-          fadeAnimation={false} markerZoomAnimation={false} zoomAnimation={false}
-          {...({rotate:true,touchRotate:true} as object)}>
-          <DisableCompassAutoRotate/>
-          <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap" maxZoom={19} keepBuffer={6}/>
+      <div style={{position:"absolute",inset:0,zIndex:1,perspective:is3D?"950px":"none",overflow:"hidden"}}>
+        <div style={{
+          width:"100%",
+          height:"100%",
+          transform:is3D?"rotateX(32deg) translateY(-2%) scale(1.06)":"none",
+          transformOrigin:"center 75%",
+          transition:"transform 0.4s cubic-bezier(0.2, 0.8, 0.4, 1)"
+        }}>
+          <MapContainer center={CAMPUS_CENTER} zoom={17}
+            style={{height:"100%",width:"100%"}} minZoom={13} maxZoom={19}
+            zoomControl={false} zoomSnap={0.1}
+            fadeAnimation={false} markerZoomAnimation={false} zoomAnimation={false}
+            {...({rotate:true,touchRotate:true} as object)}>
+            <DisableCompassAutoRotate/>
+            <TileLayer
+              key={isDarkTheme ? "carto-dark" : "carto-light"}
+              url={isDarkTheme
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+              subdomains="abcd"
+              maxZoom={19}
+              keepBuffer={6}/>
           {route&&<>
             {/* Kalan yol: gölge + mavi nokta – staticCanvas'ta, sadece route değişince yeniden çizilir */}
             <Polyline renderer={staticCanvas} positions={route} interactive={false} smoothFactor={0} pathOptions={{color:"#1d4ed8",weight:14,opacity:0.15,lineCap:"round",lineJoin:"round",dashArray:"1 16"}}/>
@@ -1749,7 +2434,9 @@ export default function CampusMap(){
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl userPos={userPos}/>
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} autoTrack={autoTrack} onDrag={handleMapDrag}/>
+          <MapBearingWatcher onBearingChange={setMapBearing}/>
         </MapContainer>
+        </div>
       </div>
 
       {/* ─── Bina bilgi modalı ──────────────────────────────────────────── */}
@@ -1760,9 +2447,11 @@ export default function CampusMap(){
             display:"flex",alignItems:"center",justifyContent:"center",
             padding:"20px 16px"}}>
           <div onClick={e=>e.stopPropagation()}
-            style={{background:"#fff",borderRadius:20,width:"100%",maxWidth:360,
-              maxHeight:"82vh",overflowY:"auto",
-              boxShadow:"0 20px 60px rgba(0,0,0,0.5)"}}>
+            style={{background: isDarkTheme ? "#1e293b" : "#ffffff",
+              borderRadius: 20, width: "100%", maxWidth: 360,
+              maxHeight: "82vh", overflowY: "auto",
+              border: isDarkTheme ? "1px solid rgba(255,255,255,0.12)" : "1px solid #e2e8f0",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)"}}>
 
             {/* Fotoğraf veya emoji başlık */}
             {(selectedLoc.photo||selectedLoc.photos)?(
@@ -1778,6 +2467,43 @@ export default function CampusMap(){
                     </div>
                   )}
                 </div>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const url = `${window.location.origin}${window.location.pathname}?loc=${selectedLoc.num}`;
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: locName(selectedLoc),
+                          text: `santralistanbul: ${locName(selectedLoc)}`,
+                          url
+                        });
+                      } catch (err) {}
+                    } else {
+                      await navigator.clipboard.writeText(url);
+                      setVoiceHint(t('shareCopied'));
+                      setTimeout(() => setVoiceHint(null), 2500);
+                    }
+                  }}
+                  title={t('btnShare')}
+                  style={{position:"absolute",top:10,right:86,width:32,height:32,zIndex:4,
+                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
+                    color:"#fff",fontSize:14,cursor:"pointer",display:"flex",
+                    alignItems:"center",justifyContent:"center",lineHeight:1}}>🔗</button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(selectedLoc.num);
+                  }}
+                  title={favorites.includes(selectedLoc.num) ? t('btnFavorited') : t('btnFavorite')}
+                  style={{position:"absolute",top:10,right:48,width:32,height:32,zIndex:4,
+                    borderRadius:"50%",border:"none",
+                    background: favorites.includes(selectedLoc.num) ? "rgba(234,179,8,0.95)" : "rgba(0,0,0,0.4)",
+                    color:"#fff",fontSize:16,cursor:"pointer",display:"flex",
+                    alignItems:"center",justifyContent:"center",lineHeight:1,
+                    boxShadow: favorites.includes(selectedLoc.num) ? "0 2px 8px rgba(234,179,8,0.5)" : "none"}}>
+                  {favorites.includes(selectedLoc.num) ? "★" : "☆"}
+                </button>
                 <button onClick={()=>setSelectedLoc(null)}
                   style={{position:"absolute",top:10,right:10,width:32,height:32,zIndex:4,
                     borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
@@ -1807,7 +2533,7 @@ export default function CampusMap(){
             )}
 
             <div style={{padding:"14px 16px 20px"}}>
-              <p style={{margin:"0 0 12px",fontSize:13,color:"#475569",lineHeight:1.6}}>
+              <p style={{margin:"0 0 12px",fontSize:13,color: isDarkTheme ? "#cbd5e1" : "#475569",lineHeight:1.6}}>
                 {locDesc(selectedLoc)}
               </p>
 
@@ -1819,8 +2545,8 @@ export default function CampusMap(){
                   <div style={{maxHeight:180,overflowY:"auto",fontSize:12,lineHeight:1.5}}>
                     {Object.entries(ROOMS[String(selectedLoc.num)]).map(([floor,rooms])=>(
                       <div key={floor} style={{marginBottom:10}}>
-                        <div style={{fontWeight:700,color:"#1e293b",fontSize:11,
-                          background:"#f1f5f9",padding:"3px 8px",borderRadius:6,marginBottom:4}}>
+                        <div style={{fontWeight:700,fontSize:11,
+                          background: isDarkTheme ? "#0f172a" : "#f1f5f9", color: isDarkTheme ? "#94a3b8" : "#1e293b", padding:"3px 8px",borderRadius:6,marginBottom:4}}>
                           {tFloor(floor)}
                         </div>
                         {(rooms as RoomEntry[]).map((r,i)=>{
@@ -1940,24 +2666,50 @@ export default function CampusMap(){
                 ~{remM}m · {remMins} {t('minRemaining')}
               </div>}
             </div>
-            {mode==='sim'&&(
-              <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0}}>
-                <button id="speed-btn" onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
-                  style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
-                    minHeight:32,padding:"0 10px",borderRadius:8,fontSize:12,fontWeight:800}}>
-                  {simSpeed}×
-                </button>
-                {simPaused?(
-                  <button onClick={resumeSim}
-                    style={{...BTN,background:"#16a34a",color:"#fff",
-                      minHeight:36,width:36,borderRadius:"50%",fontSize:16,padding:0}}>▶</button>
-                ):(
-                  <button onClick={pauseSim}
-                    style={{...BTN,background:"rgba(0,0,0,0.25)",color:"#fff",
-                      minHeight:36,width:36,borderRadius:"50%",fontSize:16,padding:0}}>⏸</button>
-                )}
-              </div>
-            )}
+            <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0}}>
+              {/* AR Butonu */}
+              <button onClick={isArActive ? stopAr : startAr}
+                title={t('arView')}
+                style={{...BTN,background:isArActive?"#c8102e":"rgba(0,0,0,0.3)",
+                  color:"#fff",minHeight:32,width:32,borderRadius:8,fontSize:14,padding:0}}>
+                📷
+              </button>
+
+              {/* Ses aç/kapat butonu */}
+              <button onClick={toggleMute}
+                title={isMuted ? (isEN() ? "Turn voice on" : "Sesi aç") : (isEN() ? "Mute voice" : "Sesi kapat")}
+                style={{...BTN,background:isMuted?"rgba(239,68,68,0.35)":"rgba(0,0,0,0.3)",
+                  color:"#fff",minHeight:32,width:32,borderRadius:8,fontSize:14,padding:0}}>
+                {isMuted ? "🔇" : "🔊"}
+              </button>
+
+              {mode==='sim'&&(
+                <>
+                  <button id="speed-btn" onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
+                    style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
+                      minHeight:32,padding:"0 9px",borderRadius:8,fontSize:12,fontWeight:800}}>
+                    {simSpeed}×
+                  </button>
+                  {simPaused?(
+                    <button onClick={resumeSim}
+                      style={{...BTN,background:"#16a34a",color:"#fff",
+                        minHeight:32,width:32,borderRadius:8,fontSize:14,padding:0}}>▶</button>
+                  ):(
+                    <button onClick={pauseSim}
+                      style={{...BTN,background:"rgba(0,0,0,0.3)",color:"#fff",
+                        minHeight:32,width:32,borderRadius:8,fontSize:14,padding:0}}>⏸</button>
+                  )}
+                </>
+              )}
+
+              {/* Rotayı bitir butonu */}
+              <button onClick={reset}
+                title={t('simEnd')}
+                style={{...BTN,background:"rgba(220,38,38,0.8)",color:"#fff",
+                  minHeight:32,width:32,borderRadius:8,fontSize:13,padding:0}}>
+                ✕
+              </button>
+            </div>
           </div>
           {/* Sonraki adım – kompakt */}
           {nextStep&&(
@@ -1969,6 +2721,27 @@ export default function CampusMap(){
                 overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{nextStep.text}</span>
             </div>
           )}
+          {/* İnteraktif İlerleme Scrubber Çubuğu */}
+          <div
+            onClick={(e) => {
+              if (mode === 'sim') {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const pct = Math.round((clickX / rect.width) * 100);
+                seekSim(pct);
+              }
+            }}
+            title={mode === 'sim' ? "İlerletmek için dokunun" : undefined}
+            style={{
+              height: 5, background: "rgba(15,23,42,0.85)", width: "100%",
+              cursor: mode === 'sim' ? "pointer" : "default", position: "relative"
+            }}>
+            <div style={{
+              height: "100%", width: `${simPct}%`,
+              background: "linear-gradient(90deg, #0d9488, #38bdf8)",
+              transition: "width 0.1s linear"
+            }} />
+          </div>
         </div>
       )}
 
@@ -2027,33 +2800,179 @@ export default function CampusMap(){
             />
             <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}</span>
           </div>
-          <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2, flexShrink: 0 }}>
-            {(["TR", "EN"] as const).map(l => (
-              <button key={l} onClick={() => setLang(l.toLowerCase() as "tr"|"en")}
-                style={{
-                  padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700,
-                  background: isEN() === (l === "EN") ? (isDarkTheme ? "rgba(255,255,255,0.2)" : "#ffffff") : "transparent",
-                  color: isEN() === (l === "EN") ? (isDarkTheme ? "#ffffff" : "#0f172a") : (isDarkTheme ? "#64748b" : "#94a3b8"),
-                  boxShadow: isEN() === (l === "EN") && !isDarkTheme ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
-                }}>{l}</button>
-            ))}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2 }}>
+              {(["TR", "EN"] as const).map(l => (
+                <button key={l} onClick={() => setLang(l.toLowerCase() as "tr"|"en")}
+                  style={{
+                    padding: "4px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, fontWeight: 700,
+                    background: isEN() === (l === "EN") ? (isDarkTheme ? "rgba(255,255,255,0.2)" : "#ffffff") : "transparent",
+                    color: isEN() === (l === "EN") ? (isDarkTheme ? "#ffffff" : "#0f172a") : (isDarkTheme ? "#64748b" : "#94a3b8"),
+                    boxShadow: isEN() === (l === "EN") && !isDarkTheme ? "0 2px 4px rgba(0,0,0,0.05)" : "none"
+                  }}>{l}</button>
+              ))}
+            </div>
+            {/* Tema Butonu */}
+            <button
+              onClick={toggleTheme}
+              title={isDarkTheme ? t('themeLight') : t('themeDark')}
+              style={{
+                width: 32, height: 32, borderRadius: 8, border: "none",
+                background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                color: isDarkTheme ? "#fde047" : "#0f172a",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 15, transition: "all 0.2s ease"
+              }}>
+              {isDarkTheme ? "☀️" : "🌙"}
+            </button>
+            {/* Geri Bildirim Butonu */}
+            <button
+              onClick={() => setShowFeedback(true)}
+              title={t('feedbackTitle')}
+              style={{
+                width: 32, height: 32, borderRadius: 8, border: "none",
+                background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                color: isDarkTheme ? "#38bdf8" : "#0284c7",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 15, transition: "all 0.2s ease"
+              }}>
+              💬
+            </button>
           </div>
         </div>
       )}
 
-      {/* ─── Sağ araç çubuğu: zoom + pusula + konuma git ──────────────────── */}
-      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')&&activeStep?145:82,zIndex:10,display:"flex",flexDirection:"column",gap:4}}>
+      {/* ─── Sağ araç çubuğu: pusula + 3D + zoom + kampüs + konuma git ──────────────────── */}
+      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')&&activeStep?145:82,zIndex:10,display:"flex",flexDirection:"column",gap:5}}>
+        {/* Pusula / Kuzeye Dön butonu */}
+        <button
+          onClick={resetNorth}
+          title={t('resetNorth')}
+          aria-label={t('resetNorth')}
+          style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: isDarkTheme ? "#1e293b" : "#ffffff",
+            color: isDarkTheme ? "#f8fafc" : "#0f172a",
+            border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+            borderRadius: 10,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            position: "relative"
+          }}
+        >
+          <div style={{
+            width: 26,
+            height: 26,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: `rotate(${-mapBearing}deg)`,
+            transition: "transform 0.2s cubic-bezier(0.2, 0.8, 0.4, 1)"
+          }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <polygon points="12,2 8,12 12,9" fill="#ef4444" />
+              <polygon points="12,2 16,12 12,9" fill="#dc2626" />
+              <polygon points="12,22 8,12 12,15" fill={isDarkTheme ? "#94a3b8" : "#cbd5e1"} />
+              <polygon points="12,22 16,12 12,15" fill={isDarkTheme ? "#64748b" : "#94a3b8"} />
+              <circle cx="12" cy="12" r="2.2" fill={isDarkTheme ? "#f8fafc" : "#0f172a"} />
+            </svg>
+          </div>
+          {mapBearing !== 0 && (
+            <span style={{
+              position: "absolute",
+              bottom: 2,
+              fontSize: 8,
+              fontWeight: 800,
+              color: "#ef4444",
+              lineHeight: 1
+            }}>
+              N
+            </span>
+          )}
+        </button>
+
+        {/* 2D / 3D Perspektif Görünümü */}
+        <button
+          onClick={toggle3D}
+          title={is3D ? t('view2D') : t('view3D')}
+          aria-label={is3D ? t('view2D') : t('view3D')}
+          style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: is3D ? "#0d9488" : (isDarkTheme ? "#1e293b" : "#ffffff"),
+            color: is3D ? "#ffffff" : (isDarkTheme ? "#f8fafc" : "#0f172a"),
+            border: `1px solid ${is3D ? "#14b8a6" : (isDarkTheme ? "#334155" : "#cbd5e1")}`,
+            borderRadius: 10,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            fontSize: 13,
+            fontWeight: 800,
+            letterSpacing: "0.5px"
+          }}
+        >
+          {is3D ? "2D" : "3D"}
+        </button>
+
+        {/* Zoom Kontrolleri */}
         {[["z+","+"],["z-","−"]].map(([id,l])=>(
-          <button key={id} id={id} style={{...BTN,width:40,height:40,background:"#1e293b",
-            color:"#fff",border:"1px solid #334155",borderRadius:10,minHeight:40,
-            boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>{l}</button>
+          <button key={id} id={id} style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: isDarkTheme ? "#1e293b" : "#ffffff",
+            color: isDarkTheme ? "#f8fafc" : "#0f172a",
+            border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+            borderRadius: 10,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            fontSize: 18,
+            fontWeight: 700
+          }}>{l}</button>
         ))}
+
+        {/* Tüm Kampüs Butonu */}
+        <button
+          onClick={fitCampus}
+          title={t('campusOverview')}
+          aria-label={t('campusOverview')}
+          style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: isDarkTheme ? "#1e293b" : "#ffffff",
+            color: isDarkTheme ? "#f8fafc" : "#0f172a",
+            border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+            borderRadius: 10,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            fontSize: 16
+          }}
+        >
+          🏫
+        </button>
+
         {/* Konuma git butonu – GPS açıksa görünür */}
         {gpsOn&&userPos&&(
           <button id="center-me"
-            style={{...BTN,width:40,height:40,background:"#1e293b",
-              border:"1px solid #334155",borderRadius:10,minHeight:40,
-              boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📍</button>
+            style={{
+              ...BTN,
+              width: 40,
+              height: 40,
+              minHeight: 40,
+              background: isDarkTheme ? "#1e293b" : "#ffffff",
+              border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+              borderRadius: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              fontSize: 18
+            }}>📍</button>
         )}
         {/* Konumu paylaş / gruba ekle – GPS açık ve konum alındıysa görünür */}
         {gpsOn&&userPos&&(
@@ -2070,19 +2989,34 @@ export default function CampusMap(){
                 :t('shareLocationCopied'));
               setTimeout(()=>setVoiceHint(null),3000);
             }}
-            style={{...BTN,width:40,height:40,
-              background:sharedPins.length>0?"#0d9488":"#1e293b",
-              border:`1px solid ${sharedPins.length>0?"#5eead4":"#334155"}`,
-              borderRadius:10,minHeight:40,
-              boxShadow:"0 2px 8px rgba(0,0,0,0.3)",fontSize:18}}>📤</button>
+            style={{
+              ...BTN,
+              width: 40,
+              height: 40,
+              minHeight: 40,
+              background: sharedPins.length>0 ? "#0d9488" : (isDarkTheme ? "#1e293b" : "#ffffff"),
+              border: `1px solid ${sharedPins.length>0 ? "#5eead4" : (isDarkTheme ? "#334155" : "#cbd5e1")}`,
+              borderRadius: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              fontSize: 18
+            }}>📤</button>
         )}
         {/* Merkeze Dön – kullanıcı nav/sim sırasında haritayı kaydırdığında çıkar */}
         {!autoTrack&&(mode==='nav'||mode==='sim')&&(
           <button onClick={()=>setAutoTrack(true)}
-            style={{...BTN,width:40,height:40,background:"#0d9488",
-              border:"none",borderRadius:10,minHeight:40,
-              boxShadow:"0 2px 8px rgba(0,0,0,0.4),0 0 0 2px #5eead4",
-              fontSize:20,color:"#fff",animation:"onboard-fadein 0.18s ease"}}>⊙</button>
+            style={{
+              ...BTN,
+              width: 40,
+              height: 40,
+              minHeight: 40,
+              background: "#0d9488",
+              border: "none",
+              borderRadius: 10,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4),0 0 0 2px #5eead4",
+              fontSize: 20,
+              color: "#fff",
+              animation: "onboard-fadein 0.18s ease"
+            }}>⊙</button>
         )}
       </div>
 
@@ -2316,6 +3250,16 @@ export default function CampusMap(){
                 style={{width:"100%",boxSizing:"border-box",background:"#0f172a",border:"1px solid #16a34a",borderRadius:10,
                   padding:"11px 14px",color:"#fff",fontSize:16,outline:"none",minHeight:44}}/>
               <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
+                {cat==='favorites'&&visible.length===0&&(
+                  <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12,lineHeight:1.5}}>
+                    {t('noFavoritesYet')}
+                  </div>
+                )}
+                {cat==='recents'&&visible.length===0&&(
+                  <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12}}>
+                    {t('noRecentsYet')}
+                  </div>
+                )}
                 {visible.slice(0,10).map(loc=>(
                   <button key={loc.num} onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setMode('pickTo');}}
                     style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
@@ -2438,11 +3382,57 @@ export default function CampusMap(){
                   style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>✕</button>
               </div>
 
-              {/* Sim/Nav ilerleyiş çubuğu – sadece küçük bar */}
+              {/* Simülasyon & Navigasyon Denetim Çubuğu */}
               {(mode==='sim'||mode==='nav')&&(
-                <div style={{height:4,background:"#0f172a",borderRadius:2,overflow:"hidden"}}>
-                  <div style={{height:"100%",width:`${simPct}%`,background:"#0d9488",
-                    borderRadius:2,transition:"width 0.1s linear"}}/>
+                <div style={{display:"flex",flexDirection:"column",gap:6,background:isDarkTheme?"#0f172a":"#f8fafc",padding:"8px 12px",borderRadius:12,border:isDarkTheme?"1px solid #334155":"1px solid #e2e8f0"}}>
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:12}}>
+                    <span style={{fontWeight:700,color:isDarkTheme?"#f1f5f9":"#1e293b"}}>
+                      {mode==='sim' ? (isEN()?"Simulation":"Simülasyon") : (isEN()?"Live Navigation":"Canlı Navigasyon")}
+                    </span>
+                    <span style={{color:isDarkTheme?"#38bdf8":"#0284c7",fontWeight:800}}>%{simPct}</span>
+                  </div>
+                  {/* Slider Scrubber */}
+                  <input
+                    type="range" min="0" max="100" value={simPct}
+                    disabled={mode!=='sim'}
+                    onChange={e => seekSim(Number(e.target.value))}
+                    style={{width:"100%",accentColor:"#38bdf8",cursor:mode==='sim'?"pointer":"default",margin:"2px 0"}}
+                  />
+                  {mode==='sim'&&(
+                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:2}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <button onClick={()=>seekSim(0)} title="Başa dön"
+                          style={{...BTN,background:isDarkTheme?"#1e293b":"#e2e8f0",color:isDarkTheme?"#fff":"#0f172a",padding:"4px 8px",borderRadius:6,fontSize:12}}>
+                          ⏮
+                        </button>
+                        {simPaused?(
+                          <button onClick={resumeSim}
+                            style={{...BTN,background:"#16a34a",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:12,fontWeight:700,gap:4}}>
+                            ▶ {t('simResume')}
+                          </button>
+                        ):(
+                          <button onClick={pauseSim}
+                            style={{...BTN,background:"#f59e0b",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:12,fontWeight:700,gap:4}}>
+                            ⏸ {t('simPause')}
+                          </button>
+                        )}
+                        <button onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
+                          style={{...BTN,background:isDarkTheme?"#1e293b":"#e2e8f0",color:isDarkTheme?"#fff":"#0f172a",padding:"4px 8px",borderRadius:6,fontSize:12,fontWeight:700}}>
+                          {simSpeed}×
+                        </button>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <button onClick={toggleMute}
+                          style={{...BTN,background:isMuted?(isDarkTheme?"rgba(239,68,68,0.2)":"#fee2e2"):(isDarkTheme?"#1e293b":"#e2e8f0"),color:isMuted?"#ef4444":(isDarkTheme?"#fff":"#0f172a"),padding:"4px 8px",borderRadius:6,fontSize:12}}>
+                          {isMuted ? "🔇" : "🔊"}
+                        </button>
+                        <button onClick={reset}
+                          style={{...BTN,background:"#dc2626",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:700}}>
+                          {t('simEnd')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2456,6 +3446,13 @@ export default function CampusMap(){
                         padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
                       <span style={{fontSize:18}}>▶</span>
                       <span style={{fontSize:11}}>{t('btnPreview')}</span>
+                    </button>
+                    {/* AR Kamera Navigasyonu */}
+                    <button onClick={startAr}
+                      style={{...BTN,flex:1,background:"#8b5cf6",color:"#fff",fontSize:13,
+                        padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
+                      <span style={{fontSize:18}}>📷</span>
+                      <span style={{fontSize:11}}>{t('arView')}</span>
                     </button>
                     {/* Gerçek GPS navigasyon */}
                     {gpsOn&&userPos?(
@@ -2508,15 +3505,32 @@ export default function CampusMap(){
 
               {/* Adım listesi – sadece showSteps açıksa, max 150px */}
               {showSteps&&(mode==='ready'||mode==='sim'||mode==='nav')&&(
-                <div style={{background:"#0f172a",borderRadius:10,maxHeight:150,overflowY:"auto",padding:"4px 2px"}}>
+                <div style={{background:isDarkTheme?"#0f172a":"#f8fafc",borderRadius:10,maxHeight:160,overflowY:"auto",padding:"4px 2px",border:isDarkTheme?"1px solid #1e293b":"1px solid #e2e8f0"}}>
                   {navSteps.map((s,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 8px",
-                      borderBottom:i<navSteps.length-1?"1px solid #1e293b":"none",
-                      opacity:i<curStepIdx?0.3:1}}>
-                      <span style={{fontSize:16,minWidth:24,textAlign:"center",
-                        color:i===curStepIdx?"#f97316":"#64748b"}}>{s.arrow}</span>
-                      <span style={{fontSize:12,color:i===curStepIdx?"#f1f5f9":"#94a3b8",flex:1,lineHeight:1.3}}>{s.text}</span>
-                      {s.dist>0&&<span style={{fontSize:10,color:"#475569",flexShrink:0}}>{s.dist}m</span>}
+                    <div key={i}
+                      onClick={() => {
+                        if (mode === 'sim') {
+                          let cumDist = 0;
+                          for (let stepIdx = 0; stepIdx < i; stepIdx++) cumDist += navSteps[stepIdx].dist;
+                          const total = cumRef.current[cumRef.current.length - 1] ?? 1;
+                          const pct = Math.min(100, Math.round((cumDist / total) * 100));
+                          seekSim(pct);
+                        }
+                      }}
+                      title={mode === 'sim' ? t('stepJumpHint') : undefined}
+                      style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",
+                        cursor: mode === 'sim' ? "pointer" : "default",
+                        borderRadius: 6,
+                        background: i === curStepIdx ? (isDarkTheme ? "rgba(56,189,248,0.15)" : "#e0f2fe") : "transparent",
+                        borderBottom:i<navSteps.length-1 ? (isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0") : "none",
+                        opacity:i<curStepIdx?0.4:1,
+                        transition:"all 0.2s ease"}}>
+                      <span style={{fontSize:18,minWidth:24,textAlign:"center",
+                        color:i===curStepIdx?"#0284c7": (isDarkTheme ? "#64748b" : "#94a3b8")}}>{s.arrow}</span>
+                      <span style={{fontSize:12.5,fontWeight: i === curStepIdx ? 700 : 500,
+                        color:i===curStepIdx ? (isDarkTheme ? "#38bdf8" : "#0284c7") : (isDarkTheme ? "#cbd5e1" : "#475569"),
+                        flex:1,lineHeight:1.3}}>{s.text}</span>
+                      {s.dist>0&&<span style={{fontSize:11,color: isDarkTheme ? "#64748b" : "#94a3b8",flexShrink:0}}>{s.dist}m</span>}
                     </div>
                   ))}
                 </div>
@@ -2527,10 +3541,38 @@ export default function CampusMap(){
           {/* Kategori filtreleri – sadece idle modda ve klavye kapalıyken */}
           {mode==='idle'&&!activeRouteInput&&(
             <div id="cat-row" style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:6,paddingBottom:4, borderRadius: 12, padding: (showTour && tourStep === 2) ? 8 : 0, animation: (showTour && tourStep === 2) ? "onboard-glow 1.4s ease-in-out infinite" : "none", boxShadow: (showTour && tourStep === 2) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.6)" : "none", transition: "all 0.3s"}}>
-              <span style={{color:"#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
+              <span style={{color: isDarkTheme ? "#94a3b8" : "#64748b",fontSize:11,whiteSpace:"nowrap",flexShrink:0}}>{t('filterLabel')}</span>
               <button onClick={()=>setCat(null)}
                 style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
-                  border:"1px solid #475569",background:cat===null?"#3b82f6":"transparent",color:"#fff"}}>{t('catAll')}</button>
+                  border: isDarkTheme ? "1px solid #475569" : "1px solid #cbd5e1",
+                  background:cat===null?"#3b82f6":"transparent",color:cat===null?"#fff":(isDarkTheme?"#cbd5e1":"#475569")}}>{t('catAll')}</button>
+              
+              {/* Favoriler butonu */}
+              <button onClick={()=>setCat(p=>p==='favorites'?null:'favorites')}
+                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
+                  border: cat==='favorites'?"1px solid #eab308": (isDarkTheme ? "1px solid rgba(234,179,8,0.4)" : "1px solid #fde047"),
+                  background: cat==='favorites'?"#eab308":"transparent",
+                  color: cat==='favorites'?"#000":(isDarkTheme?"#fde047":"#ca8a04")}}>
+                ⭐ {t('catFavorites')} {favorites.length>0 ? `(${favorites.length})` : ''}
+              </button>
+
+              {/* Son Gezilenler butonu */}
+              <button onClick={()=>setCat(p=>p==='recents'?null:'recents')}
+                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
+                  border: cat==='recents'?"1px solid #06b6d4": (isDarkTheme ? "1px solid rgba(6,182,212,0.4)" : "1px solid #67e8f9"),
+                  background: cat==='recents'?"#06b6d4":"transparent",
+                  color: cat==='recents'?"#fff":(isDarkTheme?"#67e8f9":"#0891b2")}}>
+                🕒 {t('catRecents')} {recents.length>0 ? `(${recents.length})` : ''}
+              </button>
+
+              {/* Yakındakiler butonu */}
+              <button onClick={()=>setCat(p=>p==='nearby'?null:'nearby')}
+                style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,
+                  border: cat==='nearby'?"1px solid #10b981": (isDarkTheme ? "1px solid rgba(16,185,129,0.4)" : "1px solid #6ee7b7"),
+                  background: cat==='nearby'?"#10b981":"transparent",
+                  color: cat==='nearby'?"#fff":(isDarkTheme?"#6ee7b7":"#059669")}}>
+                📍 {t('catNearby')}
+              </button>
               {(Object.entries(CAT) as [keyof typeof CAT_LABELS,{c:string;l:string}][]).map(([k,v])=>(
                 <button key={k} onClick={()=>setCat(p=>p===k?null:k)}
                   style={{...BTN,fontSize:12,padding:"0 12px",minHeight:34,borderRadius:20,flexShrink:0,

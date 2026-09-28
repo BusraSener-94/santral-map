@@ -14,15 +14,29 @@ body {
   /* Pull-to-refresh'i tamamen kapat */
   overscroll-behavior: none;
   touch-action: pan-x pan-y;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html[data-theme="light"], body.light {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+html[data-theme="dark"], body.dark {
+  background-color: #0b1020;
+  color: #f8fafc;
 }
 
 .leaflet-container {
-  background: #c8dfc8;
+  background: #e2e8f0;
 }
 
-/* Harita piksellerine sıcak/pastel ton ver */
+html[data-theme="dark"] .leaflet-container {
+  background: #0f172a;
+}
+
 .leaflet-tile-pane {
-  filter: saturate(1.7) hue-rotate(8deg) brightness(1.1) sepia(0.22) contrast(0.88);
+  transition: opacity 0.3s ease;
 }
 
 

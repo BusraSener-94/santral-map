@@ -128,6 +128,62 @@ const TR = {
   onboardTapStart: "Dokun, başla!",
   onboardTapRight: "Sağa dokun →",
   onboardBack: "← Geri",
+
+  // Yeni: Favoriler, Son Gezilenler, Yakındakiler
+  catFavorites: "Favoriler",
+  catRecents: "Son Gezilenler",
+  catNearby: "Yakındakiler",
+  noFavoritesYet: "Henüz favori eklemediniz. Binalardaki yıldız simgesine dokunarak ekleyebilirsiniz. ⭐",
+  noRecentsYet: "Henüz gezilen bir yer yok.",
+  noNearbyFound: "Yakında bina bulunamadı (Konumunuzu açın).",
+  btnFavorite: "Favori",
+  btnFavorited: "Favorilerde",
+  btnShare: "Paylaş",
+  shareCopied: "Bağlantı kopyalandı!",
+
+  // Yeni: Geri Bildirim Formu
+  feedbackTitle: "Karpuz'a Yaz / Hata Bildir",
+  feedbackDesc: "Bir hata gördün ya da önerin mi var? Karpuz dinliyor.",
+  feedbackTypeBug: "Hata",
+  feedbackTypeInfo: "Yanlış Bilgi",
+  feedbackTypeSuggest: "Öneri",
+  feedbackTypeOther: "Diğer",
+  feedbackMsgPlaceholder: "Mesajınızı buraya yazın...",
+  feedbackContactPlaceholder: "E-posta veya telefon (isteğe bağlı)",
+  feedbackSend: "Gönder",
+  feedbackSent: "Teşekkürler! Mesajın iletildi 🍉",
+  feedbackSending: "Gönderiliyor...",
+  feedbackClose: "Kapat",
+
+  // Tema
+  themeLight: "Açık",
+  themeDark: "Koyu",
+
+  // Sesli Navigasyon & Simülasyon
+  voiceOn: "Sesli yönlendirme açık",
+  voiceOff: "Sesli yönlendirme kapalı",
+  simPause: "Duraklat",
+  simResume: "Devam Et",
+  simSpeedLabel: "Hız",
+  simEnd: "Rotayı Bitir",
+  stepJumpHint: "Adıma git",
+
+  // AR Navigasyon
+  arView: "AR Görünümü",
+  arFind: "Kamera ile Bul",
+  arHint: "Telefonunu kaldır ve oku takip et",
+  arNoCamera: "Kameraya ulaşılamadı. Tarayıcı izinlerini kontrol edin.",
+  arNoCompass: "Pusula kalibrasyonu için telefonu 8 çizerek sallayın.",
+  arNoGps: "AR navigasyon için konum servislerini açın.",
+  arNextTurn: "Sonraki dönüş",
+  arDestination: "Hedef",
+  arClose: "Haritaya Dön",
+
+  // 3D & Harita Kontrolleri
+  view3D: "3D Görünüm",
+  view2D: "2D Görünüm",
+  resetNorth: "Kuzeye Dön",
+  campusOverview: "Tüm Kampüs",
 } as const;
 
 const EN: { [K in keyof typeof TR]: string } = {
@@ -239,6 +295,62 @@ const EN: { [K in keyof typeof TR]: string } = {
   onboardTapStart: "Tap to start!",
   onboardTapRight: "Tap right →",
   onboardBack: "← Back",
+
+  // New: Favorites, Recents, Nearby
+  catFavorites: "Favorites",
+  catRecents: "Recents",
+  catNearby: "Nearby",
+  noFavoritesYet: "No favorites yet. Tap the star icon on any building to add. ⭐",
+  noRecentsYet: "No recently viewed places yet.",
+  noNearbyFound: "No nearby buildings found (Enable location).",
+  btnFavorite: "Favorite",
+  btnFavorited: "Favorited",
+  btnShare: "Share",
+  shareCopied: "Link copied!",
+
+  // New: Feedback Form
+  feedbackTitle: "Feedback / Report Issue",
+  feedbackDesc: "Spotted an issue or have a suggestion? Karpuz is listening.",
+  feedbackTypeBug: "Bug",
+  feedbackTypeInfo: "Wrong Info",
+  feedbackTypeSuggest: "Suggestion",
+  feedbackTypeOther: "Other",
+  feedbackMsgPlaceholder: "Type your message here...",
+  feedbackContactPlaceholder: "Email or phone (optional)",
+  feedbackSend: "Send",
+  feedbackSent: "Thank you! Your message was sent 🍉",
+  feedbackSending: "Sending...",
+  feedbackClose: "Close",
+
+  // Theme
+  themeLight: "Light",
+  themeDark: "Dark",
+
+  // Voice Navigation & Simulation
+  voiceOn: "Voice guidance on",
+  voiceOff: "Voice guidance off",
+  simPause: "Pause",
+  simResume: "Resume",
+  simSpeedLabel: "Speed",
+  simEnd: "End Route",
+  stepJumpHint: "Jump to step",
+
+  // AR Navigation
+  arView: "AR View",
+  arFind: "Find with Camera",
+  arHint: "Raise your phone and follow the arrow",
+  arNoCamera: "Camera unavailable. Check browser permissions.",
+  arNoCompass: "Wave the phone in a figure 8 to calibrate compass.",
+  arNoGps: "Enable location to use AR navigation.",
+  arNextTurn: "Next turn",
+  arDestination: "Destination",
+  arClose: "Back to Map",
+
+  // 3D & Map Controls
+  view3D: "3D View",
+  view2D: "2D View",
+  resetNorth: "Reset North",
+  campusOverview: "Campus Overview",
 };
 
 type TKeys = keyof typeof TR;

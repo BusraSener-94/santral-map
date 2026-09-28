@@ -635,8 +635,8 @@ function getKarpuzTip(loc: Loc | null, isAccessible: boolean): string {
     return KARPUZ_TIPS[loc.num];
   }
   return isEN()
-    ? "Campus tip: Relaxing on the grass in front of CSM is a Bilgi tradition! Watermelon slices await 🍉"
-    : "Kampüs tüyosu: ÇSM önündeki çimlerde mola vermek Bilgi klasiğidir! Karpuz dilimleri seni bekler 🍉";
+    ? "Campus tip: Relaxing on the grass in front of CSM is a Bilgi tradition! Karpuz the dog is probably chilling nearby too 🐶🐾"
+    : "Kampüs tüyosu: ÇSM önündeki çimlerde mola vermek Bilgi klasiğidir! Karpuz da buralarda çimlerde uzanıyor olabilir 🐶🐾";
 }
 
 function getBuildingBadges(loc: Loc): { label: string; bg: string; color: string }[] {
@@ -1807,7 +1807,7 @@ export default function CampusMap(){
   // Varış anında tebrik sesi
   useEffect(() => {
     if (mode === 'arrived') {
-      speakText(isEN() ? "You have arrived! Karpuz wishes you a great day 🍉" : "Hedefe ulaştınız! Karpuz iyi günler diler 🍉");
+      speakText(isEN() ? "You have arrived! Karpuz wishes you a great day 🐶🐾" : "Hedefe ulaştınız! Karpuz iyi günler diler 🐶🐾");
     }
   }, [mode, speakText]);
 
@@ -2378,7 +2378,7 @@ export default function CampusMap(){
             {/* Modal Header */}
             <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14}}>
               <div style={{display: "flex", alignItems: "center", gap: 10}}>
-                <span style={{fontSize: 24}}>🍉</span>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 32, height: 32, objectFit: "contain", flexShrink: 0}} />
                 <div>
                   <div style={{fontWeight: 800, fontSize: 16, color: isDarkTheme ? "#fff" : "#0f172a"}}>
                     {t('feedbackTitle')}
@@ -2397,7 +2397,7 @@ export default function CampusMap(){
 
             {fbSent ? (
               <div style={{textAlign: "center", padding: "24px 8px"}}>
-                <div style={{fontSize: 40, marginBottom: 10}}>🍉🎉</div>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 52, height: 52, objectFit: "contain", margin: "0 auto 10px"}} />
                 <div style={{fontSize: 15, fontWeight: 700, color: "#16a34a", marginBottom: 6}}>
                   {t('feedbackSent')}
                 </div>
@@ -2625,9 +2625,13 @@ export default function CampusMap(){
             {...({rotate:true,touchRotate:true} as object)}>
             <DisableCompassAutoRotate/>
             <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap'
+              key={isDarkTheme ? "carto-dark" : "carto-voyager"}
+              url={isDarkTheme
+                ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"}
+              attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               maxZoom={19}
+              subdomains="abcd"
               keepBuffer={6}/>
           {route&&<>
             {/* Kalan yol: gölge + renkli rota çizgisi */}
@@ -2796,7 +2800,7 @@ export default function CampusMap(){
                 borderRadius: 10, padding: "8px 10px",
                 display: "flex", alignItems: "center", gap: 8, marginBottom: 12
               }}>
-                <span style={{fontSize:18,flexShrink:0}}>🍉</span>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
                 <span style={{fontSize:11.5,lineHeight:1.35,color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
                   <b>Karpuz:</b> {getKarpuzTip(selectedLoc, isAccessible)}
                 </span>
@@ -2936,8 +2940,18 @@ export default function CampusMap(){
 
       {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
       {(mode==='sim'||mode==='nav')&&activeStep&&(
-        <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
-          boxShadow:"0 2px 12px rgba(0,0,0,0.45)"}}>
+        <div id="nav-card" style={{
+          position: "fixed",
+          top: 14,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "calc(100% - 24px)",
+          maxWidth: 440,
+          zIndex: 1000,
+          borderRadius: 18,
+          overflow: "hidden",
+          boxShadow: "0 8px 30px rgba(0,0,0,0.45)"
+        }}>
           {/* Ana yön kartı – kompakt */}
           <div style={{background:"#0d9488",padding:"9px 12px",
             display:"flex",alignItems:"center",gap:10}}>
@@ -3051,65 +3065,96 @@ export default function CampusMap(){
       </div>
 
 
-      {/* ─── Yüzen Üst Arama Çubuğu (Floating Search Bar) ───────────────────── */}
-      {mode !== 'pickFrom' && !showWelcome && (
+      {/* ─── Yüzen Üst Arama / Rota Başlığı ───────────────────── */}
+      {(mode === 'idle' || mode === 'ready') && !showWelcome && (
         <div style={{
           position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
           width: "calc(100% - 32px)", maxWidth: 440,
         }}>
           <div style={{
-            background: isDarkTheme ? "rgba(30, 41, 59, 0.88)" : "rgba(255, 255, 255, 0.92)",
+            background: isDarkTheme ? "rgba(30, 41, 59, 0.92)" : "rgba(255, 255, 255, 0.95)",
             backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-            borderRadius: 24, padding: "10px 14px", display: "flex", alignItems: "center", gap: 10,
+            borderRadius: 24, padding: mode === 'ready' ? "8px 12px" : "10px 14px", display: "flex", alignItems: "center", gap: 10,
             animation: (showTour && tourStep === 1) ? "onboard-glow 1.4s ease-in-out infinite" : "none",
             boxShadow: (showTour && tourStep === 1) ? "0 0 0 4px #c8102e, 0 0 28px rgba(200, 16, 46, 0.9)" : "0 8px 32px rgba(0, 0, 0, 0.18)",
             border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.08)"
           }}>
-            <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>
-              <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: "#bbf7d0", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <img src="/karpuz-mascot.png" alt="Karpuz" onError={(e)=>{ (e.target as any).src = isEN() ? "/karpuza-sor-en.png" : "/karpuza-sor.png"; }} style={{ width: "90%", height: "90%", objectFit: "contain" }} />
-              </div>
-            </div>
-            <div onClick={() => { setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text", minWidth: 0 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <input
-                  type="text"
-                  value={toSearch}
-                  onChange={(e) => { setToSearch(e.target.value); setActiveRouteInput('to'); }}
-                  onFocus={() => { setActiveRouteInput('to'); }}
-                  placeholder={isEN() ? "Where to?" : "Nereye gidiyoruz?"}
+            {mode === 'ready' ? (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                <button
+                  onClick={reset}
                   style={{
-                    background: "transparent",
-                    border: "none",
-                    outline: "none",
-                    fontSize: 13.5,
-                    fontWeight: 700,
-                    color: isDarkTheme ? "#f8fafc" : "#1e293b",
-                    width: "100%",
-                    padding: 0
+                    background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                    border: "none", borderRadius: "50%", width: 34, height: 34,
+                    color: isDarkTheme ? "#f1f5f9" : "#0f172a", fontSize: 16, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
                   }}
-                />
-                {toSearch && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setToSearch("");
-                      setTargetRoom(null);
-                      setTargetRoomInfo(null);
-                    }}
-                    style={{
-                      background: "none", border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b",
-                      cursor: "pointer", fontSize: 13, padding: "0 4px"
-                    }}
-                  >
-                    ✕
-                  </button>
-                )}
+                  title={isEN() ? "Back to map" : "Haritaya dön"}
+                >
+                  ←
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 13.5, fontWeight: 800,
+                    color: isDarkTheme ? "#f8fafc" : "#1e293b",
+                    whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                  }}>
+                    📍 {to ? locName(to) : (isEN() ? "Route" : "Rota")}
+                  </div>
+                  <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", marginTop: 1 }}>
+                    ~{mins} {t('minLabel')} · {routeM}m
+                  </div>
+                </div>
               </div>
-              <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}
-              </span>
-            </div>
+            ) : (
+              <>
+                <div onClick={() => window.location.reload()} style={{ cursor: "pointer", flexShrink: 0 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", overflow: "hidden", background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#fef08a", border: "2px solid #eab308", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "95%", height: "95%", objectFit: "contain" }} />
+                  </div>
+                </div>
+                <div onClick={() => { setActiveRouteInput('to'); }} style={{ flex: 1, display: "flex", flexDirection: "column", cursor: "text", minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <input
+                      type="text"
+                      value={toSearch}
+                      onChange={(e) => { setToSearch(e.target.value); setActiveRouteInput('to'); }}
+                      onFocus={() => { setActiveRouteInput('to'); }}
+                      placeholder={isEN() ? "Where to?" : "Nereye gidiyoruz?"}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        outline: "none",
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        color: isDarkTheme ? "#f8fafc" : "#1e293b",
+                        width: "100%",
+                        padding: 0
+                      }}
+                    />
+                    {toSearch && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setToSearch("");
+                          setTargetRoom(null);
+                          setTargetRoomInfo(null);
+                        }}
+                        style={{
+                          background: "none", border: "none", color: isDarkTheme ? "#94a3b8" : "#64748b",
+                          cursor: "pointer", fontSize: 13, padding: "0 4px"
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {isEN() ? "Search classroom, cafe, building..." : "Derslik, kafe, bina ara..."}
+                  </span>
+                </div>
+              </>
+            )}
             <div style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
               <div style={{ display: "flex", background: isDarkTheme ? "rgba(0,0,0,0.3)" : "#f1f5f9", borderRadius: 8, padding: 2 }}>
                 {(["TR", "EN"] as const).map(l => (
@@ -3151,8 +3196,8 @@ export default function CampusMap(){
             </div>
           </div>
 
-          {/* Akıllı Otomatik Tamamlama (Derslik + Bina + Bölüm) */}
-          {toSearch && activeRouteInput === 'to' && (() => {
+          {/* Akıllı Otomatik Tamamlama (Derslik + Bina + Bölüm) - Sadece IDLE modda açıkken */}
+          {mode === 'idle' && toSearch && activeRouteInput === 'to' && (() => {
             const roomRes = searchRooms(toSearch).slice(0, 6);
             const entRes = searchEntities(toSearch).slice(0, 4);
             const locRes = searchLocs(toSearch, LOCS).slice(0, 6);
@@ -3405,7 +3450,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Sağ araç çubuğu: pusula + 3D + zoom + kampüs + konuma git ──────────────────── */}
-      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')&&activeStep?145:82,zIndex:10,display:"flex",flexDirection:"column",gap:5}}>
+      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')?95:82,zIndex:10,display:"flex",flexDirection:"column",gap:5}}>
         {/* Pusula / Kuzeye Dön butonu */}
         <button
           onClick={resetNorth}
@@ -4112,7 +4157,7 @@ export default function CampusMap(){
                     borderRadius: 10, padding: "7px 10px",
                     display: "flex", alignItems: "center", gap: 8
                   }}>
-                    <span style={{fontSize: 16, flexShrink: 0}}>🍉</span>
+                    <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
                     <div style={{flex: 1, fontSize: 11.5, lineHeight: 1.35, color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
                       <b>{t('karpuzTipTitle')}:</b> {getKarpuzTip(to, isAccessible)}
                     </div>
@@ -4257,7 +4302,7 @@ export default function CampusMap(){
                 borderRadius: 9, padding: "6px 9px",
                 display: "flex", alignItems: "center", gap: 7, marginBottom: 10
               }}>
-                <span style={{fontSize:16,flexShrink:0}}>🍉</span>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
                 <span style={{fontSize:11,lineHeight:1.35,color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
                   <b>Karpuz:</b> {getKarpuzTip(panelLoc, isAccessible)}
                 </span>
@@ -4343,7 +4388,7 @@ export default function CampusMap(){
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ width: 52, height: 52, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: isDarkTheme ? "rgba(255,255,255,0.06)" : "#f1f5f9", border: "2px solid #c8102e", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(200, 16, 46, 0.2)" }}>
-              <img src="/karpuz-mascot.png" alt="Karpuz" onError={(e)=>{ (e.target as any).src = isEN() ? "/karpuza-sor-en.png" : "/karpuza-sor.png"; }} style={{ width: "92%", height: "92%", objectFit: "contain" }} />
+              <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "92%", height: "92%", objectFit: "contain" }} />
             </div>
             <div style={{ flex: 1, fontSize: 13.5, lineHeight: 1.45, fontWeight: 600, color: isDarkTheme ? "#f8fafc" : "#1e293b" }}>
               {tourStep === 0 && (isEN() ? "Ready? Let's explore the campus together." : "Hazır mısın? Kampüsü birlikte keşfedelim.")}

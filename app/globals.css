@@ -41,11 +41,11 @@ html[data-theme="dark"] .leaflet-container {
 }
 
 html[data-theme="dark"] .leaflet-tile-pane {
-  filter: brightness(0.95) contrast(1.05);
+  filter: invert(100%) hue-rotate(180deg) brightness(0.85) contrast(1.15) grayscale(0.75);
 }
 
 html[data-theme="light"] .leaflet-tile-pane {
-  filter: saturate(1.05) contrast(1.02);
+  filter: saturate(1.15) brightness(1.02);
 }
 
 

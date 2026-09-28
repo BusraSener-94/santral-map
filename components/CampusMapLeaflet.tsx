@@ -743,6 +743,7 @@ export default function CampusMap(){
   const[showSteps,setShowSteps]=useState(false);
   const mapInstanceRef=useRef<L.Map|null>(null);
   const sheetRef=useRef<HTMLDivElement>(null);
+  const sheetContentRef=useRef<HTMLDivElement>(null);
   const handleRef=useRef<HTMLDivElement>(null);
   const dragY=useRef(0);
   const dragStartH=useRef(230);
@@ -1376,7 +1377,10 @@ export default function CampusMap(){
   const calcRoute=useCallback((fLat:number,fLon:number,t:Loc)=>{
     const[tLa,tLo]=t.gps;
     if(!fLat&&!fLon)return; // GPS henüz gelmemişse [0,0] geçersizdir
-    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005)return;
+    if(Math.abs(fLat-tLa)<0.00005&&Math.abs(fLon-tLo)<0.00005){
+      setRoute(null);setRouteM(0);setNavSteps([]);
+      return;
+    }
     const curAdList = isAccessible ? (adListAcc ?? adList) : adList;
     const pts=gd&&curAdList?dijk(gd,curAdList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
@@ -1705,6 +1709,8 @@ export default function CampusMap(){
     sheetRef.current.style.transition="height 0.3s cubic-bezier(0.32,0.72,0,1)";
     if(mode==='sim'||mode==='nav'){
       sheetRef.current.style.height="185px";
+    } else if(mode==='ready'){
+      sheetRef.current.style.height=`${Math.min(370, Math.round(window.innerHeight*0.48))}px`;
     } else if(mode==='arrived'){
       sheetRef.current.style.height="280px";
     } else if(mode==='pickTo'||mode==='pickFrom'){
@@ -1712,6 +1718,7 @@ export default function CampusMap(){
     } else if(mode==='idle'&&!panelLoc){
       sheetRef.current.style.height="185px";
     }
+    if(sheetContentRef.current) sheetContentRef.current.scrollTop = 0;
   },[mode, panelLoc]);
 
   // ── Android geri tuşu – panel kapat, sayfadan çıkma ──
@@ -3598,7 +3605,7 @@ export default function CampusMap(){
         </div>
 
         {/* Kaydırılabilir içerik alanı */}
-        <div style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8,
+        <div ref={sheetContentRef} style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8,
           flex:1,overflowY:"auto",overflowX:"hidden",minHeight:0}}>
 
           {/* ARRIVED: Varış kutlaması alt panelde */}
@@ -3909,6 +3916,12 @@ export default function CampusMap(){
                           {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(editToSearch.toLocaleLowerCase())).slice(0,6).map((loc,i,arr)=>(
                             <button key={loc.num} onMouseDown={e=>e.preventDefault()}
                               onClick={()=>{
+                                if(from&&loc.num===from.num){
+                                  setVoiceHint(isEN()?"⚠️ Start and destination cannot be the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");
+                                  setTimeout(()=>setVoiceHint(null),3000);
+                                  setEditingTo(false);
+                                  return;
+                                }
                                 setTo(loc);setToSearch(locName(loc));setEditingTo(false);setEditToSearch("");setPanelLoc(loc);
                                 if(from||(fromGPS&&userPos)){
                                   const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];

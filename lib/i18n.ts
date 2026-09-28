@@ -195,6 +195,19 @@ const TR = {
   chipAll: "Tümü",
   chipNearTitle: "Mekanlar",
   chipWcSubtitle: "Bu binada tuvalet bulunmaktadır",
+
+  // Engelsiz Rota & Akıllı Derslik & Karpuz İpuçları
+  accessibleRoute: "Engelsiz / Rampa",
+  standardRoute: "Standart",
+  accessibleNotice: "♿ Engelsiz güzergah (Düzayak & Rampalı)",
+  getDirections: "Buraya Yol Tarifi Al",
+  planFromHere: "Buradan başka yere rota çiz",
+  karpuzTipTitle: "Karpuz İpucu",
+  classroomsAndRooms: "DERSLİKLER & ODALAR (KAT BİLGİLİ)",
+  buildingsAndPlaces: "BİNALAR & NOKTALAR",
+  departmentsAndUnits: "BÖLÜMLER & BİRİMLER",
+  noResultsFound: "Sonuç bulunamadı",
+  elevatorNotice: "🛗 Asansör: Bina girişinde engelli asansörü mevcuttur.",
 } as const;
 
 const EN: { [K in keyof typeof TR]: string } = {
@@ -373,6 +386,19 @@ const EN: { [K in keyof typeof TR]: string } = {
   chipAll: "All",
   chipNearTitle: "Places",
   chipWcSubtitle: "Restroom available in this building",
+
+  // Accessible Route & Smart Room Search & Karpuz Tips
+  accessibleRoute: "Accessible / Ramp",
+  standardRoute: "Standard",
+  accessibleNotice: "♿ Accessible route (Step-free & Ramped)",
+  getDirections: "Get Directions Here",
+  planFromHere: "Plan route departing from here",
+  karpuzTipTitle: "Watermelon Tip",
+  classroomsAndRooms: "CLASSROOMS & ROOMS (WITH FLOOR)",
+  buildingsAndPlaces: "BUILDINGS & PLACES",
+  departmentsAndUnits: "DEPARTMENTS & UNITS",
+  noResultsFound: "No results found",
+  elevatorNotice: "🛗 Elevator: Accessible elevator available at building entrance.",
 };
 
 type TKeys = keyof typeof TR;

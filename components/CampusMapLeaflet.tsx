@@ -706,21 +706,30 @@ const PERSON=L.divIcon({
 });
 
 const FRIEND_COLORS=["#10b981","#3b82f6","#a855f7","#f59e0b","#ec4899"];
-function mkFriendIcon(idx:number){
+function mkFriendIcon(idx:number, name?: string){
   const col=FRIEND_COLORS[idx%FRIEND_COLORS.length];
-  const num=idx+1;
+  const initial = name && name.trim() ? name.trim().charAt(0).toUpperCase() : `${idx+1}`;
   return L.divIcon({
-    html:`<div style="position:relative;width:40px;height:48px;">
+    html:`<div style="position:relative;width:44px;height:52px;cursor:pointer;">
       <div style="position:absolute;inset:-6px;border-radius:50%;background:${col}38;animation:gps-pulse 2s ease-out infinite;"></div>
-      <div style="width:40px;height:40px;border-radius:50%;background:${col};border:3px solid #fff;
-        display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:#fff;
-        box-shadow:0 2px 8px rgba(0,0,0,0.45);">${num}</div>
+      <div style="width:44px;height:44px;border-radius:50%;background:${col};border:3px solid #fff;
+        display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;
+        box-shadow:0 3px 12px rgba(0,0,0,0.45);">${initial}</div>
       <div style="position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
         width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;
         border-top:8px solid ${col};"></div>
     </div>`,
-    className:"",iconSize:[40,48],iconAnchor:[20,48]
+    className:"",iconSize:[44,52],iconAnchor:[22,52]
   });
+}
+
+function MapClickHandler({onMapClick}:{onMapClick:(pos:[number,number])=>void}){
+  useMapEvents({
+    click:(e)=>{
+      onMapClick([e.latlng.lat, e.latlng.lng]);
+    }
+  });
+  return null;
 }
 
 
@@ -757,6 +766,13 @@ export default function CampusMap(){
   const[gpsOn,setGpsOn]=useState(false);
   const watchRef=useRef<number|null>(null);
   const[sharedPins,setSharedPins]=useState<[number,number][]>([]);
+  // Arkadaş konumu paylaşımı
+  const [friendTarget, setFriendTarget] = useState<{ gps: [number, number]; name: string; note?: string } | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [senderName, setSenderName] = useState("");
+  const [shareNote, setShareNote] = useState("");
+  const [shareCustomPos, setShareCustomPos] = useState<[number, number] | null>(null);
+  const [customPinPos, setCustomPinPos] = useState<[number, number] | null>(null);
   // sessionStorage ile oturum başına sadece 1 kez splash → re-mount'ta tekrar çıkmaz
   const[splash,setSplash]=useState<"visible"|"fading"|"hidden">(()=>{
     if(typeof window!=="undefined"&&sessionStorage.getItem("splash_shown"))return"hidden";
@@ -1233,7 +1249,7 @@ export default function CampusMap(){
     }
   }, [addRecent]);
 
-  // ?pins=lat1,lon1|lat2,lon2 (veya eski ?pin=lat,lon) → arkadaşların konumlarını haritada göster
+  // ?pins=lat1,lon1|lat2,lon2 (veya ?pin=lat,lon&name=...&note=...) → arkadaşların konumlarını haritada göster
   useEffect(()=>{
     const sp=new URLSearchParams(window.location.search);
     const multi=sp.get("pins");
@@ -1243,7 +1259,23 @@ export default function CampusMap(){
     const parsed:([number,number])[]=(multi?raw.split("|"):[raw])
       .map(s=>{const[a,b]=s.split(",");return[parseFloat(a),parseFloat(b)]as[number,number];})
       .filter(([a,b])=>!isNaN(a)&&!isNaN(b));
-    if(parsed.length>0)setSharedPins(parsed);
+    if(parsed.length>0){
+      setSharedPins(parsed);
+      const fGps = parsed[0];
+      const name = sp.get("name") || sp.get("friend");
+      const note = sp.get("note");
+      const fData = {
+        gps: fGps,
+        name: name ? decodeURIComponent(name) : (isEN() ? "Your friend" : "Arkadaşın"),
+        note: note ? decodeURIComponent(note) : undefined
+      };
+      setFriendTarget(fData);
+      setTimeout(()=>{
+        if(mapInstanceRef.current){
+          mapInstanceRef.current.setView(fGps, 18, { animate: true, duration: 0.8 });
+        }
+      }, 700);
+    }
   },[]);
 
   // Pusula: DeviceOrientationEvent → heading
@@ -1631,8 +1663,66 @@ export default function CampusMap(){
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
     setPanelLoc(null);announcedRef.current.clear();setTargetRoom(null);setExpandedRoomKey(null);
+    setCustomPinPos(null);
     if(sheetRef.current)sheetRef.current.style.height="185px";
   },[stopSim]);
+
+  const openShareModal = useCallback((customGps?: [number, number]) => {
+    if (customGps) {
+      setShareCustomPos(customGps);
+    } else {
+      setShareCustomPos(null);
+    }
+    if (!senderName && userProfile?.name) {
+      setSenderName(userProfile.name);
+    } else if (!senderName && wName.trim()) {
+      setSenderName(wName.trim());
+    }
+    setShowShareModal(true);
+  }, [senderName, userProfile, wName]);
+
+  const routeToFriend = useCallback((friend: { gps: [number, number]; name: string; note?: string }) => {
+    triggerHaptic(50);
+    stopSim();
+
+    const friendLoc: Loc = {
+      num: -999,
+      name: `${friend.name}'in Yanı`,
+      nameEN: `${friend.name}'s Spot`,
+      gps: friend.gps,
+      cats: [],
+      desc: friend.note || (isEN() ? "Friend's location shared with you." : "Arkadaşınızın sizinle paylaştığı konum."),
+      emoji: "📍"
+    };
+
+    setTo(friendLoc);
+    setToSearch(`${friend.name}'in Yanı 📍`);
+    setPanelLoc(null);
+
+    if (userPos) {
+      setFromGPS(true);
+      setFrom(null);
+      setFromSearch(t('yourLocation'));
+      calcRoute(userPos[0], userPos[1], friendLoc);
+      setVoiceHint(isEN() ? `📍 Routing to ${friend.name}...` : `📍 ${friend.name}'in yanına rota çiziliyor...`);
+      setTimeout(() => setVoiceHint(null), 2500);
+    } else {
+      toggleGPS();
+      const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
+      setFrom(defStart);
+      setFromGPS(false);
+      setFromSearch(locName(defStart));
+      calcRoute(defStart.gps[0], defStart.gps[1], friendLoc);
+      setVoiceHint(isEN() ? `📍 Route ready! Click Start to walk.` : `📍 Rota hazır! Yürümeye Başla'ya basabilirsiniz.`);
+      setTimeout(() => setVoiceHint(null), 3000);
+    }
+    setMode('ready');
+  }, [userPos, calcRoute, toggleGPS, stopSim]);
+
+  const handleMapClick = useCallback((pos: [number, number]) => {
+    if (mode === 'nav' || mode === 'sim' || mode === 'ready') return;
+    setCustomPinPos(pos);
+  }, [mode]);
 
   const swapFromTo=useCallback(()=>{
     const newFrom=to;
@@ -2681,21 +2771,43 @@ export default function CampusMap(){
           )}
           {/* Arkadaşların konumları – ?pin= / ?pins= URL parametresinden */}
           {sharedPins.map((pin,idx)=>{
-            const label=sharedPins.length===1?t('friendPin'):`${t('friendPin')} ${idx+1}`;
+            const isFriendTarget = friendTarget && (friendTarget.gps[0] === pin[0] && friendTarget.gps[1] === pin[1]);
+            const friendName = isFriendTarget ? friendTarget.name : (sharedPins.length===1?t('friendPin'):`${t('friendPin')} ${idx+1}`);
+            const friendNote = isFriendTarget ? friendTarget.note : undefined;
             return(
-              <Marker key={idx} position={pin} icon={mkFriendIcon(idx)} zIndexOffset={2500}
+              <Marker key={idx} position={pin} icon={mkFriendIcon(idx, friendName)} zIndexOffset={2500}
                 eventHandlers={{click:()=>{
-                  const friendLoc:Loc={num:-1-idx,name:label,gps:pin,cats:[],desc:"",emoji:"👤"};
-                  stopSim();setTo(friendLoc);setToSearch(label);setPanelLoc(null);
-                  const fLat=fromGPS&&userPos?userPos[0]:from?.gps[0]??pin[0];
-                  const fLon=fromGPS&&userPos?userPos[1]:from?.gps[1]??pin[1];
-                  if(from||fromGPS)calcRoute(fLat,fLon,friendLoc);
-                  setMode('ready');
+                  if (friendTarget) {
+                    routeToFriend(friendTarget);
+                  } else {
+                    routeToFriend({ gps: pin, name: friendName, note: friendNote });
+                  }
                 }}}>
-                <Tooltip permanent direction="top" offset={[0,-48]}>{label}</Tooltip>
+                <Tooltip permanent direction="top" offset={[0,-48]}>
+                  <div style={{fontWeight: 700, fontSize: 11, textAlign: "center"}}>
+                    {friendName} 📍
+                    {friendNote && <div style={{fontSize: 9.5, opacity: 0.9, fontWeight: 500, color: "#10b981"}}>{friendNote}</div>}
+                  </div>
+                </Tooltip>
               </Marker>
             );
           })}
+
+          {/* Kullanıcının haritaya dokunarak seçtiği nokta */}
+          {customPinPos && (
+            <Marker
+              position={customPinPos}
+              icon={L.divIcon({
+                html: `<div style="position:relative;width:36px;height:44px;cursor:pointer;">
+                  <div style="width:36px;height:36px;border-radius:50%;background:#3b82f6;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 14px rgba(0,0,0,0.5);">📍</div>
+                  <div style="position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:8px solid #3b82f6;"></div>
+                </div>`,
+                className: "", iconSize: [36, 44], iconAnchor: [18, 44]
+              })}
+              zIndexOffset={2200}
+            />
+          )}
+
           {mapVisible.map(loc=>{
             const iF=fromGPS?false:from?.num===loc.num,iT=to?.num===loc.num;
             // Nav/sim'de sadece varış etiketi, diğerleri gizli
@@ -2715,6 +2827,7 @@ export default function CampusMap(){
           <ZoomCtrl/>
           <ZoomWatcher setShowLabels={setShowLabels}/>
           <CenterCtrl/>
+          <MapClickHandler onMapClick={handleMapClick}/>
           <MapFollower pos={mode==='nav'?userPos:mode==='sim'?simPos:null} active={mode==='nav'||mode==='sim'} autoTrack={autoTrack} onDrag={handleMapDrag}/>
           <MapBearingWatcher onBearingChange={setMapBearing}/>
         </MapContainer>
@@ -3658,33 +3771,30 @@ export default function CampusMap(){
             }} />
           )}
         </button>
-        {/* Konumu paylaş / gruba ekle – GPS açık ve konum alındıysa görünür */}
-        {gpsOn&&userPos&&(
-          <button
-            onClick={()=>{
-              const me=userPos[0].toFixed(6)+","+userPos[1].toFixed(6);
-              const existing=sharedPins.map(([a,b])=>a.toFixed(6)+","+b.toFixed(6));
-              const allPins=[...existing,me];
-              const param=allPins.length===1?"pin="+me:"pins="+allPins.join("|");
-              const url=window.location.origin+window.location.pathname+"?"+param;
-              navigator.clipboard.writeText(url).catch(()=>{});
-              setVoiceHint(sharedPins.length>0
-                ?isEN()?"🔗 Added to group link!":"🔗 Gruba eklendi, link kopyalandı!"
-                :t('shareLocationCopied'));
-              setTimeout(()=>setVoiceHint(null),3000);
-            }}
-            style={{
-              ...BTN,
-              width: 40,
-              height: 40,
-              minHeight: 40,
-              background: sharedPins.length>0 ? "#0d9488" : (isDarkTheme ? "#1e293b" : "#ffffff"),
-              border: `1px solid ${sharedPins.length>0 ? "#5eead4" : (isDarkTheme ? "#334155" : "#cbd5e1")}`,
-              borderRadius: 10,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-              fontSize: 18
-            }}>📤</button>
-        )}
+        {/* Arkadaşına Konum At butonu – Her zaman erişilebilir */}
+        <button
+          onClick={() => openShareModal()}
+          title={isEN() ? "Share location with friend" : "Arkadaşına Konum At"}
+          aria-label="Konum Paylaş"
+          style={{
+            ...BTN,
+            width: 40,
+            height: 40,
+            minHeight: 40,
+            background: isDarkTheme ? "#1e293b" : "#ffffff",
+            color: "#10b981",
+            border: `1px solid ${isDarkTheme ? "#334155" : "#cbd5e1"}`,
+            borderRadius: 10,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            fontSize: 18,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0
+          }}
+        >
+          📤
+        </button>
         {/* Merkeze Dön – kullanıcı nav/sim sırasında haritayı kaydırdığında çıkar */}
         {!autoTrack&&(mode==='nav'||mode==='sim')&&(
           <button onClick={()=>setAutoTrack(true)}
@@ -3754,6 +3864,7 @@ export default function CampusMap(){
               {/* Hızlı Kısayol Çipleri */}
               <div id="cat-row" style={{display:"flex",alignItems:"center",gap:6,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
                 {[
+                  { id: 'share_loc', icon: '📍', label: isEN() ? "Share Location" : "Konumunu At", color: '#10b981', bg: '#10b981', fg: '#fff', isSpecial: true },
                   { id: 'food', icon: '☕', label: t('chipFood'), color: '#f59e0b', bg: '#f59e0b', fg: '#fff' },
                   { id: 'library', icon: '📚', label: t('chipLibrary'), color: '#6366f1', bg: '#6366f1', fg: '#fff' },
                   { id: 'wc', icon: '🚻', label: t('chipWc'), color: '#06b6d4', bg: '#06b6d4', fg: '#fff' },
@@ -3769,6 +3880,10 @@ export default function CampusMap(){
                       key={chip.id}
                       onClick={() => {
                         triggerHaptic(30);
+                        if (chip.isSpecial && chip.id === 'share_loc') {
+                          openShareModal();
+                          return;
+                        }
                         const next = isActive ? null : chip.id;
                         setCat(next);
                         if (next && sheetRef.current) {
@@ -4453,6 +4568,389 @@ export default function CampusMap(){
 
         </div>
       </div>
+      {/* ─── Arkadaşın Konumu Karşılama Kartı ─────────────────────────────── */}
+      {friendTarget && mode === 'idle' && !selectedLoc && !panelLoc && (
+        <div
+          style={{
+            position: "fixed", bottom: 200, left: "50%", transform: "translateX(-50%)",
+            zIndex: 1100, width: "calc(100% - 32px)", maxWidth: 390,
+            animation: "onboard-fadein 0.3s ease"
+          }}
+        >
+          <div
+            style={{
+              background: isDarkTheme ? "rgba(15, 23, 42, 0.95)" : "rgba(255, 255, 255, 0.98)",
+              backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+              border: "2px solid #10b981", borderRadius: 20,
+              padding: "14px 16px",
+              boxShadow: "0 12px 36px rgba(16, 185, 129, 0.35)",
+              display: "flex", flexDirection: "column", gap: 10
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: "50%",
+                  background: "#10b981", color: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 18, fontWeight: 800, flexShrink: 0
+                }}>
+                  {friendTarget.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                    {friendTarget.name} {isEN() ? "is waiting here! 📍" : "burada seni bekliyor! 📍"}
+                  </div>
+                  {friendTarget.note && (
+                    <div style={{ fontSize: 12, color: "#10b981", fontWeight: 600, marginTop: 1 }}>
+                      "{friendTarget.note}"
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setFriendTarget(null)}
+                style={{
+                  background: "transparent", border: "none",
+                  color: isDarkTheme ? "#94a3b8" : "#64748b",
+                  fontSize: 16, cursor: "pointer", padding: "4px"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <button
+              onClick={() => routeToFriend(friendTarget)}
+              style={{
+                ...BTN,
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "#fff", borderRadius: 12, padding: "11px 14px",
+                fontSize: 13.5, fontWeight: 800, minHeight: 42,
+                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+              }}
+            >
+              <span>🚶</span>
+              <span>
+                {isEN() ? `Walk to ${friendTarget.name} (Get Directions)` : `${friendTarget.name}'in Yanına Git (Yol Tarifi Al)`}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Haritada Tıklanan Özel Nokta Kartı ────────────────────────────── */}
+      {customPinPos && mode === 'idle' && !selectedLoc && !panelLoc && !friendTarget && (
+        <div
+          style={{
+            position: "fixed", bottom: 200, left: "50%", transform: "translateX(-50%)",
+            zIndex: 1100, width: "calc(100% - 32px)", maxWidth: 360,
+            animation: "onboard-fadein 0.25s ease"
+          }}
+        >
+          <div
+            style={{
+              background: isDarkTheme ? "rgba(15, 23, 42, 0.95)" : "rgba(255, 255, 255, 0.98)",
+              backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)",
+              border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+              borderRadius: 18, padding: "12px 14px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+              display: "flex", flexDirection: "column", gap: 8
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ fontSize: 16 }}>📍</span>
+                <span style={{ fontSize: 13, fontWeight: 800, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                  {isEN() ? "Selected Point on Map" : "Haritada İşaretlenen Nokta"}
+                </span>
+              </div>
+              <button
+                onClick={() => setCustomPinPos(null)}
+                style={{
+                  background: "transparent", border: "none",
+                  color: isDarkTheme ? "#94a3b8" : "#64748b",
+                  fontSize: 15, cursor: "pointer", padding: "2px"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => {
+                  triggerHaptic(40);
+                  const pLoc: Loc = {
+                    num: -888,
+                    name: isEN() ? "Pinned Spot" : "İşaretlenen Nokta",
+                    gps: customPinPos,
+                    cats: [], desc: "", emoji: "📍"
+                  };
+                  setTo(pLoc);
+                  setToSearch(isEN() ? "Pinned Spot 📍" : "İşaretlenen Nokta 📍");
+                  if (userPos) {
+                    setFromGPS(true);
+                    calcRoute(userPos[0], userPos[1], pLoc);
+                  } else {
+                    const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
+                    setFrom(defStart);
+                    calcRoute(defStart.gps[0], defStart.gps[1], pLoc);
+                  }
+                  setCustomPinPos(null);
+                  setMode('ready');
+                }}
+                style={{
+                  ...BTN,
+                  background: "#0d9488", color: "#fff",
+                  borderRadius: 10, padding: "8px 12px",
+                  fontSize: 12.5, fontWeight: 700, flex: 1, minHeight: 38
+                }}
+              >
+                🚶 {isEN() ? "Go Here" : "Buraya Git"}
+              </button>
+              <button
+                onClick={() => {
+                  openShareModal(customPinPos);
+                  setCustomPinPos(null);
+                }}
+                style={{
+                  ...BTN,
+                  background: "#25d366", color: "#fff",
+                  borderRadius: 10, padding: "8px 12px",
+                  fontSize: 12.5, fontWeight: 700, flex: 1, minHeight: 38
+                }}
+              >
+                📲 {isEN() ? "Share Spot" : "Arkadaşına At"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Arkadaşına Konum Gönder Modalı ────────────────────────────────── */}
+      {showShareModal && (
+        <div
+          onClick={() => setShowShareModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 3000,
+            background: "rgba(0, 0, 0, 0.65)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "16px", animation: "onboard-fadein 0.2s ease"
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: isDarkTheme ? "#0f172a" : "#ffffff",
+              border: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0",
+              borderRadius: 24, width: "100%", maxWidth: 390,
+              padding: "20px 20px 24px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+              display: "flex", flexDirection: "column", gap: 14,
+              color: isDarkTheme ? "#f8fafc" : "#0f172a"
+            }}
+          >
+            {/* Başlık ve Karpuz */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: "50%",
+                  background: isDarkTheme ? "#1e293b" : "#fef08a",
+                  border: "2px solid #eab308",
+                  display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden"
+                }}>
+                  <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "95%", height: "95%", objectFit: "contain" }} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>
+                    {isEN() ? "Share Location with Friend 📍" : "Arkadaşına Konum At 📍"}
+                  </h3>
+                  <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                    {isEN() ? "Friend opens map & gets instant walking directions" : "Arkadaşın tek tıkla sana yürüyüş rotası çizebilir"}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                style={{
+                  background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#f1f5f9",
+                  border: "none", borderRadius: "50%", width: 30, height: 30,
+                  color: isDarkTheme ? "#94a3b8" : "#64748b", fontSize: 14, cursor: "pointer"
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Konum Belirleme Seçeneği */}
+            <div style={{
+              background: isDarkTheme ? "#1e293b" : "#f8fafc",
+              borderRadius: 14, padding: "12px",
+              border: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0"
+            }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b", marginBottom: 6 }}>
+                {isEN() ? "CURRENT LOCATION:" : "PAYLAŞILACAK KONUM:"}
+              </div>
+              {userPos ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>
+                    {isEN() ? "Live GPS Location Ready" : "Mevcut GPS Konumun Hazır"}
+                  </span>
+                  <span style={{ fontSize: 10, color: isDarkTheme ? "#94a3b8" : "#64748b", marginLeft: "auto" }}>
+                    ({userPos[0].toFixed(5)}, {userPos[1].toFixed(5)})
+                  </span>
+                </div>
+              ) : shareCustomPos ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#3b82f6" }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: "#3b82f6" }}>
+                    {isEN() ? "Selected Point on Map" : "Haritadan Seçilen Nokta"}
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 12, color: isDarkTheme ? "#cbd5e1" : "#475569" }}>
+                    {isEN() ? "GPS is not active yet. Turn on GPS to share your live spot:" : "GPS henüz açık değil. Tam yerini göndermek için:"}
+                  </div>
+                  <button
+                    onClick={() => {
+                      toggleGPS();
+                      setVoiceHint(isEN() ? "📍 Requesting GPS location..." : "📍 GPS konumu alınıyor...");
+                      setTimeout(() => setVoiceHint(null), 2500);
+                    }}
+                    style={{
+                      ...BTN,
+                      background: "#0d9488", color: "#fff",
+                      borderRadius: 10, padding: "8px 12px",
+                      fontSize: 12.5, fontWeight: 700, minHeight: 36
+                    }}
+                  >
+                    📍 {isEN() ? "Turn on My GPS Location" : "Konumumu GPS ile Al"}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* İsim ve Not Inputları */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b", display: "block", marginBottom: 4 }}>
+                  {isEN() ? "Your Name (what friend sees):" : "Senin Adın (arkadaşının göreceği isim):"}
+                </label>
+                <input
+                  type="text"
+                  value={senderName}
+                  onChange={e => setSenderName(e.target.value)}
+                  placeholder={isEN() ? "e.g. Alex" : "örn. Zeynep, Can..."}
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    background: isDarkTheme ? "#1e293b" : "#f1f5f9",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    borderRadius: 10, padding: "9px 12px",
+                    color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                    fontSize: 13.5, outline: "none", fontWeight: 600
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b", display: "block", marginBottom: 4 }}>
+                  {isEN() ? "Short Note (Optional):" : "Kısa Not (İsteğe bağlı):"}
+                </label>
+                <input
+                  type="text"
+                  value={shareNote}
+                  onChange={e => setShareNote(e.target.value)}
+                  placeholder={isEN() ? "e.g. Sitting on the grass, having coffee" : "örn. Çimlerdeyiz, kahve aldım bekliyorum :)"}
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    background: isDarkTheme ? "#1e293b" : "#f1f5f9",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    borderRadius: 10, padding: "9px 12px",
+                    color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                    fontSize: 13, outline: "none"
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Paylaşım Butonları */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 4 }}>
+              {/* WhatsApp Butonu */}
+              <button
+                onClick={() => {
+                  triggerHaptic(40);
+                  const pos = userPos || shareCustomPos || CAMPUS_CENTER;
+                  const latStr = pos[0].toFixed(6);
+                  const lonStr = pos[1].toFixed(6);
+                  const n = (senderName.trim() || (isEN() ? "Your friend" : "Arkadaşın"));
+                  const notePart = shareNote.trim() ? `&note=${encodeURIComponent(shareNote.trim())}` : "";
+                  const shareUrl = `${window.location.origin}${window.location.pathname}?pin=${latStr},${lonStr}&name=${encodeURIComponent(n)}${notePart}`;
+                  const msg = isEN()
+                    ? `Hey! I am at santralistanbul campus, come over 📍\n${shareNote.trim() ? `"${shareNote.trim()}"\n` : ''}See my spot & walk directions on the map:\n${shareUrl}`
+                    : `Selam! santralistanbul kampüsündeyim, yanıma gel 📍\n${shareNote.trim() ? `"${shareNote.trim()}"\n` : ''}Haritada tam yerim ve yol tarifi:\n${shareUrl}`;
+                  const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`;
+                  window.open(waUrl, "_blank");
+                  setShowShareModal(false);
+                }}
+                style={{
+                  ...BTN,
+                  background: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)",
+                  color: "#fff", borderRadius: 12, padding: "12px 16px",
+                  fontSize: 14, fontWeight: 800, minHeight: 46,
+                  boxShadow: "0 4px 14px rgba(37, 211, 102, 0.4)",
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                }}
+              >
+                <span>📲</span>
+                <span>{isEN() ? "Send via WhatsApp" : "WhatsApp ile Gönder"}</span>
+              </button>
+
+              {/* Link Kopyala / Paylaş */}
+              <button
+                onClick={async () => {
+                  triggerHaptic(30);
+                  const pos = userPos || shareCustomPos || CAMPUS_CENTER;
+                  const latStr = pos[0].toFixed(6);
+                  const lonStr = pos[1].toFixed(6);
+                  const n = (senderName.trim() || (isEN() ? "Your friend" : "Arkadaşın"));
+                  const notePart = shareNote.trim() ? `&note=${encodeURIComponent(shareNote.trim())}` : "";
+                  const shareUrl = `${window.location.origin}${window.location.pathname}?pin=${latStr},${lonStr}&name=${encodeURIComponent(n)}${notePart}`;
+                  const msg = isEN()
+                    ? `santralistanbul: ${n} is waiting for you 📍`
+                    : `santralistanbul: ${n} seni bekliyor 📍`;
+
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title: msg, text: shareNote.trim() || msg, url: shareUrl });
+                      setShowShareModal(false);
+                      return;
+                    } catch (e) {}
+                  }
+                  await navigator.clipboard.writeText(shareUrl);
+                  setVoiceHint(isEN() ? "🔗 Link copied! Send to your friend." : "🔗 Link kopyalandı! Arkadaşına gönderebilirsin.");
+                  setTimeout(() => setVoiceHint(null), 3000);
+                  setShowShareModal(false);
+                }}
+                style={{
+                  ...BTN,
+                  background: isDarkTheme ? "#1e293b" : "#f1f5f9",
+                  color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                  borderRadius: 12, padding: "10px 16px",
+                  fontSize: 13, fontWeight: 700, minHeight: 42,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8
+                }}
+              >
+                <span>🔗</span>
+                <span>{isEN() ? "Copy / Share Link" : "Linki Kopyala / Paylaş"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── YENİ MODERN 5 ADIMLI REHBER KARTI (GERİ BUTONLU) ───────────── */}
       {!showWelcome && showTour && (

@@ -1243,7 +1243,8 @@ export default function CampusMap(){
     if (locId) {
       const found = LOCS.find(l => l.num === Number(locId));
       if (found) {
-        setSelectedLoc(found);
+        setPanelLoc(found);
+        setSelectedLoc(null);
         addRecent(found.num);
       }
     }
@@ -1452,8 +1453,17 @@ export default function CampusMap(){
       setRoute(null);setRouteM(0);setNavSteps([]);
       return;
     }
+    // Kampüs dışı koruması: fLat/fLon kampüs sınırları dışındaysa (>800m) Ana Giriş'ten başlat
+    let actualFLat = fLat;
+    let actualFLon = fLon;
+    const dCampus = hav(fLat, fLon, CAMPUS_CENTER[0], CAMPUS_CENTER[1]);
+    if (dCampus > 800) {
+      const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
+      actualFLat = defStart.gps[0];
+      actualFLon = defStart.gps[1];
+    }
     const curAdList = isAccessible ? (adListAcc ?? adList) : adList;
-    const pts=gd&&curAdList?dijk(gd,curAdList,fLat,fLon,tLa,tLo):[[fLat,fLon],[tLa,tLo]] as[number,number][];
+    const pts=gd&&curAdList?dijk(gd,curAdList,actualFLat,actualFLon,tLa,tLo):[[actualFLat,actualFLon],[tLa,tLo]] as[number,number][];
     setRoute(pts);setRouteM(distM(pts));
     const s=steps(pts);setNavSteps(s);setCurStepIdx(0);
     const cum=[0];for(let i=1;i<pts.length;i++)cum.push(cum[i-1]+hav(pts[i-1][0],pts[i-1][1],pts[i][0],pts[i][1]));
@@ -1638,21 +1648,88 @@ export default function CampusMap(){
     }
   },[wRole,wName,wExtra,wKvkk]);
 
+  const handleGoHere = useCallback((loc: Loc) => {
+    triggerHaptic(50);
+    stopSim();
+    setPanelLoc(null);
+    setSelectedLoc(null);
+    setTo(loc);
+    setToSearch(locName(loc));
+    setTargetRoom(null);
+    setTargetRoomInfo(null);
+
+    const dCampus = userPos ? hav(userPos[0], userPos[1], CAMPUS_CENTER[0], CAMPUS_CENTER[1]) : 99999;
+    if (gpsOn && userPos && dCampus <= 800) {
+      setFromGPS(true);
+      setFrom(null);
+      setFromSearch(t('yourLocation'));
+      calcRoute(userPos[0], userPos[1], loc);
+    } else if (from && !fromGPS) {
+      calcRoute(from.gps[0], from.gps[1], loc);
+    } else {
+      const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
+      setFrom(defStart);
+      setFromGPS(false);
+      setFromSearch(locName(defStart));
+      calcRoute(defStart.gps[0], defStart.gps[1], loc);
+      if (gpsOn && userPos && dCampus > 800) {
+        const km = (dCampus / 1000).toFixed(1);
+        setVoiceHint(isEN() ? `🐾 Off-campus (~${km}km). Starting from West Gate.` : `🐾 Kampüsün ${km}km dışındasınız. Rota Santral Ana Giriş'ten başlatıldı.`);
+        setTimeout(() => setVoiceHint(null), 3500);
+      }
+    }
+    setMode('ready');
+  }, [userPos, gpsOn, from, fromGPS, calcRoute, stopSim]);
+
+  const handleStartHere = useCallback((loc: Loc) => {
+    triggerHaptic(40);
+    stopSim();
+    setPanelLoc(null);
+    setSelectedLoc(null);
+    setFrom(loc);
+    setFromGPS(false);
+    setFromSearch(locName(loc));
+
+    if (to && to.num !== loc.num) {
+      calcRoute(loc.gps[0], loc.gps[1], to);
+      setMode('ready');
+    } else {
+      setTo(null);
+      setToSearch("");
+      setActiveRouteInput('to');
+      setVoiceHint(isEN() ? "🟢 Start set. Where to?" : "🟢 Başlangıç seçildi. Nereye gidiyoruz?");
+      setTimeout(() => setVoiceHint(null), 2500);
+    }
+  }, [to, calcRoute, stopSim]);
+
   const handlePinClick=useCallback((loc:Loc)=>{
     addRecent(loc.num);
-    if(mode==='pickFrom'){setPanelLoc(loc);setFrom(loc);setFromGPS(false);setMode('pickTo');return;}
-    if(mode==='pickTo'){
-      setPanelLoc(loc);setTo(loc);
+    if(activeRouteInput==='from'){
+      setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setActiveRouteInput(null);
+      if(to){calcRoute(loc.gps[0],loc.gps[1],to);setMode('ready');}
+      return;
+    }
+    if(activeRouteInput==='to'){
+      setTo(loc);setToSearch(locName(loc));setActiveRouteInput(null);
       if(from||(fromGPS&&userPos)){
         const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
         const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
-        calcRoute(fLa,fLo,loc);
+        calcRoute(fLa,fLo,loc);setMode('ready');
+      } else {
+        const defStart=LOCS.find(l=>l.num===1)||LOCS[0];
+        setFrom(defStart);setFromGPS(false);setFromSearch(locName(defStart));
+        calcRoute(defStart.gps[0],defStart.gps[1],loc);setMode('ready');
       }
       return;
     }
-    // Diğer tüm modlarda (idle, ready, sim, nav, arrived) bina modalı aç
-    setSelectedLoc(loc);
-  },[mode,from,fromGPS,userPos,calcRoute]);
+    // Normal tıklamada bina detay kartını aç
+    setPanelLoc(loc);
+    setSelectedLoc(null);
+    if(sheetRef.current && window.innerWidth < 768){
+      sheetRef.current.style.transition="height 0.3s cubic-bezier(0.32,0.72,0,1)";
+      sheetRef.current.style.height=`${Math.min(460, Math.round(window.innerHeight*0.65))}px`;
+    }
+  },[activeRouteInput,from,fromGPS,userPos,to,calcRoute,addRecent]);
 
   const dismissKarpuzIntro=useCallback(()=>{
     setShowKarpuzIntro(false);
@@ -1662,7 +1739,7 @@ export default function CampusMap(){
   const reset=useCallback(()=>{
     stopSim();setFrom(null);setFromGPS(false);setTo(null);setRoute(null);setRouteM(0);
     setNavSteps([]);setShowSteps(false);setMode('idle');setCurStepIdx(0);setSimPct(0);
-    setPanelLoc(null);announcedRef.current.clear();setTargetRoom(null);setExpandedRoomKey(null);
+    setPanelLoc(null);announcedRef.current.clear();setTargetRoom(null);setTargetRoomInfo(null);
     setCustomPinPos(null);
     if(sheetRef.current)sheetRef.current.style.height="185px";
   },[stopSim]);
@@ -1725,13 +1802,31 @@ export default function CampusMap(){
   }, [mode]);
 
   const swapFromTo=useCallback(()=>{
-    const newFrom=to;
-    const newTo=fromGPS?null:from;
-    setFrom(newFrom??null);setFromGPS(false);setFromSearch(newFrom?locName(newFrom):"");
-    setTo(newTo??null);setToSearch(newTo?locName(newTo):"");
-    if(newFrom&&newTo){calcRoute(newFrom.gps[0],newFrom.gps[1],newTo);setMode('ready');}
-    else if(newFrom){setMode('pickTo');}
-  },[from,to,fromGPS,calcRoute]);
+    let newFrom = to;
+    let newTo: Loc | null = null;
+
+    if (fromGPS && userPos) {
+      newTo = {
+        num: -777,
+        name: isEN() ? "My Location" : "Mevcut Konumum",
+        gps: userPos,
+        cats: [], desc: "", emoji: "📍"
+      };
+    } else {
+      newTo = from;
+    }
+
+    setFrom(newFrom ?? null);
+    setFromGPS(false);
+    setFromSearch(newFrom ? locName(newFrom) : "");
+    setTo(newTo ?? null);
+    setToSearch(newTo ? locName(newTo) : "");
+
+    if (newFrom && newTo) {
+      calcRoute(newFrom.gps[0], newFrom.gps[1], newTo);
+      setMode('ready');
+    }
+  }, [from, to, fromGPS, userPos, calcRoute]);
 
   // sheetDismiss her render'da güncellenir — stale closure olmadan reset/showSteps kullanır
   sheetDismiss.current=()=>{setShowSteps(false);};
@@ -2026,6 +2121,916 @@ export default function CampusMap(){
   const BTN:React.CSSProperties={border:"none",borderRadius:10,cursor:"pointer",
     display:"flex",alignItems:"center",justifyContent:"center",gap:6,
     fontFamily:"inherit",fontWeight:700,touchAction:"manipulation",minHeight:44};
+
+  const renderPanelContent = () => {
+    // 1. ARRIVED: Varış kutlaması
+    if (mode === 'arrived') {
+      return (
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center",
+          justifyContent: "center", gap: 8, padding: "16px 0",
+          textAlign: "center", animation: "onboard-fadein .3s ease"
+        }}>
+          <div style={{ fontSize: 44 }}>🎉</div>
+          <div style={{ color: "#86efac", fontWeight: 800, fontSize: 19, lineHeight: 1.2 }}>
+            {to ? locName(to) : ""}
+          </div>
+          <div style={{ color: isDarkTheme ? "#94a3b8" : "#64748b", fontSize: 13.5 }}>
+            {t('arrivedMsg')}
+          </div>
+          <button
+            onClick={reset}
+            style={{
+              ...BTN, background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              color: "#fff", width: "100%", fontSize: 15, fontWeight: 700,
+              minHeight: 48, borderRadius: 12, marginTop: 10,
+              boxShadow: "0 4px 14px rgba(16,185,129,0.35)"
+            }}
+          >
+            {isEN() ? "New Route" : "Yeni Rota Çiz"}
+          </button>
+        </div>
+      );
+    }
+
+    // 2. PANEL BİNA DETAY KARTI (panelLoc)
+    if (panelLoc && !activeRouteInput && (mode === 'idle' || mode === 'ready')) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "onboard-fadein 0.2s ease" }}>
+          {/* Fotoğraf Galerisi */}
+          <div style={{ position: "relative", borderRadius: 16, overflow: "hidden" }}>
+            <PhotoGallery loc={panelLoc} height={150} mb={0} />
+            <button
+              onClick={() => setPanelLoc(null)}
+              style={{
+                position: "absolute", top: 10, right: 10, width: 32, height: 32, zIndex: 5,
+                borderRadius: "50%", border: "none", background: "rgba(0,0,0,0.5)",
+                color: "#fff", fontSize: 16, cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)"
+              }}
+              title={isEN() ? "Close" : "Kapat"}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Başlık ve Butonlar */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+              {!panelLoc.photo && <span style={{ fontSize: 26 }}>{panelLoc.emoji}</span>}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 800, color: isDarkTheme ? "#fff" : "#0f172a", fontSize: 16, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {locName(panelLoc)}
+                </div>
+                {ROOMS[String(panelLoc.num)] && (
+                  <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", marginTop: 1 }}>
+                    {Object.values(ROOMS[String(panelLoc.num)]).reduce((s: number, a) => s + (a as RoomEntry[]).length, 0)} {t('mahalUnit')}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFavorite(panelLoc.num);
+                }}
+                title={favorites.includes(panelLoc.num) ? t('btnFavorited') : t('btnFavorite')}
+                style={{
+                  ...BTN, width: 32, height: 32, minHeight: 32, borderRadius: 8,
+                  background: favorites.includes(panelLoc.num) ? "#eab308" : (isDarkTheme ? "#334155" : "#e2e8f0"),
+                  color: favorites.includes(panelLoc.num) ? "#000" : (isDarkTheme ? "#f8fafc" : "#0f172a"),
+                  fontSize: 16, padding: 0
+                }}
+              >
+                {favorites.includes(panelLoc.num) ? "★" : "☆"}
+              </button>
+              <button
+                onClick={async () => {
+                  const url = `${window.location.origin}${window.location.pathname}?loc=${panelLoc.num}`;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({ title: locName(panelLoc), url });
+                    } catch (e) {}
+                  } else {
+                    await navigator.clipboard.writeText(url);
+                    setVoiceHint(t('shareCopied'));
+                    setTimeout(() => setVoiceHint(null), 2500);
+                  }
+                }}
+                title={t('btnShare')}
+                style={{
+                  ...BTN, width: 32, height: 32, minHeight: 32, borderRadius: 8,
+                  background: isDarkTheme ? "#334155" : "#e2e8f0",
+                  color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  fontSize: 14, padding: 0
+                }}
+              >
+                🔗
+              </button>
+            </div>
+          </div>
+
+          {/* Vurucu Rozetler */}
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {getBuildingBadges(panelLoc).map((b, i) => (
+              <span key={i} style={{ background: b.bg, color: b.color, fontSize: 10.5, fontWeight: 700, padding: "2px 7px", borderRadius: 5 }}>
+                {b.label}
+              </span>
+            ))}
+          </div>
+
+          {/* Açıklama */}
+          <p style={{ margin: 0, fontSize: 12, color: isDarkTheme ? "#94a3b8" : "#64748b", lineHeight: 1.5 }}>
+            {locDesc(panelLoc)}
+          </p>
+
+          {/* Karpuz Samimi İpucu */}
+          <div style={{
+            background: isDarkTheme ? "rgba(244,63,94,0.1)" : "#fff1f2",
+            border: "1px solid rgba(244,63,94,0.25)",
+            borderRadius: 10, padding: "7px 10px",
+            display: "flex", alignItems: "center", gap: 8
+          }}>
+            <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: 28, height: 28, objectFit: "contain", flexShrink: 0 }} />
+            <span style={{ fontSize: 11.5, lineHeight: 1.35, color: isDarkTheme ? "#fecdd3" : "#9f1239" }}>
+              <b>Karpuz:</b> {getKarpuzTip(panelLoc, isAccessible)}
+            </span>
+          </div>
+
+          {/* Odalar & Derslikler Listesi (Varsa) */}
+          {ROOMS[String(panelLoc.num)] && (
+            <div style={{
+              background: isDarkTheme ? "rgba(0,0,0,0.2)" : "#f8fafc",
+              border: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0",
+              borderRadius: 12, padding: "8px 10px", maxHeight: 150, overflowY: "auto"
+            }}>
+              <div style={{ fontSize: 10.5, fontWeight: 800, color: isDarkTheme ? "#94a3b8" : "#64748b", marginBottom: 6 }}>
+                🚪 {t('roomListTitle')}
+              </div>
+              {Object.entries(ROOMS[String(panelLoc.num)]).map(([floor, rooms]) => (
+                <div key={floor} style={{ marginBottom: 6 }}>
+                  <div style={{
+                    fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#475569", fontSize: 10,
+                    background: isDarkTheme ? "#0f172a" : "#e2e8f0", padding: "2px 6px", borderRadius: 4, marginBottom: 3
+                  }}>
+                    {tFloor(floor)}
+                  </div>
+                  {(rooms as RoomEntry[]).map((r, i) => {
+                    const rk = `${panelLoc.num}_${floor}_${i}`;
+                    return (
+                      <RoomRow
+                        key={rk} r={r} roomKey={rk}
+                        expanded={expandedRoomKey === rk} onToggle={toggleRoom} dark={isDarkTheme}
+                        highlighted={highlightedRoomKey === rk}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 🌟 2-BUTON GRID: [ 🟢 Buradan Başla ] & [ 🔴 Buraya Git ] */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 4 }}>
+            <button
+              onClick={() => handleStartHere(panelLoc)}
+              style={{
+                ...BTN,
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                color: "#fff", fontSize: 13, fontWeight: 700, padding: "12px 8px",
+                borderRadius: 12, boxShadow: "0 4px 14px rgba(16, 185, 129, 0.35)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+              }}
+            >
+              <span style={{ fontSize: 15 }}>🟢</span>
+              <span>{t('btnStartHere')}</span>
+            </button>
+
+            <button
+              onClick={() => handleGoHere(panelLoc)}
+              style={{
+                ...BTN,
+                background: "linear-gradient(135deg, #e11d48 0%, #be123c 100%)",
+                color: "#fff", fontSize: 13, fontWeight: 700, padding: "12px 8px",
+                borderRadius: 12, boxShadow: "0 4px 14px rgba(225, 29, 72, 0.35)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+              }}
+            >
+              <span style={{ fontSize: 15 }}>🔴</span>
+              <span>{t('btnGoHere')}</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // 3. ROTA KARTI / ENDPOINTS (mode === 'ready' || activeRouteInput)
+    if (mode === 'ready' || activeRouteInput) {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "onboard-fadein 0.2s ease" }}>
+          {/* 2-Endpoint Kutusu */}
+          <div style={{
+            background: isDarkTheme ? "#0f172a" : "#f8fafc",
+            border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+            borderRadius: 14, padding: "10px",
+            display: "flex", flexDirection: "column", gap: 8
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {/* Girişler */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+                {/* FROM SATIRI */}
+                <div
+                  onClick={() => setActiveRouteInput(activeRouteInput === 'from' ? null : 'from')}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: activeRouteInput === 'from' ? (isDarkTheme ? "#1e293b" : "#e0f2fe") : (isDarkTheme ? "rgba(255,255,255,0.04)" : "#fff"),
+                    border: activeRouteInput === 'from' ? "1.5px solid #10b981" : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
+                    borderRadius: 9, padding: "7px 10px", cursor: "pointer", transition: "all 0.15s ease"
+                  }}
+                >
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#10b981", flexShrink: 0, boxShadow: "0 0 8px rgba(16,185,129,0.5)" }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 9.5, color: isDarkTheme ? "#94a3b8" : "#64748b", fontWeight: 600 }}>
+                      {isEN() ? "Starting Point" : "Başlangıç Noktası"}
+                    </div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {fromGPS ? t('yourLocation') : from ? locName(from) : (isEN() ? "Choose starting point..." : "Başlangıç seçin...")}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>✎</span>
+                </div>
+
+                {/* TO SATIRI */}
+                <div
+                  onClick={() => setActiveRouteInput(activeRouteInput === 'to' ? null : 'to')}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    background: activeRouteInput === 'to' ? (isDarkTheme ? "#1e293b" : "#fee2e2") : (isDarkTheme ? "rgba(255,255,255,0.04)" : "#fff"),
+                    border: activeRouteInput === 'to' ? "1.5px solid #ef4444" : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
+                    borderRadius: 9, padding: "7px 10px", cursor: "pointer", transition: "all 0.15s ease"
+                  }}
+                >
+                  <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#ef4444", flexShrink: 0, boxShadow: "0 0 8px rgba(239,68,68,0.5)" }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 9.5, color: isDarkTheme ? "#94a3b8" : "#64748b", fontWeight: 600 }}>
+                      {isEN() ? "Destination" : "Varış Noktası"}
+                    </div>
+                    <div style={{ fontSize: 12.5, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {to ? locName(to) : (isEN() ? "Choose destination..." : "Hedef seçin...")}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>✎</span>
+                </div>
+              </div>
+
+              {/* Butonlar: Değiştir & İptal */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+                <button
+                  onClick={swapFromTo}
+                  title={isEN() ? "Swap endpoints" : "Başlangıç ve varışı değiştir"}
+                  style={{
+                    ...BTN, width: 34, height: 34, minHeight: 34,
+                    background: isDarkTheme ? "#1e293b" : "#fff",
+                    color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    borderRadius: 8, fontSize: 16, cursor: "pointer"
+                  }}
+                >
+                  ⇅
+                </button>
+                <button
+                  onClick={reset}
+                  title={isEN() ? "Cancel route" : "Rotayı iptal et"}
+                  style={{
+                    ...BTN, width: 34, height: 34, minHeight: 34,
+                    background: isDarkTheme ? "#1e293b" : "#fff",
+                    color: isDarkTheme ? "#94a3b8" : "#64748b",
+                    border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1",
+                    borderRadius: 8, fontSize: 14, cursor: "pointer"
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* FROM DÜZENLEME SEÇENEKLERİ */}
+            {activeRouteInput === 'from' && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 4, borderTop: isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0" }}>
+                <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                  <button
+                    onClick={() => {
+                      if (gpsOn && userPos) {
+                        setFromGPS(true); setFrom(null); setFromSearch(t('yourLocation'));
+                        if (to) calcRoute(userPos[0], userPos[1], to);
+                        setActiveRouteInput(null);
+                      } else {
+                        toggleGPS();
+                        setVoiceHint(isEN() ? "📍 Requesting GPS location..." : "📍 GPS açılıyor...");
+                        setTimeout(() => setVoiceHint(null), 2500);
+                      }
+                    }}
+                    style={{
+                      ...BTN, padding: "5px 9px", fontSize: 11, fontWeight: 700, borderRadius: 16,
+                      background: "#10b981", color: "#fff", gap: 4
+                    }}
+                  >
+                    <span>🎯</span>
+                    <span>{t('yourLocation')}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
+                      setFrom(defStart); setFromGPS(false); setFromSearch(locName(defStart));
+                      if (to) calcRoute(defStart.gps[0], defStart.gps[1], to);
+                      setActiveRouteInput(null);
+                    }}
+                    style={{
+                      ...BTN, padding: "5px 9px", fontSize: 11, fontWeight: 700, borderRadius: 16,
+                      background: isDarkTheme ? "#334155" : "#e2e8f0", color: isDarkTheme ? "#f8fafc" : "#0f172a", gap: 4
+                    }}
+                  >
+                    <span>🚪</span>
+                    <span>{isEN() ? "West Gate" : "Santral Ana Giriş"}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const histGate = LOCS.find(l => l.num === 33);
+                      if (histGate) {
+                        setFrom(histGate); setFromGPS(false); setFromSearch(locName(histGate));
+                        if (to) calcRoute(histGate.gps[0], histGate.gps[1], to);
+                        setActiveRouteInput(null);
+                      }
+                    }}
+                    style={{
+                      ...BTN, padding: "5px 9px", fontSize: 11, fontWeight: 700, borderRadius: 16,
+                      background: isDarkTheme ? "#334155" : "#e2e8f0", color: isDarkTheme ? "#f8fafc" : "#0f172a", gap: 4
+                    }}
+                  >
+                    <span>🏛️</span>
+                    <span>{isEN() ? "Historic Gate" : "Tarihi Giriş"}</span>
+                  </button>
+                </div>
+
+                <input
+                  value={fromSearch}
+                  onChange={e => setFromSearch(e.target.value)}
+                  placeholder={isEN() ? "Search starting place..." : "Başlangıç binası ara..."}
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    background: isDarkTheme ? "#1e293b" : "#fff",
+                    border: "1px solid #10b981", borderRadius: 8,
+                    padding: "7px 10px", color: isDarkTheme ? "#fff" : "#000",
+                    fontSize: 12, outline: "none"
+                  }}
+                />
+                <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+                  {LOCS.filter(l => locName(l).toLocaleLowerCase().includes(fromSearch.toLocaleLowerCase())).slice(0, 5).map(loc => (
+                    <button
+                      key={loc.num}
+                      onClick={() => {
+                        setFrom(loc); setFromGPS(false); setFromSearch(locName(loc));
+                        if (to) calcRoute(loc.gps[0], loc.gps[1], to);
+                        setActiveRouteInput(null);
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "6px 8px",
+                        background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                        border: "none", borderRadius: 6, cursor: "pointer",
+                        color: isDarkTheme ? "#fff" : "#0f172a", textAlign: "left", width: "100%"
+                      }}
+                    >
+                      <span>{loc.emoji}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{locName(loc)}</span>
+                      <span style={{ fontSize: 11, color: "#10b981", fontWeight: 700 }}>Seç →</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TO DÜZENLEME SEÇENEKLERİ */}
+            {activeRouteInput === 'to' && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, paddingTop: 4, borderTop: isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0" }}>
+                <input
+                  value={toSearch}
+                  onChange={e => setToSearch(e.target.value)}
+                  placeholder={isEN() ? "Search destination..." : "Varış noktası ara..."}
+                  style={{
+                    width: "100%", boxSizing: "border-box",
+                    background: isDarkTheme ? "#1e293b" : "#fff",
+                    border: "1px solid #ef4444", borderRadius: 8,
+                    padding: "7px 10px", color: isDarkTheme ? "#fff" : "#000",
+                    fontSize: 12, outline: "none"
+                  }}
+                />
+                <div style={{ maxHeight: 120, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+                  {LOCS.filter(l => locName(l).toLocaleLowerCase().includes(toSearch.toLocaleLowerCase())).slice(0, 5).map(loc => (
+                    <button
+                      key={loc.num}
+                      onClick={() => {
+                        handleGoHere(loc);
+                        setActiveRouteInput(null);
+                      }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "6px 8px",
+                        background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                        border: "none", borderRadius: 6, cursor: "pointer",
+                        color: isDarkTheme ? "#fff" : "#0f172a", textAlign: "left", width: "100%"
+                      }}
+                    >
+                      <span>{loc.emoji}</span>
+                      <span style={{ fontSize: 12, fontWeight: 600, flex: 1 }}>{locName(loc)}</span>
+                      <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 700 }}>Seç →</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Rota Süre ve Mesafe Kartı */}
+          {mode === 'ready' && routeM > 0 && (
+            <div style={{
+              background: isDarkTheme ? "rgba(16,185,129,0.12)" : "#ecfdf5",
+              border: "1px solid rgba(16,185,129,0.3)",
+              borderRadius: 12, padding: "9px 12px",
+              display: "flex", alignItems: "center", justifyContent: "space-between"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🚶</span>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: isDarkTheme ? "#86efac" : "#047857" }}>
+                    ~{mins} {t('minLabel')}
+                  </div>
+                  <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                    {routeM} metre
+                  </div>
+                </div>
+              </div>
+
+              {/* Standart / Engelsiz Toggle */}
+              <div style={{
+                display: "flex", background: isDarkTheme ? "#0f172a" : "#f1f5f9",
+                borderRadius: 8, padding: 2, gap: 2, border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"
+              }}>
+                <button
+                  onClick={() => setIsAccessible(false)}
+                  style={{
+                    ...BTN, padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                    background: !isAccessible ? (isDarkTheme ? "#334155" : "#fff") : "transparent",
+                    color: !isAccessible ? (isDarkTheme ? "#fff" : "#0f172a") : (isDarkTheme ? "#94a3b8" : "#64748b")
+                  }}
+                >
+                  🚶 {t('standardRoute')}
+                </button>
+                <button
+                  onClick={() => setIsAccessible(true)}
+                  style={{
+                    ...BTN, padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700,
+                    background: isAccessible ? "#059669" : "transparent",
+                    color: isAccessible ? "#fff" : (isDarkTheme ? "#94a3b8" : "#64748b")
+                  }}
+                >
+                  ♿ {t('accessibleRoute')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Karpuz Samimi İpucu */}
+          {mode === 'ready' && to && (
+            <div style={{
+              background: isDarkTheme ? "rgba(244,63,94,0.08)" : "#fff1f2",
+              border: "1px solid rgba(244,63,94,0.2)",
+              borderRadius: 10, padding: "7px 10px",
+              display: "flex", alignItems: "center", gap: 8
+            }}>
+              <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: 26, height: 26, objectFit: "contain", flexShrink: 0 }} />
+              <div style={{ flex: 1, fontSize: 11.5, lineHeight: 1.35, color: isDarkTheme ? "#fecdd3" : "#9f1239" }}>
+                <b>{t('karpuzTipTitle')}:</b> {getKarpuzTip(to, isAccessible)}
+              </div>
+            </div>
+          )}
+
+          {/* Rota Aksiyon Butonları */}
+          {mode === 'ready' && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                {/* 🚶 YOLA ÇIK (BÜYÜK PRİMARY) */}
+                <button
+                  onClick={() => {
+                    if (gpsOn && userPos) {
+                      setMode('nav');
+                    } else {
+                      toggleGPS();
+                      setMode('nav');
+                      setVoiceHint(isEN() ? "📍 Starting GPS Navigation..." : "📍 GPS Navigasyonu Başlatılıyor...");
+                      setTimeout(() => setVoiceHint(null), 3000);
+                    }
+                  }}
+                  style={{
+                    ...BTN, flex: 2,
+                    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                    color: "#fff", fontSize: 14, fontWeight: 800, padding: "12px 10px",
+                    borderRadius: 12, boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6
+                  }}
+                >
+                  <span style={{ fontSize: 18 }}>🚶</span>
+                  <span>{isEN() ? "Start Walking" : "Yola Çık (Navigasyon)"}</span>
+                </button>
+
+                {/* ▶️ ÖNİZLEME (SİMÜLASYON) */}
+                <button
+                  onClick={startSim}
+                  style={{
+                    ...BTN, flex: 1,
+                    background: "#f97316", color: "#fff",
+                    fontSize: 12.5, fontWeight: 700, padding: "12px 10px",
+                    borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5
+                  }}
+                >
+                  <span>▶</span>
+                  <span>{t('btnPreview')}</span>
+                </button>
+
+                {/* 📋 ADIMLAR */}
+                <button
+                  onClick={() => setShowSteps(p => !p)}
+                  style={{
+                    ...BTN,
+                    background: showSteps ? "#3b82f6" : (isDarkTheme ? "#334155" : "#e2e8f0"),
+                    color: showSteps ? "#fff" : (isDarkTheme ? "#f8fafc" : "#0f172a"),
+                    fontSize: 12, fontWeight: 700, padding: "0 12px", minHeight: 44,
+                    borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 4
+                  }}
+                  title="Adım Listesi"
+                >
+                  <span>≡</span>
+                  <span>{showSteps ? t('btnStepsHide') : t('btnStepsShow')}</span>
+                </button>
+              </div>
+
+              {/* Turn-by-Turn Adım Listesi */}
+              {showSteps && navSteps.length > 0 && (
+                <div style={{
+                  background: isDarkTheme ? "#0f172a" : "#f8fafc",
+                  border: isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0",
+                  borderRadius: 10, maxHeight: 150, overflowY: "auto", padding: "4px"
+                }}>
+                  {navSteps.map((s, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 8, padding: "6px 8px",
+                        borderBottom: i < navSteps.length - 1 ? (isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0") : "none"
+                      }}
+                    >
+                      <span style={{ fontSize: 16 }}>{s.arrow}</span>
+                      <span style={{ fontSize: 12, color: isDarkTheme ? "#f1f5f9" : "#1e293b", flex: 1 }}>{s.text}</span>
+                      {s.dist > 0 && <span style={{ fontSize: 11, color: isDarkTheme ? "#64748b" : "#94a3b8" }}>{s.dist}m</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // 4. NAV / SIM DENETİM ÇUBUĞU
+    if (mode === 'sim' || mode === 'nav') {
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, animation: "onboard-fadein 0.2s ease" }}>
+          <div style={{
+            display: "flex", flexDirection: "column", gap: 6,
+            background: isDarkTheme ? "#0f172a" : "#f8fafc", padding: "10px 12px",
+            borderRadius: 12, border: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}>
+              <span style={{ fontWeight: 800, color: isDarkTheme ? "#f1f5f9" : "#1e293b" }}>
+                {mode === 'sim' ? (isEN() ? "Simulation" : "Simülasyon") : (isEN() ? "Live Navigation" : "Canlı Navigasyon")}
+              </span>
+              <span style={{ color: isDarkTheme ? "#38bdf8" : "#0284c7", fontWeight: 800 }}>%{simPct}</span>
+            </div>
+            {/* Scrubber */}
+            <input
+              type="range" min="0" max="100" value={simPct}
+              disabled={mode !== 'sim'}
+              onChange={e => seekSim(Number(e.target.value))}
+              style={{ width: "100%", accentColor: "#38bdf8", cursor: mode === 'sim' ? "pointer" : "default" }}
+            />
+            {mode === 'sim' && (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={() => seekSim(0)} title="Başa dön" style={{ ...BTN, background: isDarkTheme ? "#1e293b" : "#e2e8f0", color: isDarkTheme ? "#fff" : "#0f172a", padding: "4px 8px", borderRadius: 6, fontSize: 12 }}>⏮</button>
+                  {simPaused ? (
+                    <button onClick={resumeSim} style={{ ...BTN, background: "#16a34a", color: "#fff", padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>▶ {t('simResume')}</button>
+                  ) : (
+                    <button onClick={pauseSim} style={{ ...BTN, background: "#f59e0b", color: "#fff", padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>⏸ {t('simPause')}</button>
+                  )}
+                  <button onClick={() => { const n = simSpeed === 1 ? 2 : simSpeed === 2 ? 4 : 1; setSimSpeed(n); simSpeedRef.current = n; }} style={{ ...BTN, background: isDarkTheme ? "#1e293b" : "#e2e8f0", color: isDarkTheme ? "#fff" : "#0f172a", padding: "4px 8px", borderRadius: 6, fontSize: 12, fontWeight: 700 }}>
+                    {simSpeed}×
+                  </button>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button onClick={toggleMute} style={{ ...BTN, background: isMuted ? (isDarkTheme ? "rgba(239,68,68,0.2)" : "#fee2e2") : (isDarkTheme ? "#1e293b" : "#e2e8f0"), color: isMuted ? "#ef4444" : (isDarkTheme ? "#fff" : "#0f172a"), padding: "4px 8px", borderRadius: 6, fontSize: 12 }}>
+                    {isMuted ? "🔇" : "🔊"}
+                  </button>
+                  <button onClick={reset} style={{ ...BTN, background: "#dc2626", color: "#fff", padding: "4px 10px", borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                    {t('simEnd')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // 5. IDLE: ARAMA SONUÇLARI VEYA KATEGORİLER & POPÜLER MEKANLAR
+    if (toSearch.trim().length > 0) {
+      const roomRes = searchRooms(toSearch).slice(0, 6);
+      const entRes = searchEntities(toSearch).slice(0, 4);
+      const locRes = searchLocs(toSearch, LOCS).slice(0, 6);
+      const total = roomRes.length + entRes.length + locRes.length;
+
+      if (total === 0) {
+        return (
+          <div style={{
+            background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+            borderRadius: 14, padding: "20px 16px", textAlign: "center",
+            color: isDarkTheme ? "#94a3b8" : "#64748b", fontSize: 13
+          }}>
+            <span>🔍 {t('noResultsFound')}: <b>"{toSearch}"</b></span>
+            <div style={{ fontSize: 11, marginTop: 6, color: "#94a3b8" }}>
+              {isEN() ? "Try '101', 'VCD', 'Kütüphane' or 'Hukuk'" : "'101', 'VCD', 'Kütüphane' veya 'Hukuk' yazmayı deneyebilirsiniz."}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {/* Derslikler */}
+          {roomRes.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#38bdf8", padding: "4px 4px 6px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>🚪</span>
+                <span>{t('classroomsAndRooms')}</span>
+              </div>
+              {roomRes.map((r, i) => (
+                <button
+                  key={`${r.bNum}_${r.floor}_${r.oda}_${i}`}
+                  onClick={() => {
+                    setToSearch(`${r.oda} (${locName(r.building)})`);
+                    setTargetRoom(r.oda);
+                    setTargetRoomInfo({
+                      room: r.oda,
+                      floor: r.floor,
+                      label: r.label,
+                      cat: r.cat,
+                      buildingName: locName(r.building),
+                      cap: r.cap
+                    });
+                    handleGoHere(r.building);
+                  }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                    borderRadius: 10, border: "none", cursor: "pointer", width: "100%",
+                    background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                    textAlign: "left", marginBottom: 3
+                  }}
+                >
+                  <div style={{ background: "#0284c7", color: "#fff", fontWeight: 800, fontSize: 11, padding: "3px 6px", borderRadius: 6, flexShrink: 0 }}>
+                    {r.oda}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                        {locName(r.building)}
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, background: isDarkTheme ? "#334155" : "#e2e8f0", color: isDarkTheme ? "#38bdf8" : "#0369a1", padding: "1px 5px", borderRadius: 4 }}>
+                        {r.floor}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.label}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>Git →</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Binalar */}
+          {locRes.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", padding: "4px 4px 6px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>🏢</span>
+                <span>{t('buildingsAndPlaces')}</span>
+              </div>
+              {locRes.map(({ loc, keyword }) => (
+                <button
+                  key={loc.num}
+                  onClick={() => handleGoHere(loc)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                    borderRadius: 10, border: "none", cursor: "pointer", width: "100%",
+                    background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                    textAlign: "left", marginBottom: 3
+                  }}
+                >
+                  <span style={{ fontSize: 20 }}>{loc.emoji}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                      {locName(loc)}
+                    </div>
+                    {keyword && (
+                      <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                        {keyword}
+                      </div>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>Git →</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Bölümler */}
+          {entRes.length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 800, color: "#a855f7", padding: "4px 4px 6px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>🎓</span>
+                <span>{t('departmentsAndUnits')}</span>
+              </div>
+              {entRes.map(ent => {
+                const parent = LOCS.find(l => l.num === ent.parentPoiNum);
+                if (!parent) return null;
+                return (
+                  <button
+                    key={ent.id}
+                    onClick={() => {
+                      setToSearch(entName(ent));
+                      setTargetRoom(ent.room ?? null);
+                      setTargetRoomInfo({
+                        room: ent.room ?? "Birim",
+                        floor: "Kat Bilgisi",
+                        label: entName(ent),
+                        cat: "Bölüm",
+                        buildingName: locName(parent)
+                      });
+                      handleGoHere(parent);
+                    }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
+                      borderRadius: 10, border: "none", cursor: "pointer", width: "100%",
+                      background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                      textAlign: "left", marginBottom: 3
+                    }}
+                  >
+                    <span style={{ fontSize: 18 }}>{ENTITY_ICON[ent.kind]}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                        {entName(ent)}
+                      </div>
+                      <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                        {locName(parent)} {ent.room ? `· Oda ${ent.room}` : ""}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>Git →</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Arama yoksa Kategori Çipleri + Popüler Mekanlar
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {/* Kategori Çipleri */}
+        <div id="cat-row" style={{ display: "flex", alignItems: "center", gap: 6, overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+          {[
+            { id: 'share_loc', icon: '📍', label: isEN() ? "Share Location" : "Konumunu At", color: '#10b981', bg: '#10b981', fg: '#fff', isSpecial: true },
+            { id: 'food', icon: '☕', label: t('chipFood'), color: '#f59e0b', bg: '#f59e0b', fg: '#fff' },
+            { id: 'library', icon: '📚', label: t('chipLibrary'), color: '#6366f1', bg: '#6366f1', fg: '#fff' },
+            { id: 'wc', icon: '🚻', label: t('chipWc'), color: '#06b6d4', bg: '#06b6d4', fg: '#fff' },
+            { id: 'atm', icon: '🏧', label: t('chipAtm'), color: '#10b981', bg: '#10b981', fg: '#fff' },
+            { id: 'student', icon: '🏢', label: t('chipStudent'), color: '#ec4899', bg: '#ec4899', fg: '#fff' },
+            { id: 'faculty', icon: '🎓', label: t('chipFaculty'), color: '#3b82f6', bg: '#3b82f6', fg: '#fff' },
+            { id: 'favorites', icon: '⭐', label: t('catFavorites'), color: '#eab308', bg: '#eab308', fg: '#000', count: favorites.length },
+            { id: 'recents', icon: '🕒', label: t('catRecents'), color: '#8b5cf6', bg: '#8b5cf6', fg: '#fff', count: recents.length },
+          ].map(chip => {
+            const isActive = cat === chip.id;
+            return (
+              <button
+                key={chip.id}
+                onClick={() => {
+                  triggerHaptic(30);
+                  if (chip.isSpecial && chip.id === 'share_loc') {
+                    openShareModal();
+                    return;
+                  }
+                  const next = isActive ? null : chip.id;
+                  setCat(next);
+                  if (next && sheetRef.current && window.innerWidth < 768) {
+                    sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
+                    sheetRef.current.style.height = `${Math.min(360, Math.round(window.innerHeight * 0.46))}px`;
+                  }
+                }}
+                style={{
+                  ...BTN, fontSize: 11.5, fontWeight: 600, padding: "5px 10px", minHeight: 30, borderRadius: 20, flexShrink: 0,
+                  border: isActive ? `1.5px solid ${chip.color}` : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
+                  background: isActive ? chip.bg : (isDarkTheme ? "rgba(255,255,255,0.05)" : "#f8fafc"),
+                  color: isActive ? chip.fg : (isDarkTheme ? "#cbd5e1" : "#475569"),
+                  boxShadow: isActive ? `0 2px 8px ${chip.color}55` : "none",
+                  transition: "all 0.15s ease", display: "flex", alignItems: "center", gap: 4
+                }}
+              >
+                <span>{chip.icon}</span>
+                <span>{chip.label}</span>
+                {typeof chip.count === 'number' && chip.count > 0 && (
+                  <span style={{ fontSize: 9.5, background: "rgba(0,0,0,0.2)", padding: "1px 4px", borderRadius: 8, fontWeight: 700 }}>
+                    {chip.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Popüler ve Yakındaki Mekanlar Listesi */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2px" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+              {cat ? `${visible.length} ${t('chipNearTitle')}` : (isEN() ? "Popular & Nearby Places" : "Popüler & Sık Gidilenler")}
+            </span>
+            {cat && (
+              <button
+                onClick={() => setCat(null)}
+                style={{ background: "none", border: "none", color: isDarkTheme ? "#64748b" : "#94a3b8", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+              >
+                ✕ {isEN() ? "Clear" : "Temizle"}
+              </button>
+            )}
+          </div>
+
+          <div style={{ maxHeight: 220, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
+            {visible.slice(0, 10).map((loc) => {
+              const distFromUser = userPos ? Math.round(hav(userPos[0], userPos[1], loc.gps[0], loc.gps[1])) : null;
+              return (
+                <div
+                  key={loc.num}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "8px 10px", borderRadius: 10,
+                    background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
+                    border: isDarkTheme ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.05)"
+                  }}
+                >
+                  <div
+                    onClick={() => handlePinClick(loc)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, cursor: "pointer" }}
+                  >
+                    <span style={{ fontSize: 20 }}>{loc.emoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
+                        {locName(loc)}
+                      </div>
+                      <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", display: "flex", alignItems: "center", gap: 6 }}>
+                        {distFromUser !== null && <span>📍 {distFromUser} m</span>}
+                        {ROOMS[String(loc.num)] && <span>🚪 {Object.values(ROOMS[String(loc.num)]).reduce((s, a) => s + a.length, 0)} {t('mahalUnit')}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleGoHere(loc)}
+                    style={{
+                      ...BTN,
+                      background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      color: "#fff", fontSize: 12, fontWeight: 700,
+                      padding: "6px 12px", borderRadius: 8, flexShrink: 0
+                    }}
+                  >
+                    {t('btnGoHereArrow')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return(
     <div style={{position:"relative",height:"100dvh",width:"100vw",maxWidth:"100vw",maxHeight:"100dvh",overflow:"hidden",
@@ -2834,228 +3839,6 @@ export default function CampusMap(){
         </div>
       </div>
 
-      {/* ─── Bina bilgi modalı ──────────────────────────────────────────── */}
-      {selectedLoc&&(
-        <div onClick={()=>setSelectedLoc(null)}
-          style={{position:"fixed",inset:0,zIndex:30,
-            background:"rgba(0,0,0,0.55)",
-            display:"flex",alignItems:"center",justifyContent:"center",
-            padding:"20px 16px"}}>
-          <div onClick={e=>e.stopPropagation()}
-            style={{background: isDarkTheme ? "#1e293b" : "#ffffff",
-              borderRadius: 20, width: "100%", maxWidth: 360,
-              maxHeight: "82vh", overflowY: "auto",
-              border: isDarkTheme ? "1px solid rgba(255,255,255,0.12)" : "1px solid #e2e8f0",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)"}}>
-
-            {/* Fotoğraf veya emoji başlık */}
-            {(selectedLoc.photo||selectedLoc.photos)?(
-              <div style={{position:"relative",borderRadius:"20px 20px 0 0",overflow:"hidden"}}>
-                <PhotoGallery loc={selectedLoc} height={170} mb={0}/>
-                <div style={{position:"absolute",bottom:0,left:0,right:0,zIndex:3,
-                  background:"linear-gradient(transparent,rgba(0,0,0,0.75))",
-                  padding:"24px 16px 14px",pointerEvents:"none"}}>
-                  <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{locName(selectedLoc)}</div>
-                  {ROOMS[String(selectedLoc.num)]&&(
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
-                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} {t('mahalUnit')}
-                    </div>
-                  )}
-                </div>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    const url = `${window.location.origin}${window.location.pathname}?loc=${selectedLoc.num}`;
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({
-                          title: locName(selectedLoc),
-                          text: `santralistanbul: ${locName(selectedLoc)}`,
-                          url
-                        });
-                      } catch (err) {}
-                    } else {
-                      await navigator.clipboard.writeText(url);
-                      setVoiceHint(t('shareCopied'));
-                      setTimeout(() => setVoiceHint(null), 2500);
-                    }
-                  }}
-                  title={t('btnShare')}
-                  style={{position:"absolute",top:10,right:86,width:32,height:32,zIndex:4,
-                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
-                    color:"#fff",fontSize:14,cursor:"pointer",display:"flex",
-                    alignItems:"center",justifyContent:"center",lineHeight:1}}>🔗</button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFavorite(selectedLoc.num);
-                  }}
-                  title={favorites.includes(selectedLoc.num) ? t('btnFavorited') : t('btnFavorite')}
-                  style={{position:"absolute",top:10,right:48,width:32,height:32,zIndex:4,
-                    borderRadius:"50%",border:"none",
-                    background: favorites.includes(selectedLoc.num) ? "rgba(234,179,8,0.95)" : "rgba(0,0,0,0.4)",
-                    color:"#fff",fontSize:16,cursor:"pointer",display:"flex",
-                    alignItems:"center",justifyContent:"center",lineHeight:1,
-                    boxShadow: favorites.includes(selectedLoc.num) ? "0 2px 8px rgba(234,179,8,0.5)" : "none"}}>
-                  {favorites.includes(selectedLoc.num) ? "★" : "☆"}
-                </button>
-                <button onClick={()=>setSelectedLoc(null)}
-                  style={{position:"absolute",top:10,right:10,width:32,height:32,zIndex:4,
-                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.4)",
-                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",
-                    alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
-              </div>
-            ):(
-              <div style={{
-                background:`linear-gradient(135deg,${CAT[selectedLoc.cats[0]]?.c??"#3b82f6"},${CAT[selectedLoc.cats[0]]?.c??"#3b82f6"}99)`,
-                borderRadius:"20px 20px 0 0",padding:"24px 16px 20px",
-                display:"flex",alignItems:"center",gap:14,position:"relative"}}>
-                <div style={{fontSize:42}}>{selectedLoc.emoji}</div>
-                <div>
-                  <div style={{fontWeight:800,fontSize:18,color:"#fff"}}>{locName(selectedLoc)}</div>
-                  {ROOMS[String(selectedLoc.num)]&&(
-                    <div style={{fontSize:11,color:"rgba(255,255,255,0.75)",marginTop:2}}>
-                      {Object.values(ROOMS[String(selectedLoc.num)]).reduce((s,a)=>s+a.length,0)} {t('mahalUnit')}
-                    </div>
-                  )}
-                </div>
-                <button onClick={()=>setSelectedLoc(null)}
-                  style={{position:"absolute",top:12,right:12,width:32,height:32,
-                    borderRadius:"50%",border:"none",background:"rgba(0,0,0,0.25)",
-                    color:"#fff",fontSize:18,cursor:"pointer",display:"flex",
-                    alignItems:"center",justifyContent:"center",lineHeight:1}}>✕</button>
-              </div>
-            )}
-
-            <div style={{padding:"14px 16px 20px"}}>
-              {/* Vurucu Rozetler */}
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:10}}>
-                {getBuildingBadges(selectedLoc).map((b,i)=>(
-                  <span key={i} style={{background:b.bg,color:b.color,fontSize:11,fontWeight:700,padding:"3px 8px",borderRadius:6}}>
-                    {b.label}
-                  </span>
-                ))}
-              </div>
-
-              <p style={{margin:"0 0 10px",fontSize:12.5,color: isDarkTheme ? "#cbd5e1" : "#475569",lineHeight:1.5}}>
-                {locDesc(selectedLoc)}
-              </p>
-
-              {/* Karpuz Bina Tüyosu */}
-              <div style={{
-                background: isDarkTheme ? "rgba(244,63,94,0.1)" : "#fff1f2",
-                border: "1px solid rgba(244,63,94,0.25)",
-                borderRadius: 10, padding: "8px 10px",
-                display: "flex", alignItems: "center", gap: 8, marginBottom: 12
-              }}>
-                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
-                <span style={{fontSize:11.5,lineHeight:1.35,color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
-                  <b>Karpuz:</b> {getKarpuzTip(selectedLoc, isAccessible)}
-                </span>
-              </div>
-
-              {/* Mahal listesi */}
-              {ROOMS[String(selectedLoc.num)]&&(
-                <div style={{borderTop: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0",paddingTop:10,marginBottom:14}}>
-                  <div style={{fontSize:10,fontWeight:700,color:"#94a3b8",
-                    letterSpacing:"0.06em",marginBottom:8}}>{t('roomListTitle')}</div>
-                  <div style={{maxHeight:160,overflowY:"auto",fontSize:12,lineHeight:1.5}}>
-                    {Object.entries(ROOMS[String(selectedLoc.num)]).map(([floor,rooms])=>(
-                      <div key={floor} style={{marginBottom:10}}>
-                        <div style={{fontWeight:700,fontSize:11,
-                          background: isDarkTheme ? "#0f172a" : "#f1f5f9", color: isDarkTheme ? "#94a3b8" : "#1e293b", padding:"3px 8px",borderRadius:6,marginBottom:4}}>
-                          {tFloor(floor)}
-                        </div>
-                        {(rooms as RoomEntry[]).map((r,i)=>{
-                          const rk=`${selectedLoc.num}_${floor}_${i}`;
-                          return<RoomRow key={rk} r={r} roomKey={rk}
-                            expanded={expandedRoomKey===rk} onToggle={toggleRoom}
-                            highlighted={highlightedRoomKey===rk}/>;
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Hızlı 1-Tıkla Rota & İkincil Aksiyon */}
-              <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                <button onClick={()=>{
-                  triggerHaptic(50);
-                  stopSim();
-                  setTo(selectedLoc);
-                  setToSearch(locName(selectedLoc));
-                  setTargetRoom(null);
-                  setTargetRoomInfo(null);
-                  if(gpsOn&&userPos){
-                    setFromGPS(true);
-                    calcRoute(userPos[0],userPos[1],selectedLoc);
-                  } else if(from){
-                    calcRoute(from.gps[0],from.gps[1],selectedLoc);
-                  } else {
-                    const defStart=LOCS.find(l=>l.num===1)||LOCS[0];
-                    setFrom(defStart);
-                    setFromGPS(false);
-                    setFromSearch(locName(defStart));
-                    calcRoute(defStart.gps[0],defStart.gps[1],selectedLoc);
-                  }
-                  setSelectedLoc(null);
-                  setPanelLoc(null);
-                  setMode('ready');
-                }}
-                  style={{...BTN,width:"100%",background:"linear-gradient(135deg,#10b981 0%,#059669 100%)",color:"#fff",
-                    fontSize:14,fontWeight:800,padding:"13px 0",borderRadius:12,boxShadow:"0 4px 14px rgba(16,185,129,0.35)",gap:6}}>
-                  <span>📍</span>
-                  <span>{t('getDirections')}</span>
-                </button>
-
-                <button onClick={()=>{
-                  triggerHaptic(30);
-                  stopSim();setPanelLoc(selectedLoc);setFrom(selectedLoc);setFromGPS(false);
-                  setFromSearch(locName(selectedLoc));setMode('pickTo');setSelectedLoc(null);
-                }}
-                  style={{background:"transparent",border:"none",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12,
-                    cursor:"pointer",padding:"4px 0",textAlign:"center",width:"100%",textDecoration:"underline"}}>
-                  🔄 {t('planFromHere')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Seçim modu – merkezi yüzen kart ───────────────────────────── */}
-      {mode==='pickFrom'&&(
-        <div style={{position:"absolute",top:68,left:"50%",transform:"translateX(-50%)",
-          zIndex:20,display:"flex",flexDirection:"column",alignItems:"center",gap:10,
-          background:"#16a34a",
-          borderRadius:20,padding:"14px 20px",width:"80%",maxWidth:320,
-          boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
-          animation:"onboard-fadein 0.25s ease"}}>
-          <div style={{display:"flex",alignItems:"center",gap:10,width:"100%"}}>
-            <span style={{fontSize:22}}>🟢</span>
-            <span style={{color:"#fff",fontWeight:700,fontSize:15,flex:1}}>
-              {t('pickFromTitle')}
-            </span>
-            <button onClick={reset}
-              style={{...BTN,background:"rgba(0,0,0,0.2)",color:"#fff",
-                minHeight:32,width:32,borderRadius:"50%",fontSize:16,padding:0,flexShrink:0}}>
-              ✕
-            </button>
-          </div>
-          <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,textAlign:"center",lineHeight:1.6,whiteSpace:"pre-line"}}>
-            {t('pickFromDesc')}
-          </div>
-          {gpsOn&&userPos&&(
-            <button onClick={()=>{setFromGPS(true);setMode('pickTo');}}
-              style={{...BTN,background:"rgba(255,255,255,0.25)",color:"#fff",
-                fontSize:13,padding:"8px 20px",minHeight:36,borderRadius:30,width:"100%"}}>
-              {t('useMyLocation')}
-            </button>
-          )}
-        </div>
-      )}
-
       {/* ─── Onboarding step 6 demo nav bar (idle modda) ─────────────────── */}
       {onboardStep===6&&mode==='idle'&&(
         <div id="nav-card" style={{position:"absolute",top:56,left:0,right:0,zIndex:15,
@@ -3088,7 +3871,7 @@ export default function CampusMap(){
 
       {/* ─── Google Maps tarzı navigasyon kartı ─────────────────────────── */}
       {(mode==='sim'||mode==='nav')&&activeStep&&(
-        <div id="nav-card" style={{
+        <div id="nav-card" className="santral-nav-hud" style={{
           position: "fixed",
           top: 14,
           left: "50%",
@@ -3215,9 +3998,13 @@ export default function CampusMap(){
 
       {/* ─── Yüzen Üst Arama / Rota Başlığı ───────────────────── */}
       {/* ─── READY Modunda Sol Üst Minimal Geri Butonu (Harita Görünümünü Kapatmaz) ─── */}
-      {mode === 'ready' && !showWelcome && (
+      {(mode === 'ready' || panelLoc) && !showWelcome && (
         <button
-          onClick={reset}
+          onClick={() => {
+            if (panelLoc) setPanelLoc(null);
+            else reset();
+          }}
+          className="santral-mobile-only"
           style={{
             position: "fixed", top: 16, left: 16, zIndex: 1000,
             background: isDarkTheme ? "rgba(30, 41, 59, 0.92)" : "rgba(255, 255, 255, 0.95)",
@@ -3239,7 +4026,7 @@ export default function CampusMap(){
 
       {/* ─── Yüzen Üst Arama Çubuğu (Sadece Keşif Modunda, Kart Açık Değilken) ─── */}
       {mode === 'idle' && !showWelcome && !selectedLoc && !panelLoc && (
-        <div style={{
+        <div className="santral-mobile-only" style={{
           position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 1000,
           width: "calc(100% - 32px)", maxWidth: 440,
         }}>
@@ -3591,7 +4378,7 @@ export default function CampusMap(){
       )}
 
       {/* ─── Sağ araç çubuğu: pusula + 3D + zoom + kampüs + konuma git ──────────────────── */}
-      <div style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')?95:82,zIndex:10,display:"flex",flexDirection:"column",gap:5}}>
+      <div className="santral-toolbar-ctrls" style={{position:"absolute",right:12,top:(mode==='nav'||mode==='sim')?95:82,zIndex:10,display:"flex",flexDirection:"column",gap:5}}>
         {/* Pusula / Kuzeye Dön butonu */}
         <button
           onClick={resetNorth}
@@ -3717,9 +4504,17 @@ export default function CampusMap(){
               setVoiceHint(isEN() ? "📍 Requesting GPS location..." : "📍 GPS konumu açılıyor...");
               setTimeout(() => setVoiceHint(null), 2500);
             } else if (userPos && mapInstanceRef.current) {
-              mapInstanceRef.current.setView(userPos, 18, { animate: true });
-              setVoiceHint(isEN() ? "🎯 Centered on your location" : "🎯 Konumunuza odaklandı");
-              setTimeout(() => setVoiceHint(null), 2000);
+              const dCampus = hav(userPos[0], userPos[1], CAMPUS_CENTER[0], CAMPUS_CENTER[1]);
+              if (dCampus > 800) {
+                fitCampus();
+                const km = (dCampus / 1000).toFixed(1);
+                setVoiceHint(isEN() ? `🐾 Off-campus (~${km}km). Showing Santral.` : `🐾 Kampüsün ${km}km dışındasınız. Santral haritası gösteriliyor.`);
+                setTimeout(() => setVoiceHint(null), 3500);
+              } else {
+                mapInstanceRef.current.setView(userPos, 18, { animate: true });
+                setVoiceHint(isEN() ? "🎯 Centered on your location" : "🎯 Konumunuza odaklandı");
+                setTimeout(() => setVoiceHint(null), 2000);
+              }
             } else {
               setVoiceHint(isEN() ? "📍 Waiting for GPS signal..." : "📍 GPS sinyali bekleniyor...");
               setTimeout(() => setVoiceHint(null), 2500);
@@ -3814,760 +4609,180 @@ export default function CampusMap(){
         )}
       </div>
 
-      {/* ─── Alt panel ───────────────────────────────────────────────────── */}
+      {/* ─── 1. MASAÜSTÜ SOL KENAR ÇUBUĞU (Desktop Sidebar - 768px+) ──────── */}
       <div
-        style={{position:"fixed",bottom:0,left:0,right:0,margin:"0 auto",zIndex:10,
-          background: isDarkTheme ? "#1e293b" : "#ffffff",
-          borderRadius:"18px 18px 0 0",
-          boxShadow:showKarpuzIntro
-            ?"0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
-            :"0 -4px 24px rgba(0,0,0,0.35)",
-          height:"185px",maxHeight:"78dvh",
-          width:"100%",maxWidth: 480,boxSizing:"border-box",
-          display: (showTour) ? "none" : "flex",flexDirection:"column",
-          overflow:"hidden",
-          transition:"height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"}}
-        ref={sheetRef}>
-
-        {/* Drag handle – flex-shrink:0 ile ezilmez */}
-        <div ref={handleRef}
-          style={{display:"flex",justifyContent:"center",alignItems:"center",
-            padding:"16px 0",cursor:"grab",width:"100%",touchAction:"none",flexShrink:0}}>
-          <div style={{width:36,height:4,background:"#475569",borderRadius:2}}/>
-        </div>
-
-        {/* Kaydırılabilir içerik alanı */}
-        <div ref={sheetContentRef} style={{padding:"4px 12px 12px",display:"flex",flexDirection:"column",gap:8,
-          flex:1,overflowY:"auto",overflowX:"hidden",minHeight:0}}>
-
-          {/* ARRIVED: Varış kutlaması alt panelde */}
-          {mode==='arrived'&&(
-            <div style={{display:"flex",flexDirection:"column",alignItems:"center",
-              justifyContent:"center",gap:6,padding:"8px 0 env(safe-area-inset-bottom,12px)",
-              textAlign:"center",animation:"onboard-fadein .3s ease"}}>
-              <div style={{fontSize:42}}>🎉</div>
-              <div style={{color:"#86efac",fontWeight:800,fontSize:18,lineHeight:1.2}}>{to?locName(to):""}</div>
-              <div style={{color:"#94a3b8",fontSize:13}}>{t('arrivedMsg')}</div>
-              <button onClick={reset}
-                style={{...BTN,background:"#16a34a",color:"#fff",width:"100%",
-                  fontSize:15,fontWeight:700,minHeight:48,borderRadius:12,marginTop:6,
-                  paddingBottom:"calc(env(safe-area-inset-bottom,0px) + 0px)"}}>
-                {isEN()?"New Route":"Yeni Rota Çiz"}
+        className="santral-desktop-sidebar"
+        style={{
+          background: isDarkTheme ? "rgba(15, 23, 42, 0.94)" : "rgba(255, 255, 255, 0.96)",
+          border: isDarkTheme ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(0, 0, 0, 0.08)",
+          display: showWelcome ? "none" : undefined
+        }}
+      >
+        {/* Masaüstü Sidebar Başlık & Hızlı Araçlar */}
+        <div style={{
+          padding: "16px 18px 14px",
+          borderBottom: isDarkTheme ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.06)",
+          display: "flex", flexDirection: "column", gap: 12, flexShrink: 0
+        }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div
+              onClick={() => {
+                if (panelLoc) setPanelLoc(null);
+                else reset();
+              }}
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+              title={isEN() ? "Back to Campus Home" : "Ana Sayfaya Dön"}
+            >
+              <div style={{
+                width: 38, height: 38, borderRadius: "50%", overflow: "hidden",
+                background: isDarkTheme ? "rgba(255,255,255,0.08)" : "#fef08a",
+                border: "2px solid #eab308", display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+              }}>
+                <img src="/karpuz-dog.png" alt="Karpuz" style={{ width: "95%", height: "95%", objectFit: "contain" }} />
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: isDarkTheme ? "#f8fafc" : "#0f172a", lineHeight: 1.2 }}>
+                  {isEN() ? "Santral Campus" : "Santral Kampüs"}
+                </div>
+                <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
+                  {isEN() ? "BİLGİ Smart Navigation" : "BİLGİ Akıllı Navigasyon"}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {/* Tema Değiştir */}
+              <button
+                onClick={toggleTheme}
+                title={isDarkTheme ? "Açık tema" : "Koyu tema"}
+                style={{
+                  ...BTN, width: 32, height: 32, minHeight: 32,
+                  background: isDarkTheme ? "#334155" : "#e2e8f0",
+                  color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  borderRadius: 8, fontSize: 14, padding: 0
+                }}
+              >
+                {isDarkTheme ? "☀️" : "🌙"}
+              </button>
+              {/* Dil Değiştir */}
+              <button
+                onClick={() => setLang(isEN() ? "tr" : "en")}
+                title="Dil / Language"
+                style={{
+                  ...BTN, height: 32, minHeight: 32, padding: "0 9px",
+                  background: isDarkTheme ? "#334155" : "#e2e8f0",
+                  color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  borderRadius: 8, fontSize: 12, fontWeight: 700
+                }}
+              >
+                {isEN() ? "EN" : "TR"}
+              </button>
+              {/* Geri Bildirim */}
+              <button
+                onClick={() => setShowFeedback(true)}
+                title={isEN() ? "Feedback" : "Geri Bildirim"}
+                style={{
+                  ...BTN, width: 32, height: 32, minHeight: 32,
+                  background: isDarkTheme ? "#334155" : "#e2e8f0",
+                  color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  borderRadius: 8, fontSize: 13, padding: 0
+                }}
+              >
+                💬
               </button>
             </div>
-          )}
+          </div>
 
-
-          {/* IDLE: Kampüs Keşfi & Hızlı Erişim Paneli */}
-          {mode==='idle'&&(
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {/* Hızlı Kısayol Çipleri */}
-              <div id="cat-row" style={{display:"flex",alignItems:"center",gap:6,overflowX:"auto",paddingBottom:2,WebkitOverflowScrolling:"touch",scrollbarWidth:"none"}}>
-                {[
-                  { id: 'share_loc', icon: '📍', label: isEN() ? "Share Location" : "Konumunu At", color: '#10b981', bg: '#10b981', fg: '#fff', isSpecial: true },
-                  { id: 'food', icon: '☕', label: t('chipFood'), color: '#f59e0b', bg: '#f59e0b', fg: '#fff' },
-                  { id: 'library', icon: '📚', label: t('chipLibrary'), color: '#6366f1', bg: '#6366f1', fg: '#fff' },
-                  { id: 'wc', icon: '🚻', label: t('chipWc'), color: '#06b6d4', bg: '#06b6d4', fg: '#fff' },
-                  { id: 'atm', icon: '🏧', label: t('chipAtm'), color: '#10b981', bg: '#10b981', fg: '#fff' },
-                  { id: 'student', icon: '🏢', label: t('chipStudent'), color: '#ec4899', bg: '#ec4899', fg: '#fff' },
-                  { id: 'faculty', icon: '🎓', label: t('chipFaculty'), color: '#3b82f6', bg: '#3b82f6', fg: '#fff' },
-                  { id: 'favorites', icon: '⭐', label: t('catFavorites'), color: '#eab308', bg: '#eab308', fg: '#000', count: favorites.length },
-                  { id: 'recents', icon: '🕒', label: t('catRecents'), color: '#8b5cf6', bg: '#8b5cf6', fg: '#fff', count: recents.length },
-                ].map(chip => {
-                  const isActive = cat === chip.id;
-                  return (
-                    <button
-                      key={chip.id}
-                      onClick={() => {
-                        triggerHaptic(30);
-                        if (chip.isSpecial && chip.id === 'share_loc') {
-                          openShareModal();
-                          return;
-                        }
-                        const next = isActive ? null : chip.id;
-                        setCat(next);
-                        if (next && sheetRef.current) {
-                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
-                          sheetRef.current.style.height = `${Math.min(360, Math.round(window.innerHeight * 0.46))}px`;
-                        } else if (!next && sheetRef.current) {
-                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
-                          sheetRef.current.style.height = "185px";
-                        }
-                      }}
-                      style={{
-                        ...BTN,
-                        fontSize: 12,
-                        fontWeight: 600,
-                        padding: "6px 12px",
-                        minHeight: 32,
-                        borderRadius: 20,
-                        flexShrink: 0,
-                        border: isActive ? `1.5px solid ${chip.color}` : (isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"),
-                        background: isActive ? chip.bg : (isDarkTheme ? "rgba(255,255,255,0.05)" : "#f8fafc"),
-                        color: isActive ? chip.fg : (isDarkTheme ? "#cbd5e1" : "#475569"),
-                        boxShadow: isActive ? `0 2px 8px ${chip.color}55` : "none",
-                        transition: "all 0.15s ease",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5
-                      }}
-                    >
-                      <span style={{ fontSize: 13 }}>{chip.icon}</span>
-                      <span>{chip.label}</span>
-                      {typeof chip.count === 'number' && chip.count > 0 && (
-                        <span style={{
-                          fontSize: 10,
-                          background: isActive ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.12)",
-                          padding: "1px 5px",
-                          borderRadius: 10,
-                          fontWeight: 700
-                        }}>
-                          {chip.count}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Hızlı Mekan Kartları Listesi */}
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 2px" }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: isDarkTheme ? "#94a3b8" : "#64748b" }}>
-                    {cat ? `${visible.length} ${t('chipNearTitle')}` : (isEN() ? "Popular & Nearby Places" : "Popüler & Sık Gidilenler")}
-                  </span>
-                  {cat ? (
-                    <button
-                      onClick={() => {
-                        setCat(null);
-                        if (sheetRef.current) {
-                          sheetRef.current.style.transition = "height 0.25s cubic-bezier(0.32,0.72,0,1)";
-                          sheetRef.current.style.height = "185px";
-                        }
-                      }}
-                      style={{
-                        background: "none", border: "none",
-                        color: isDarkTheme ? "#64748b" : "#94a3b8",
-                        fontSize: 11, fontWeight: 600, cursor: "pointer", padding: "2px 4px"
-                      }}
-                    >
-                      ✕ {isEN() ? "Close" : "Kapat"}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => setMode('pickFrom')}
-                      style={{
-                        background: "none", border: "none",
-                        color: isDarkTheme ? "#38bdf8" : "#0284c7",
-                        fontSize: 11, fontWeight: 700, cursor: "pointer", padding: "2px 4px"
-                      }}
-                    >
-                      {isEN() ? "🗺️ Custom route..." : "🗺️ A'dan B'ye rota..."}
-                    </button>
-                  )}
-                </div>
-
-                <div style={{ maxHeight: 210, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 }}>
-                  {cat==='favorites'&&visible.length===0&&(
-                    <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12,lineHeight:1.5}}>
-                      {t('noFavoritesYet')}
-                    </div>
-                  )}
-                  {cat==='recents'&&visible.length===0&&(
-                    <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12}}>
-                      {t('noRecentsYet')}
-                    </div>
-                  )}
-                  {visible.slice(0, 10).map((loc) => {
-                    const distFromUser = userPos ? Math.round(hav(userPos[0], userPos[1], loc.gps[0], loc.gps[1])) : null;
-                    return (
-                      <div
-                        key={loc.num}
-                        style={{
-                          display: "flex", alignItems: "center", justifyContent: "space-between",
-                          padding: "8px 10px", borderRadius: 10,
-                          background: isDarkTheme ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
-                          border: isDarkTheme ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.05)"
-                        }}
-                      >
-                        <div
-                          onClick={() => handlePinClick(loc)}
-                          style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, cursor: "pointer" }}
-                        >
-                          <span style={{ fontSize: 20 }}>{loc.emoji}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: isDarkTheme ? "#f8fafc" : "#0f172a" }}>
-                              {locName(loc)}
-                            </div>
-                            <div style={{ fontSize: 11, color: isDarkTheme ? "#94a3b8" : "#64748b", display: "flex", alignItems: "center", gap: 6 }}>
-                              {distFromUser !== null && <span>📍 {distFromUser} m</span>}
-                              {cat === 'wc' && <span>🚻 WC</span>}
-                              {ROOMS[String(loc.num)] && <span>🚪 {Object.values(ROOMS[String(loc.num)]).reduce((s, a) => s + a.length, 0)} {t('mahalUnit')}</span>}
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            triggerHaptic(40);
-                            stopSim();
-                            setTo(loc);
-                            setToSearch(locName(loc));
-                            setTargetRoom(null);
-                            setTargetRoomInfo(null);
-                            if (gpsOn && userPos) {
-                              setFromGPS(true);
-                              calcRoute(userPos[0], userPos[1], loc);
-                            } else if (from) {
-                              calcRoute(from.gps[0], from.gps[1], loc);
-                            } else {
-                              const defStart = LOCS.find(l => l.num === 1) || LOCS[0];
-                              setFrom(defStart);
-                              setFromGPS(false);
-                              setFromSearch(locName(defStart));
-                              calcRoute(defStart.gps[0], defStart.gps[1], loc);
-                            }
-                            setMode('ready');
-                          }}
-                          style={{
-                            ...BTN,
-                            background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                            color: "#fff",
-                            fontSize: 12,
-                            fontWeight: 700,
-                            padding: "6px 12px",
-                            borderRadius: 8,
-                            flexShrink: 0
-                          }}
-                        >
-                          {t('btnGoHereArrow')}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PICKFROM: Başlangıç noktası arama listesi */}
-          {mode==='pickFrom'&&(
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              {userPos&&(
-                <button onClick={()=>{setFromGPS(true);setFrom(null);setFromSearch(t('yourLocation'));setMode('pickTo');}}
-                  style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
-                    padding:"10px 16px",borderRadius:10,width:"100%",gap:6,minHeight:44}}>
-                  📍 {t('useMyLocation')}
-                </button>
-              )}
-              <input value={search} onChange={e=>setSearch(e.target.value)}
-                placeholder={t('fromPlaceholder')}
-                autoFocus
-                style={{width:"100%",boxSizing:"border-box",background:"#0f172a",border:"1px solid #16a34a",borderRadius:10,
-                  padding:"11px 14px",color:"#fff",fontSize:16,outline:"none",minHeight:44}}/>
-              <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
-                {cat==='favorites'&&visible.length===0&&(
-                  <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12,lineHeight:1.5}}>
-                    {t('noFavoritesYet')}
-                  </div>
-                )}
-                {cat==='recents'&&visible.length===0&&(
-                  <div style={{padding:"14px",textAlign:"center",color:isDarkTheme?"#94a3b8":"#64748b",fontSize:12}}>
-                    {t('noRecentsYet')}
-                  </div>
-                )}
-                {visible.slice(0,10).map(loc=>(
-                  <button key={loc.num} onClick={()=>{setFrom(loc);setFromGPS(false);setFromSearch(locName(loc));setMode('pickTo');}}
-                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
-                      background:"#0f172a",border:"none",borderRadius:8,cursor:"pointer",
-                      color:"#fff",textAlign:"left",width:"100%"}}>
-                    <span style={{fontSize:18,flexShrink:0}}>{loc.emoji}</span>
-                    <span style={{fontSize:14,fontWeight:600,flex:1}}>{locName(loc)}</span>
-                    <span style={{color:"#16a34a",fontSize:12,flexShrink:0}}>🟢 {t('btnStartHere').replace('🟢 ','')}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* PICKTО: Varış noktası arama listesi */}
-          {mode==='pickTo'&&(
-            <div style={{display:"flex",flexDirection:"column",gap:6}}>
-              <div style={{display:"flex",alignItems:"center",gap:8}}>
-                <button onClick={()=>setMode('idle')}
-                  style={{...BTN,background:"transparent",color:"#94a3b8",
-                    minHeight:32,padding:"0 10px",fontSize:12,borderRadius:6,flexShrink:0,
-                    border:"1px solid #334155"}}>
-                  ← {isEN()?"Back":"Geri"}
-                </button>
-                <span style={{color:"#f1f5f9",fontSize:13,fontWeight:600,flex:1}}>
-                  🔴 {t('pickToTitle')}
-                </span>
-              </div>
-              <input value={search} onChange={e=>setSearch(e.target.value)}
-                placeholder={t('searchDestPlaceholder')}
-                autoFocus
-                style={{width:"100%",boxSizing:"border-box",background:"#0f172a",border:"1px solid #ef4444",borderRadius:10,
-                  padding:"11px 14px",color:"#fff",fontSize:16,outline:"none",minHeight:44}}/>
-              <div style={{maxHeight:180,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>
-                {visible.slice(0,10).map(loc=>(
-                  <button key={loc.num} onClick={()=>handlePinClick(loc)}
-                    style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",
-                      background:"#0f172a",border:"none",borderRadius:8,cursor:"pointer",
-                      color:"#fff",textAlign:"left",width:"100%"}}>
-                    <span style={{fontSize:18,flexShrink:0}}>{loc.emoji}</span>
-                    <span style={{fontSize:14,fontWeight:600,flex:1}}>{locName(loc)}</span>
-                    <span style={{color:"#ef4444",fontSize:12,flexShrink:0}}>{t('btnGoHereArrow')}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* READY / SIM / NAV: Rota bilgisi */}
-          {(mode==='ready'||mode==='sim'||mode==='nav')&&(
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {/* Kimden - Kime */}
-              <div style={{display:"flex",alignItems:"center",gap:8,background:"#0f172a",borderRadius:10,padding:"10px 12px"}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}
-                    onClick={()=>{if(mode==='ready'){setFrom(null);setFromGPS(false);setFromSearch("");setMode('idle');setRoute(null);setRouteM(0);setNavSteps([]);}}}>
-                    <span style={{width:8,height:8,borderRadius:"50%",background:"#16a34a",flexShrink:0}}/>
-                    <span style={{fontSize:12,color:"#94a3b8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
-                      textDecoration:mode==='ready'?"underline dotted":"none",cursor:mode==='ready'?"pointer":"default"}}>
-                      {fromGPS?t('yourLocation'):from?locName(from):"—"}
-                    </span>
-                  </div>
-                  {editingTo?(
-                    <div style={{position:"relative",marginTop:2}}>
-                      <input autoFocus value={editToSearch}
-                        onChange={e=>setEditToSearch(e.target.value)}
-                        onBlur={()=>setTimeout(()=>setEditingTo(false),160)}
-                        placeholder={t('editToPlaceholder')}
-                        style={{width:"100%",boxSizing:"border-box",background:"#1e293b",
-                          border:"1px solid #ef4444",borderRadius:8,padding:"6px 10px",
-                          color:"#fff",fontSize:12,outline:"none"}}/>
-                      {editToSearch&&(
-                        <div style={{position:"absolute",left:0,right:0,top:"calc(100% + 2px)",zIndex:60,
-                          background:"#1e293b",borderRadius:8,boxShadow:"0 4px 16px rgba(0,0,0,0.7)",maxHeight:160,overflowY:"auto"}}>
-                          {LOCS.filter(l=>locName(l).toLocaleLowerCase().includes(editToSearch.toLocaleLowerCase())).slice(0,6).map((loc,i,arr)=>(
-                            <button key={loc.num} onMouseDown={e=>e.preventDefault()}
-                              onClick={()=>{
-                                if(from&&loc.num===from.num){
-                                  setVoiceHint(isEN()?"⚠️ Start and destination cannot be the same!":"⚠️ Başlangıç ve varış noktası aynı olamaz!");
-                                  setTimeout(()=>setVoiceHint(null),3000);
-                                  setEditingTo(false);
-                                  return;
-                                }
-                                setTo(loc);setToSearch(locName(loc));setEditingTo(false);setEditToSearch("");setPanelLoc(loc);
-                                if(from||(fromGPS&&userPos)){
-                                  const fLa=fromGPS&&userPos?userPos[0]:from!.gps[0];
-                                  const fLo=fromGPS&&userPos?userPos[1]:from!.gps[1];
-                                  calcRoute(fLa,fLo,loc);setMode('ready');
-                                }
-                              }}
-                              style={{display:"flex",alignItems:"center",gap:8,padding:"8px 12px",
-                                background:"transparent",border:"none",
-                                borderBottom:i<arr.length-1?"1px solid #334155":"none",
-                                cursor:"pointer",color:"#fff",textAlign:"left",width:"100%"}}>
-                              <span style={{fontSize:14,flexShrink:0}}>{loc.emoji}</span>
-                              <span style={{fontSize:12,flex:1}}>{locName(loc)}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ):(
-                    <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <span style={{width:8,height:8,borderRadius:"50%",background:"#ef4444",flexShrink:0}}/>
-                      <span style={{fontSize:12,color:"#f1f5f9",fontWeight:700,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1}}>
-                        {to?locName(to):"—"}
-                      </span>
-                      {mode==='ready'&&(
-                        <button onMouseDown={e=>e.preventDefault()}
-                          onClick={()=>{setEditToSearch("");setEditingTo(true);}}
-                          style={{...BTN,padding:"2px 6px",fontSize:11,background:"#334155",
-                            color:"#94a3b8",borderRadius:6,flexShrink:0,minHeight:24}}>{t('btnChange')}</button>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div style={{textAlign:"right",flexShrink:0}}>
-                  <div style={{color:"#86efac",fontWeight:800,fontSize:14}}>~{mins} {t('minLabel')}</div>
-                  <div style={{color:"#64748b",fontSize:11}}>{routeM} m</div>
-                </div>
-                {mode==='ready'&&(
-                  <button onClick={swapFromTo}
-                    style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>⇅</button>
-                )}
-                <button onClick={reset}
-                  style={{...BTN,background:"#334155",color:"#94a3b8",minHeight:36,padding:"0 10px",fontSize:18,borderRadius:8}}>✕</button>
-              </div>
-
-              {/* Simülasyon & Navigasyon Denetim Çubuğu */}
-              {(mode==='sim'||mode==='nav')&&(
-                <div style={{display:"flex",flexDirection:"column",gap:6,background:isDarkTheme?"#0f172a":"#f8fafc",padding:"8px 12px",borderRadius:12,border:isDarkTheme?"1px solid #334155":"1px solid #e2e8f0"}}>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:12}}>
-                    <span style={{fontWeight:700,color:isDarkTheme?"#f1f5f9":"#1e293b"}}>
-                      {mode==='sim' ? (isEN()?"Simulation":"Simülasyon") : (isEN()?"Live Navigation":"Canlı Navigasyon")}
-                    </span>
-                    <span style={{color:isDarkTheme?"#38bdf8":"#0284c7",fontWeight:800}}>%{simPct}</span>
-                  </div>
-                  {/* Slider Scrubber */}
-                  <input
-                    type="range" min="0" max="100" value={simPct}
-                    disabled={mode!=='sim'}
-                    onChange={e => seekSim(Number(e.target.value))}
-                    style={{width:"100%",accentColor:"#38bdf8",cursor:mode==='sim'?"pointer":"default",margin:"2px 0"}}
-                  />
-                  {mode==='sim'&&(
-                    <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:2}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <button onClick={()=>seekSim(0)} title="Başa dön"
-                          style={{...BTN,background:isDarkTheme?"#1e293b":"#e2e8f0",color:isDarkTheme?"#fff":"#0f172a",padding:"4px 8px",borderRadius:6,fontSize:12}}>
-                          ⏮
-                        </button>
-                        {simPaused?(
-                          <button onClick={resumeSim}
-                            style={{...BTN,background:"#16a34a",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:12,fontWeight:700,gap:4}}>
-                            ▶ {t('simResume')}
-                          </button>
-                        ):(
-                          <button onClick={pauseSim}
-                            style={{...BTN,background:"#f59e0b",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:12,fontWeight:700,gap:4}}>
-                            ⏸ {t('simPause')}
-                          </button>
-                        )}
-                        <button onClick={()=>{const n=simSpeed===1?2:simSpeed===2?4:1;setSimSpeed(n);simSpeedRef.current=n;}}
-                          style={{...BTN,background:isDarkTheme?"#1e293b":"#e2e8f0",color:isDarkTheme?"#fff":"#0f172a",padding:"4px 8px",borderRadius:6,fontSize:12,fontWeight:700}}>
-                          {simSpeed}×
-                        </button>
-                      </div>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <button onClick={toggleMute}
-                          style={{...BTN,background:isMuted?(isDarkTheme?"rgba(239,68,68,0.2)":"#fee2e2"):(isDarkTheme?"#1e293b":"#e2e8f0"),color:isMuted?"#ef4444":(isDarkTheme?"#fff":"#0f172a"),padding:"4px 8px",borderRadius:6,fontSize:12}}>
-                          {isMuted ? "🔇" : "🔊"}
-                        </button>
-                        <button onClick={reset}
-                          style={{...BTN,background:"#dc2626",color:"#fff",padding:"4px 10px",borderRadius:6,fontSize:11,fontWeight:700}}>
-                          {t('simEnd')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Aksiyon butonları */}
-              {mode==='ready'&&(
-                <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                  {/* Kat Bilgili Akıllı Oda Kartı */}
-                  {targetRoomInfo && (
-                    <div style={{
-                      background: isDarkTheme ? "rgba(37,99,235,0.15)" : "#eff6ff",
-                      border: "1px solid rgba(59,130,246,0.35)",
-                      borderRadius: 12, padding: "8px 12px",
-                      display: "flex", alignItems: "center", gap: 10
-                    }}>
-                      <div style={{
-                        background: "#0284c7", color: "#fff",
-                        fontWeight: 800, fontSize: 12, padding: "4px 8px",
-                        borderRadius: 8, flexShrink: 0, textAlign: "center"
-                      }}>
-                        🚪 {targetRoomInfo.room}
-                      </div>
-                      <div style={{flex: 1, minWidth: 0}}>
-                        <div style={{display: "flex", alignItems: "center", gap: 6}}>
-                          <span style={{
-                            fontSize: 10.5, fontWeight: 700,
-                            background: "#0369a1", color: "#fff",
-                            padding: "1px 6px", borderRadius: 4
-                          }}>
-                            {targetRoomInfo.floor}
-                          </span>
-                          <span style={{fontSize: 11, fontWeight: 600, color: isDarkTheme ? "#93c5fd" : "#1d4ed8"}}>
-                            {targetRoomInfo.cat}
-                          </span>
-                          {targetRoomInfo.cap && (
-                            <span style={{fontSize: 10, color: isDarkTheme ? "#94a3b8" : "#64748b"}}>
-                              👤 {targetRoomInfo.cap} kişi
-                            </span>
-                          )}
-                        </div>
-                        <div style={{fontSize: 11.5, color: isDarkTheme ? "#f1f5f9" : "#1e293b", fontWeight: 600, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>
-                          {targetRoomInfo.label}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Engelsiz Rota Segmented Toggle */}
-                  <div style={{
-                    display: "flex", background: isDarkTheme ? "#0f172a" : "#f1f5f9",
-                    borderRadius: 10, padding: 3, gap: 4, border: isDarkTheme ? "1px solid #334155" : "1px solid #cbd5e1"
-                  }}>
-                    <button
-                      onClick={() => {
-                        triggerHaptic(30);
-                        setIsAccessible(false);
-                      }}
-                      style={{
-                        ...BTN, flex: 1, padding: "6px 10px", borderRadius: 7,
-                        fontSize: 12, fontWeight: 700,
-                        background: !isAccessible ? (isDarkTheme ? "#334155" : "#fff") : "transparent",
-                        color: !isAccessible ? (isDarkTheme ? "#fff" : "#0f172a") : (isDarkTheme ? "#94a3b8" : "#64748b"),
-                        boxShadow: !isAccessible ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 4
-                      }}
-                    >
-                      <span>🚶</span>
-                      <span>{t('standardRoute')}</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        triggerHaptic(35);
-                        setIsAccessible(true);
-                      }}
-                      style={{
-                        ...BTN, flex: 1, padding: "6px 10px", borderRadius: 7,
-                        fontSize: 12, fontWeight: 700,
-                        background: isAccessible ? "#059669" : "transparent",
-                        color: isAccessible ? "#fff" : (isDarkTheme ? "#94a3b8" : "#64748b"),
-                        boxShadow: isAccessible ? "0 2px 8px rgba(5,150,105,0.4)" : "none",
-                        display: "flex", alignItems: "center", justifyContent: "center", gap: 4
-                      }}
-                    >
-                      <span>♿</span>
-                      <span>{t('accessibleRoute')}</span>
-                    </button>
-                  </div>
-
-                  {/* Karpuz Samimi İpucu Kartı */}
-                  <div style={{
-                    background: isDarkTheme ? "rgba(244,63,94,0.08)" : "#fff1f2",
-                    border: "1px solid rgba(244,63,94,0.2)",
-                    borderRadius: 10, padding: "7px 10px",
-                    display: "flex", alignItems: "center", gap: 8
-                  }}>
-                    <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
-                    <div style={{flex: 1, fontSize: 11.5, lineHeight: 1.35, color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
-                      <b>{t('karpuzTipTitle')}:</b> {getKarpuzTip(to, isAccessible)}
-                    </div>
-                  </div>
-
-                  <div style={{display:"flex",gap:8}}>
-                    {/* Önizleme: navigasyona gerek yok, sadece izle */}
-                    <button onClick={startSim}
-                      style={{...BTN,flex:1,background:"#f97316",color:"#fff",fontSize:13,
-                        padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
-                      <span style={{fontSize:18}}>▶</span>
-                      <span style={{fontSize:11}}>{t('btnPreview')}</span>
-                    </button>
-                    {/* AR Kamera Navigasyonu */}
-                    <button onClick={startAr}
-                      style={{...BTN,flex:1,background:"#8b5cf6",color:"#fff",fontSize:13,
-                        padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
-                      <span style={{fontSize:18}}>📷</span>
-                      <span style={{fontSize:11}}>{t('arView')}</span>
-                    </button>
-                    {/* Gerçek GPS navigasyon */}
-                    {gpsOn&&userPos?(
-                      <button onClick={()=>{
-                        if(to&&userPos&&hav(userPos[0],userPos[1],to.gps[0],to.gps[1])<ARRIVE_M){
-                          setVoiceHint(isEN()?"📍 You're already here!":"📍 Zaten buradasınız!");
-                          setTimeout(()=>setVoiceHint(null),3000);
-                          setMode('arrived');return;
-                        }
-                        setFromGPS(true);setMode('nav');}}
-                        style={{...BTN,flex:1,background:"#3b82f6",color:"#fff",fontSize:13,
-                          padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
-                        <span style={{fontSize:18}}>🚶</span>
-                        <span style={{fontSize:11}}>{t('btnGpsNav')}</span>
-                      </button>
-                    ):(
-                      <button onClick={toggleGPS}
-                        style={{...BTN,flex:1,background:"#334155",color:"#94a3b8",fontSize:11,
-                          padding:"11px 0",borderRadius:10,flexDirection:"column",gap:2,minHeight:48}}>
-                        <span style={{fontSize:18}}>📍</span>
-                        <span>{t('btnOpenGps')}</span>
-                      </button>
-                    )}
-                    <button onClick={()=>setShowSteps(p=>!p)}
-                      style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
-                        fontSize:11,padding:"0 10px",borderRadius:10,flexDirection:"column",gap:2,minHeight:48,minWidth:50}}>
-                      <span style={{fontSize:18}}>≡</span>
-                      <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Nav/Sim modunda varış fotoğrafı */}
-              {(mode==='sim'||mode==='nav')&&to&&(to.photo||to.photos?.length)&&(
-                <PhotoGallery loc={to} height={140} mb={0}/>
-              )}
-
-              {/* Nav/Sim modunda adım butonu */}
-              {(mode==='sim'||mode==='nav')&&(
-                <div style={{display:"flex",justifyContent:"flex-end"}}>
-                  <button onClick={()=>setShowSteps(p=>!p)}
-                    style={{...BTN,background:showSteps?"#3b82f6":"#334155",color:"#fff",
-                      fontSize:11,padding:"4px 12px",borderRadius:8,gap:4,minHeight:32}}>
-                    <span style={{fontSize:14}}>≡</span>
-                    <span>{showSteps?t('btnStepsHide'):t('btnStepsShow')}</span>
-                  </button>
-                </div>
-              )}
-
-              {/* Adım listesi – sadece showSteps açıksa, max 150px */}
-              {showSteps&&(mode==='ready'||mode==='sim'||mode==='nav')&&(
-                <div style={{background:isDarkTheme?"#0f172a":"#f8fafc",borderRadius:10,maxHeight:160,overflowY:"auto",padding:"4px 2px",border:isDarkTheme?"1px solid #1e293b":"1px solid #e2e8f0"}}>
-                  {navSteps.map((s,i)=>(
-                    <div key={i}
-                      onClick={() => {
-                        if (mode === 'sim') {
-                          let cumDist = 0;
-                          for (let stepIdx = 0; stepIdx < i; stepIdx++) cumDist += navSteps[stepIdx].dist;
-                          const total = cumRef.current[cumRef.current.length - 1] ?? 1;
-                          const pct = Math.min(100, Math.round((cumDist / total) * 100));
-                          seekSim(pct);
-                        }
-                      }}
-                      title={mode === 'sim' ? t('stepJumpHint') : undefined}
-                      style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",
-                        cursor: mode === 'sim' ? "pointer" : "default",
-                        borderRadius: 6,
-                        background: i === curStepIdx ? (isDarkTheme ? "rgba(56,189,248,0.15)" : "#e0f2fe") : "transparent",
-                        borderBottom:i<navSteps.length-1 ? (isDarkTheme ? "1px solid #1e293b" : "1px solid #e2e8f0") : "none",
-                        opacity:i<curStepIdx?0.4:1,
-                        transition:"all 0.2s ease"}}>
-                      <span style={{fontSize:18,minWidth:24,textAlign:"center",
-                        color:i===curStepIdx?"#0284c7": (isDarkTheme ? "#64748b" : "#94a3b8")}}>{s.arrow}</span>
-                      <span style={{fontSize:12.5,fontWeight: i === curStepIdx ? 700 : 500,
-                        color:i===curStepIdx ? (isDarkTheme ? "#38bdf8" : "#0284c7") : (isDarkTheme ? "#cbd5e1" : "#475569"),
-                        flex:1,lineHeight:1.3}}>{s.text}</span>
-                      {s.dist>0&&<span style={{fontSize:11,color: isDarkTheme ? "#64748b" : "#94a3b8",flexShrink:0}}>{s.dist}m</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Panel içi bina detay kartı – klavye kapalıyken */}
-          {panelLoc&&!activeRouteInput&&(mode==='idle'||mode==='ready')&&(
-            <div style={{marginTop:8,borderTop: isDarkTheme ? "1px solid #334155" : "1px solid #e2e8f0",paddingTop:10}}>
-              <PhotoGallery loc={panelLoc} height={110}/>
-              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
-                {!panelLoc.photo&&<span style={{fontSize:28}}>{panelLoc.emoji}</span>}
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700,color: isDarkTheme ? "#fff" : "#0f172a",fontSize:15}}>{locName(panelLoc)}</div>
-                  {ROOMS[String(panelLoc.num)]&&(
-                    <div style={{fontSize:11,color: isDarkTheme ? "#94a3b8" : "#64748b"}}>
-                      {Object.values(ROOMS[String(panelLoc.num)]).reduce((s:number,a)=>s+(a as RoomEntry[]).length,0)} {t('mahalUnit')}
-                    </div>
-                  )}
-                </div>
-                <button onClick={()=>setPanelLoc(null)}
-                  style={{...BTN,width:28,height:28,borderRadius:"50%",padding:0,
-                    background: isDarkTheme ? "#334155" : "#e2e8f0",
-                    color: isDarkTheme ? "#fff" : "#0f172a",fontSize:14,flexShrink:0}}>✕</button>
-              </div>
-
-              {/* Vurucu Rozetler */}
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
-                {getBuildingBadges(panelLoc).map((b,i)=>(
-                  <span key={i} style={{background:b.bg,color:b.color,fontSize:10.5,fontWeight:700,padding:"2px 7px",borderRadius:5}}>
-                    {b.label}
-                  </span>
-                ))}
-              </div>
-
-              <p style={{margin:"0 0 8px",fontSize:12,color: isDarkTheme ? "#94a3b8" : "#64748b",lineHeight:1.5}}>
-                {locDesc(panelLoc)}
-              </p>
-
-              {/* Karpuz Samimi İpucu */}
-              <div style={{
-                background: isDarkTheme ? "rgba(244,63,94,0.1)" : "#fff1f2",
-                border: "1px solid rgba(244,63,94,0.25)",
-                borderRadius: 9, padding: "6px 9px",
-                display: "flex", alignItems: "center", gap: 7, marginBottom: 10
-              }}>
-                <img src="/karpuz-dog.png" alt="Karpuz" style={{width: 26, height: 26, objectFit: "contain", flexShrink: 0}} />
-                <span style={{fontSize:11,lineHeight:1.35,color: isDarkTheme ? "#fecdd3" : "#9f1239"}}>
-                  <b>Karpuz:</b> {getKarpuzTip(panelLoc, isAccessible)}
-                </span>
-              </div>
-
-              {ROOMS[String(panelLoc.num)]&&(
-                <div style={{maxHeight:130,overflowY:"auto",fontSize:12,marginBottom:10}}>
-                  {Object.entries(ROOMS[String(panelLoc.num)]).map(([floor,rooms])=>(
-                    <div key={floor} style={{marginBottom:6}}>
-                      <div style={{fontWeight:700,color: isDarkTheme ? "#94a3b8" : "#475569",fontSize:10,
-                        background: isDarkTheme ? "#0f172a" : "#f1f5f9",padding:"2px 6px",borderRadius:4,marginBottom:3}}>
-                        {tFloor(floor)}
-                      </div>
-                      {(rooms as RoomEntry[]).map((r,i)=>{
-                        const rk=`${panelLoc.num}_${floor}_${i}`;
-                        return<RoomRow key={rk} r={r} roomKey={rk}
-                          expanded={expandedRoomKey===rk} onToggle={toggleRoom} dark={isDarkTheme}
-                          highlighted={highlightedRoomKey===rk}/>;
-                      })}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Hızlı 1-Tıkla Rota & Başlangıç Seç */}
-              <div style={{display:"flex",gap:8}}>
-                <button onClick={()=>{
-                  triggerHaptic(40);
-                  const sel=panelLoc;
-                  setPanelLoc(null);
-                  setTo(sel);
-                  setToSearch(locName(sel));
-                  setTargetRoom(null);
-                  setTargetRoomInfo(null);
-                  if(gpsOn&&userPos){
-                    setFromGPS(true);
-                    calcRoute(userPos[0],userPos[1],sel);
-                  } else if(from){
-                    calcRoute(from.gps[0],from.gps[1],sel);
-                  } else {
-                    const defStart=LOCS.find(l=>l.num===1)||LOCS[0];
-                    setFrom(defStart);
-                    setFromGPS(false);
-                    setFromSearch(locName(defStart));
-                    calcRoute(defStart.gps[0],defStart.gps[1],sel);
+          {/* Masaüstü Sidebar Arama Kutusu (Sadece Idle ve Panel Kapalıyken) */}
+          {mode === 'idle' && !panelLoc && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: isDarkTheme ? "rgba(30, 41, 59, 0.85)" : "rgba(241, 245, 249, 0.95)",
+              borderRadius: 12, padding: "9px 12px",
+              border: isDarkTheme ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.08)",
+              boxShadow: "inset 0 1px 2px rgba(0,0,0,0.06)"
+            }}>
+              <span style={{ fontSize: 15 }}>🔍</span>
+              <input
+                type="text"
+                value={toSearch}
+                onChange={(e) => {
+                  setToSearch(e.target.value);
+                  if (e.target.value.trim() && mode === 'idle') {
+                    setActiveRouteInput('to');
                   }
-                  setMode('ready');
                 }}
-                  style={{...BTN,flex:2,background:"linear-gradient(135deg, #10b981 0%, #059669 100%)",color:"#fff",fontSize:13,fontWeight:700,padding:"10px 0",borderRadius:10,gap:5}}>
-                  <span>📍</span>
-                  <span>{t('getDirections')}</span>
+                placeholder={t('searchDestPlaceholder')}
+                style={{
+                  border: "none", background: "transparent", outline: "none",
+                  fontSize: 13, flex: 1, color: isDarkTheme ? "#f8fafc" : "#0f172a",
+                  fontFamily: "inherit"
+                }}
+              />
+              {toSearch && (
+                <button
+                  onClick={() => setToSearch('')}
+                  style={{ border: "none", background: "transparent", color: isDarkTheme ? "#94a3b8" : "#64748b", cursor: "pointer", fontSize: 13, padding: "0 2px" }}
+                >
+                  ✕
                 </button>
-
-                {panelLoc?.num!==from?.num&&(
-                  <button onClick={()=>{
-                    triggerHaptic(25);
-                    const sel=panelLoc;
-                    setPanelLoc(null);
-                    setFrom(sel);
-                    setFromGPS(false);
-                    setFromSearch(locName(sel));
-                    setMode('pickTo');
-                  }}
-                    style={{...BTN,flex:1,background: isDarkTheme ? "#334155" : "#e2e8f0",color: isDarkTheme ? "#f1f5f9" : "#334155",fontSize:12,fontWeight:600,padding:"10px 0",borderRadius:10}}>
-                    {t('planFromHere')}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           )}
+        </div>
 
+        {/* Masaüstü Sidebar Kaydırılabilir İçerik */}
+        <div style={{
+          flex: 1, overflowY: "auto", overflowX: "hidden",
+          padding: "14px 16px 20px", display: "flex", flexDirection: "column", gap: 10,
+          minHeight: 0
+        }}>
+          {renderPanelContent()}
         </div>
       </div>
+
+      {/* ─── 2. MOBİL ALT ÇEKMECE PANELİ (Mobile Bottom Sheet - <768px) ───── */}
+      <div
+        ref={sheetRef}
+        className="santral-mobile-only santral-mobile-sheet"
+        style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, margin: "0 auto", zIndex: 10,
+          background: isDarkTheme ? "#1e293b" : "#ffffff",
+          borderRadius: "20px 20px 0 0",
+          boxShadow: showKarpuzIntro
+            ? "0 -4px 24px rgba(0,0,0,0.5),0 0 0 2px #0d9488,0 0 32px rgba(13,148,136,0.45)"
+            : "0 -4px 24px rgba(0,0,0,0.35)",
+          height: "185px", maxHeight: "78dvh",
+          width: "100%", maxWidth: 480, boxSizing: "border-box",
+          display: showTour ? "none" : "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          transition: "height 0.25s cubic-bezier(0.32,0.72,0,1),bottom 0.15s ease"
+        }}
+      >
+        {/* Drag handle – mobil çekmece tutamacı */}
+        <div
+          ref={handleRef}
+          style={{
+            display: "flex", justifyContent: "center", alignItems: "center",
+            padding: "14px 0 8px", cursor: "grab", width: "100%", touchAction: "none", flexShrink: 0
+          }}
+        >
+          <div style={{ width: 38, height: 4, background: isDarkTheme ? "#475569" : "#cbd5e1", borderRadius: 2 }} />
+        </div>
+
+        {/* Mobil Kaydırılabilir içerik alanı */}
+        <div
+          ref={sheetContentRef}
+          style={{
+            padding: "4px 14px 16px", display: "flex", flexDirection: "column", gap: 8,
+            flex: 1, overflowY: "auto", overflowX: "hidden", minHeight: 0
+          }}
+        >
+          {renderPanelContent()}
+        </div>
+      </div>
+      
       {/* ─── Arkadaşın Konumu Karşılama Kartı ─────────────────────────────── */}
       {friendTarget && mode === 'idle' && !selectedLoc && !panelLoc && (
         <div

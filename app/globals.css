@@ -78,3 +78,81 @@ vercel-toolbar,
 [data-vercel-toolbar] {
   display: none !important;
 }
+
+/* Custom scrollbar for modern feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* ========================================================
+   RESPONSIVE LAYOUT (Desktop Sidebar vs Mobile Sheet)
+   ======================================================== */
+
+@media (min-width: 768px) {
+  .santral-mobile-only {
+    display: none !important;
+  }
+  
+  .santral-desktop-sidebar {
+    display: flex !important;
+    position: fixed;
+    top: 16px;
+    bottom: 16px;
+    left: 16px;
+    width: 410px;
+    max-width: calc(100vw - 32px);
+    z-index: 1000;
+    flex-direction: column;
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.32);
+    animation: onboard-fadein 0.25s ease;
+  }
+
+  /* Harita kontrol araç çubuğu sağ üstte */
+  .santral-toolbar-ctrls {
+    top: 16px !important;
+    right: 16px !important;
+  }
+
+  /* Navigasyon / HUD kartı masaüstünde harita üzerinde ortalanır */
+  .santral-nav-hud {
+    left: calc(50% + 205px) !important;
+    transform: translateX(-50%) !important;
+    max-width: 480px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .santral-desktop-sidebar {
+    display: none !important;
+  }
+  
+  .santral-mobile-only {
+    display: flex !important;
+  }
+
+  .santral-toolbar-ctrls {
+    top: 82px !important;
+    right: 12px !important;
+  }
+
+  .santral-nav-hud {
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+  }
+}

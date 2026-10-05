@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Koyu yeşil arka plan -->
+  <rect width="512" height="512" rx="88" fill="#091810"/>
+
+  <!-- Pin gövdesi (harita iğnesi şekli) -->
+  <path d="M 256 462 C 256 432 104 348 96 180 C 96 50 196 28 256 28 C 316 28 416 50 416 180 C 408 348 256 432 256 462 Z"
+        fill="#1b5e20" stroke="#0d2a12" stroke-width="5"/>
+
+  <!-- Karpuz dış kabuğu (koyu yeşil halka) -->
+  <circle cx="256" cy="178" r="137" fill="#2e7d32"/>
+
+  <!-- Karpuz iç kabuğu (açık yeşil/beyazımsı ince şerit) -->
+  <circle cx="256" cy="178" r="120" fill="#f1f8e9"/>
+
+  <!-- Karpuz eti (kırmızı) -->
+  <circle cx="256" cy="178" r="108" fill="#c62828"/>
+
+  <!-- Çekirdekler -->
+  <ellipse cx="228" cy="157" rx="7" ry="11.5" fill="#1a1a1a" transform="rotate(-20 228 157)"/>
+  <ellipse cx="267" cy="140" rx="7" ry="11.5" fill="#1a1a1a" transform="rotate(-5 267 140)"/>
+  <ellipse cx="303" cy="159" rx="7" ry="11.5" fill="#1a1a1a" transform="rotate(17 303 159)"/>
+  <ellipse cx="216" cy="194" rx="7" ry="11.5" fill="#1a1a1a" transform="rotate(-17 216 194)"/>
+  <ellipse cx="256" cy="204" rx="7" ry="11.5" fill="#1a1a1a"/>
+  <ellipse cx="295" cy="193" rx="7" ry="11.5" fill="#1a1a1a" transform="rotate(17 295 193)"/>
+
+  <!-- Parıltı (glossy highlight) -->
+  <ellipse cx="222" cy="132" rx="46" ry="30" fill="rgba(255,255,255,0.20)" transform="rotate(-22 222 132)"/>
+</svg>

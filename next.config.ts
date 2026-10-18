@@ -4,7 +4,8 @@ const repoName = "santral-map";
 
 const nextConfig: NextConfig = {
   output: "export",
-  basePath: process.env.NODE_ENV === "production" ? `/${repoName}` : "",
+  basePath: `/${repoName}`,
+  assetPrefix: `/${repoName}`,
   images: {
     unoptimized: true,
   },

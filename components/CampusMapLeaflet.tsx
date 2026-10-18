@@ -9,6 +9,8 @@ import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
 import { t, greetUser, tFloor, tCat, isEN, setLang } from "../lib/i18n";
 
+const BASE_PATH = "/santral-map";
+
 type Occupant={name:string;title:string};
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string;occupants?:Occupant[]};
 type RoomsData=Record<string,Record<string,RoomEntry[]>>;
@@ -399,56 +401,56 @@ function RoomRow({r,roomKey,expanded,onToggle,dark,highlighted}:{
 }
 const LOCS:Loc[]=[
   // ── Girişler ──────────────────────────────────────────────────────────────
-  {num:1, name:"Cami Tarafı Giriş",  nameEN:"West Gate",           gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",descEN:"West main campus entrance gate near the mosque.",photo:"/buildings/cami-giris.jpg",photos:["/buildings/cami-giris.jpg","/buildings/cami-giris2.jpg"]},
+  {num:1, name:"Cami Tarafı Giriş",  nameEN:"West Gate",            gps:[41.06855,28.94406],cats:["giriş"],   emoji:"🚪",desc:"Cami tarafındaki kampüs batı ana giriş kapısı.",descEN:"West main campus entrance gate near the mosque.",photo:`${BASE_PATH}/buildings/cami-giris.jpg`,photos:[`${BASE_PATH}/buildings/cami-giris.jpg`,`${BASE_PATH}/buildings/cami-giris2.jpg`]},
   {num:25,name:"Misafir Girişi",      nameEN:"South Gate",           gps:[41.06668,28.94535],cats:["giriş"],   emoji:"🚪",desc:"Ana misafir ve öğrenci güney girişi.",descEN:"Main south entrance for visitors and students."},
-  {num:33,name:"Tarihi Giriş",        nameEN:"Historic Gate",        gps:[41.06568,28.94669],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",descEN:"Historic main entrance of the power plant complex.",photo:"/buildings/tarihi-giris.jpg"},
+  {num:33,name:"Tarihi Giriş",        nameEN:"Historic Gate",        gps:[41.06568,28.94669],cats:["giriş"],   emoji:"🏛️",desc:"Tarihi güç santrali ana giriş kapısı.",descEN:"Historic main entrance of the power plant complex.",photo:`${BASE_PATH}/buildings/tarihi-giris.jpg`},
   // ── Eğitsel ───────────────────────────────────────────────────────────────
-  {num:2, name:"E1",                  gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"İletişim Fakültesi – Görsel İletişim Tasarımı (VCD), Dijital Oyun Tasarımı, Radyo Televizyon ve Sinema (FTV), Dijital Yapımcılık ve Yayıncılık.",descEN:"Faculty of Communication – Visual Communication Design (VCD), Digital Game Design, Radio Television and Cinema (FTV), Digital Production and Broadcasting.",photo:"/buildings/e1.jpg",keywords:["Görsel İletişim Tasarımı","VCD","Dijital Oyun Tasarımı","Oyun Tasarımı","FTV","Radyo Televizyon","Sinema","Dijital Yapımcılık","İletişim Fakültesi"]},
-  {num:3, name:"E2",                  gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Psikoloji, Sosyoloji, Tarih, Karşılaştırmalı Edebiyat, İngiliz Dili ve Edebiyatı, Müzik.",descEN:"Faculty of Social Sciences and Humanities – Psychology, Sociology, History, Comparative Literature, English Language & Literature, Music.",photo:"/buildings/e2.jpg",keywords:["Psikoloji","Sosyoloji","Tarih","Karşılaştırmalı Edebiyat","İngiliz Dili","İngiliz Edebiyatı","Müzik","Sosyal Bilimler","Beşeri Bilimler","SOSBEL"]},
-  {num:7, name:"L1",                  gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"Lisansüstü Programlar Enstitüsü, Bilişim ve Teknoloji Hukuku Enstitüsü, araştırma merkezleri.",descEN:"Institute of Graduate Programs, Institute of IT and Technology Law, research centers.",photo:"/buildings/l1.jpg",keywords:["Yüksek Lisans","Doktora","SBE","FBE","Enstitü","Graduate"]},
-  {num:8, name:"L2",                  gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası.",descEN:"L2 building.",photo:"/buildings/l2.jpg"},
-  {num:9, name:"L3",                  gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası.",descEN:"L3 Energy building.",photo:"/buildings/l3.jpg"},
-  {num:11,name:"E3",                  gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – Bilgisayar Mühendisliği, Elektrik Elektronik Mühendisliği, Enerji Sistemleri Mühendisliği.",descEN:"Faculty of Engineering and Natural Sciences – Computer Engineering, Electrical & Electronics Engineering, Energy Systems Engineering.",photo:"/buildings/e3.jpg",keywords:["Bilgisayar Mühendisliği","Elektrik Elektronik Mühendisliği","Enerji Sistemleri","Mühendislik Fakültesi","BM","EEE","CS","Doğa Bilimleri","Yazılım"]},
-  {num:12,name:"E4",                  gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"İletişim Fakültesi – Medya, Reklamcılık, Sahne Sanatları, Sanat ve Kültür Yönetimi.",descEN:"Faculty of Communication – Media, Advertising, Performing Arts, Arts and Cultural Management.",photo:"/buildings/e4.jpg",keywords:["Medya","Reklamcılık","Reklam","Sahne Sanatları","Sanat ve Kültür Yönetimi","Performans","İletişim E4"]},
-  {num:13,name:"ÇSM Sınıflar",        nameEN:"CSM Classrooms",      gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",descEN:"CSM lower floor – classrooms and study rooms.",photo:"/buildings/csm-siniflar.jpg"},
-  {num:18,name:"E5",                  gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Uluslararası İlişkiler, Avrupa Birliği Enstitüsü.",descEN:"Faculty of Social Sciences and Humanities – International Relations, European Union Institute.",photo:"/buildings/e5.jpg",keywords:["Uluslararası İlişkiler","Avrupa Birliği","AB Enstitüsü","Siyaset Bilimi","Uluslararası E5","UI","International Relations"]},
-  {num:19,name:"E6",                  gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",descEN:"E6 academic building.",photo:"/buildings/e6.jpg"},
-  {num:16,name:"KD4 Mimarlık",        nameEN:"KD4 Architecture",    gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık Fakültesi – Mimarlık, İç Mimarlık, Endüstri Ürünleri Tasarımı.",descEN:"Faculty of Architecture – Architecture, Interior Architecture, Industrial Product Design.",photo:"/buildings/mimarlik-kd4.jpg",keywords:["Mimarlık Fakültesi","İç Mimarlık","Endüstri Ürünleri Tasarımı","Tasarım","Stüdyo","Atölye","MİMFAK","KD4"]},
-  {num:17,name:"Seyfi Arıkan",        gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Hukuk Fakültesi – derslikler ve konferans salonu.",descEN:"Faculty of Law – classrooms and conference hall.",photo:"/buildings/seyfi-arikan.jpg",keywords:["Hukuk Fakültesi","Hukuk","Özel Hukuk","Kamu Hukuku","Konferans Salonu","Amfi","Derslik Hukuk"]},
-  {num:20,name:"Kütüphane",           nameEN:"Library",             gps:[41.06635,28.94598],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",descEN:"Mehmet Kenan Tekdağ Library.",photo:"/buildings/kutuphane.jpg",keywords:["Tekdağ","Mehmet Kenan","Okuma Salonu","Kitap","Araştırma","Veritabanı","Kütüphane"]},
-  {num:22,name:"MIDL",               gps:[41.06726,28.94597],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı.",descEN:"Media and Communication Design Laboratory.",photo:"/buildings/midl.jpg"},
-  {num:31,name:"Gastronomi Mutfak",   nameEN:"Gastronomy Kitchen",  gps:[41.06603,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve Mutfak Sanatları bölümü – uygulama mutfakları.",descEN:"Gastronomy and Culinary Arts department – practice kitchens.",photo:"/buildings/gastronomi.jpg"},
-  {num:37,name:"Blab",               gps:[41.06753,28.94561],cats:["sosyal"],   emoji:"☕",desc:"Blab Coffee – kampüs kafe alanı.",descEN:"Blab Coffee – campus café.",photo:"/buildings/blab.jpg"},
+  {num:2, name:"E1",                  gps:[41.06884,28.94474],cats:["eğitsel"],  emoji:"🏭",desc:"İletişim Fakültesi – Görsel İletişim Tasarımı (VCD), Dijital Oyun Tasarımı, Radyo Televizyon ve Sinema (FTV), Dijital Yapımcılık ve Yayıncılık.",descEN:"Faculty of Communication – Visual Communication Design (VCD), Digital Game Design, Radio Television and Cinema (FTV), Digital Production and Broadcasting.",photo:`${BASE_PATH}/buildings/e1.jpg`,keywords:["Görsel İletişim Tasarımı","VCD","Dijital Oyun Tasarımı","Oyun Tasarımı","FTV","Radyo Televizyon","Sinema","Dijital Yapımcılık","İletişim Fakültesi"]},
+  {num:3, name:"E2",                  gps:[41.06959,28.94568],cats:["eğitsel"],  emoji:"🏭",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Psikoloji, Sosyoloji, Tarih, Karşılaştırmalı Edebiyat, İngiliz Dili ve Edebiyatı, Müzik.",descEN:"Faculty of Social Sciences and Humanities – Psychology, Sociology, History, Comparative Literature, English Language & Literature, Music.",photo:`${BASE_PATH}/buildings/e2.jpg`,keywords:["Psikoloji","Sosyoloji","Tarih","Karşılaştırmalı Edebiyat","İngiliz Dili","İngiliz Edebiyatı","Müzik","Sosyal Bilimler","Beşeri Bilimler","SOSBEL"]},
+  {num:7, name:"L1",                  gps:[41.06909,28.94553],cats:["eğitsel"],  emoji:"🏭",desc:"Lisansüstü Programlar Enstitüsü, Bilişim ve Teknoloji Hukuku Enstitüsü, araştırma merkezleri.",descEN:"Institute of Graduate Programs, Institute of IT and Technology Law, research centers.",photo:`${BASE_PATH}/buildings/l1.jpg`,keywords:["Yüksek Lisans","Doktora","SBE","FBE","Enstitü","Graduate"]},
+  {num:8, name:"L2",                  gps:[41.06861,28.94553],cats:["eğitsel","idari"],emoji:"🏭",desc:"L2 binası.",descEN:"L2 building.",photo:`${BASE_PATH}/buildings/l2.jpg`},
+  {num:9, name:"L3",                  gps:[41.06906,28.94581],cats:["eğitsel"],  emoji:"🏭",desc:"L3 Enerji binası.",descEN:"L3 Energy building.",photo:`${BASE_PATH}/buildings/l3.jpg`},
+  {num:11,name:"E3",                  gps:[41.06807,28.94656],cats:["eğitsel"],  emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – Bilgisayar Mühendisliği, Elektrik Elektronik Mühendisliği, Enerji Sistemleri Mühendisliği.",descEN:"Faculty of Engineering and Natural Sciences – Computer Engineering, Electrical & Electronics Engineering, Energy Systems Engineering.",photo:`${BASE_PATH}/buildings/e3.jpg`,keywords:["Bilgisayar Mühendisliği","Elektrik Elektronik Mühendisliği","Enerji Sistemleri","Mühendislik Fakültesi","BM","EEE","CS","Doğa Bilimleri","Yazılım"]},
+  {num:12,name:"E4",                  gps:[41.06729,28.94669],cats:["eğitsel"],  emoji:"🏢",desc:"İletişim Fakültesi – Medya, Reklamcılık, Sahne Sanatları, Sanat ve Kültür Yönetimi.",descEN:"Faculty of Communication – Media, Advertising, Performing Arts, Arts and Cultural Management.",photo:`${BASE_PATH}/buildings/e4.jpg`,keywords:["Medya","Reklamcılık","Reklam","Sahne Sanatları","Sanat ve Kültür Yönetimi","Performans","İletişim E4"]},
+  {num:13,name:"ÇSM Sınıflar",        nameEN:"CSM Classrooms",      gps:[41.06692,28.94621],cats:["eğitsel"],  emoji:"🎓",desc:"ÇSM alt kat – derslikler ve çalışma sınıfları.",descEN:"CSM lower floor – classrooms and study rooms.",photo:`${BASE_PATH}/buildings/csm-siniflar.jpg`},
+  {num:18,name:"E5",                  gps:[41.06610,28.94660],cats:["eğitsel"],  emoji:"🏢",desc:"Sosyal ve Beşeri Bilimler Fakültesi – Uluslararası İlişkiler, Avrupa Birliği Enstitüsü.",descEN:"Faculty of Social Sciences and Humanities – International Relations, European Union Institute.",photo:`${BASE_PATH}/buildings/e5.jpg`,keywords:["Uluslararası İlişkiler","Avrupa Birliği","AB Enstitüsü","Siyaset Bilimi","Uluslararası E5","UI","International Relations"]},
+  {num:19,name:"E6",                  gps:[41.06606,28.94619],cats:["eğitsel"],  emoji:"🏢",desc:"E6 akademik binası.",descEN:"E6 academic building.",photo:`${BASE_PATH}/buildings/e6.jpg`},
+  {num:16,name:"KD4 Mimarlık",        nameEN:"KD4 Architecture",    gps:[41.06630,28.94616],cats:["eğitsel"],  emoji:"📐",desc:"Mimarlık Fakültesi – Mimarlık, İç Mimarlık, Endüstri Ürünleri Tasarımı.",descEN:"Faculty of Architecture – Architecture, Interior Architecture, Industrial Product Design.",photo:`${BASE_PATH}/buildings/mimarlik-kd4.jpg`,keywords:["Mimarlık Fakültesi","İç Mimarlık","Endüstri Ürünleri Tasarımı","Tasarım","Stüdyo","Atölye","MİMFAK","KD4"]},
+  {num:17,name:"Seyfi Arıkan",        gps:[41.06689,28.94692],cats:["eğitsel"],  emoji:"🎤",desc:"Hukuk Fakültesi – derslikler ve konferans salonu.",descEN:"Faculty of Law – classrooms and conference hall.",photo:`${BASE_PATH}/buildings/seyfi-arikan.jpg`,keywords:["Hukuk Fakültesi","Hukuk","Özel Hukuk","Kamu Hukuku","Konferans Salonu","Amfi","Derslik Hukuk"]},
+  {num:20,name:"Kütüphane",           nameEN:"Library",             gps:[41.06635,28.94598],cats:["eğitsel","sosyal"],emoji:"📚",desc:"Mehmet Kenan Tekdağ Kütüphanesi.",descEN:"Mehmet Kenan Tekdağ Library.",photo:`${BASE_PATH}/buildings/kutuphane.jpg`,keywords:["Tekdağ","Mehmet Kenan","Okuma Salonu","Kitap","Araştırma","Veritabanı","Kütüphane"]},
+  {num:22,name:"MIDL",                gps:[41.06726,28.94597],cats:["sosyal"],   emoji:"🎬",desc:"Medya ve İletişim Tasarım Laboratuvarı.",descEN:"Media and Communication Design Laboratory.",photo:`${BASE_PATH}/buildings/midl.jpg`},
+  {num:31,name:"Gastronomi Mutfak",   nameEN:"Gastronomy Kitchen",  gps:[41.06603,28.94565],cats:["eğitsel"],  emoji:"👨‍🍳",desc:"Gastronomi ve Mutfak Sanatları bölümü – uygulama mutfakları.",descEN:"Gastronomy and Culinary Arts department – practice kitchens.",photo:`${BASE_PATH}/buildings/gastronomi.jpg`},
+  {num:37,name:"Blab",                gps:[41.06753,28.94561],cats:["sosyal"],   emoji:"☕",desc:"Blab Coffee – kampüs kafe alanı.",descEN:"Blab Coffee – campus café.",photo:`${BASE_PATH}/buildings/blab.jpg`},
   // ── İdari ─────────────────────────────────────────────────────────────────
   {num:10,name:"Rektörlük",           nameEN:"Rector's Office",     gps:[41.06833,28.94617],cats:["idari"],    emoji:"🏛️",desc:"Rektörlük idari ofisleri.",descEN:"Rectorate administrative offices.",keywords:["Rektör","Genel Sekreter","Yönetim","İdari","Dekanlık","Akademik Kurul"]},
-  {num:14,name:"ÇSM Ofisler",         nameEN:"CSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"CSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:"/buildings/csm-ofisler.jpg",keywords:["Öğrenci Kulüpleri","ÇSM"]},
-  {num:36,name:"Öğrenci İşleri",      nameEN:"Student Affairs",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat.",descEN:"Student Affairs Directorate – next to CSM Offices, upper floor.",photo:"/buildings/ogrenci-isleri.jpg",keywords:["Transkript","Belge","Diploma","Mezuniyet","Kayıt Yenileme","Öğrenci Belgesi","Sertifika","Vizeler","Not"]},
-  {num:45,name:"Uluslararası Merkez", nameEN:"International Center",gps:[41.06769,28.94670],cats:["idari"],    emoji:"🌍",desc:"Uluslararası Öğrenci Merkezi.",descEN:"International Student Center.",photo:"/buildings/uluslararasi.jpg",keywords:["Yabancı Öğrenci","Mübadele","Uluslararası Öğrenci","International Student"]},
-  {num:21,name:"EN-1",               gps:[41.06757,28.94543],cats:["eğitsel","idari"],emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – İnşaat Mühendisliği, Makine Mühendisliği, Mekatronik Mühendisliği, Matematik, Moleküler Biyoloji ve Genetik.",descEN:"Faculty of Engineering and Natural Sciences – Civil Engineering, Mechanical Engineering, Mechatronics Engineering, Mathematics, Molecular Biology and Genetics."},
-  {num:30,name:"ÖDM",                gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",descEN:"Student Support Center (ÖDM) – counseling and career services.",photo:"/buildings/odm.jpg",keywords:["Danışmanlık","Kariyer","Psikolojik Destek","PDR","Rehberlik","Öğrenci Destek","Psikoloji Merkezi"]},
-  {num:32,name:"BT",                 gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",descEN:"Information Technologies unit.",photo:"/buildings/bt.jpg",keywords:["Bilişim","IT","Teknik Destek","Wifi","İnternet","Şifre","Parola","Yazıcı","Laptop","BİT","Helpdesk"]},
-  {num:40,name:"Yapı Kredi",         gps:[41.06746,28.94560],cats:["işlevsel"], emoji:"🏦",desc:"Yapı Kredi bankacılık şubesi.",descEN:"Yapı Kredi bank branch."},
-  {num:46,name:"Yapı Kredi ATM",     gps:[41.06828,28.94469],cats:["işlevsel"], emoji:"🏧",desc:"Yapı Kredi ATM – kafeterya yanı.",descEN:"Yapı Kredi ATM – next to cafeteria.",photo:"/buildings/yapikredi-atm.jpg"},
-  {num:47,name:"VakıfBank ATM",      gps:[41.06702,28.94539],cats:["işlevsel"], emoji:"🏧",desc:"VakıfBank ATM – güney kampüs.",descEN:"VakıfBank ATM – south campus.",photo:"/buildings/vakifbank-atm.jpg"},
+  {num:14,name:"ÇSM Ofisler",         nameEN:"CSM Offices",         gps:[41.06725,28.94627],cats:["idari"],    emoji:"🏢",desc:"ÇSM üst kat – öğrenci kulüp ve ofisleri. ETM Eğitim Teknolojileri Uygulama ve Araştırma Merkezi (Eski UZEM).",descEN:"CSM upper floor – student clubs and offices. ETM Educational Technology Application and Research Center.",photo:`${BASE_PATH}/buildings/csm-ofisler.jpg`,keywords:["Öğrenci Kulüpleri","ÇSM"]},
+  {num:36,name:"Öğrenci İşleri",      nameEN:"Student Affairs",     gps:[41.06709,28.94646],cats:["idari"],    emoji:"📋",desc:"Öğrenci İşleri Direktörlüğü – ÇSM Ofisler yanı, üst kat.",descEN:"Student Affairs Directorate – next to CSM Offices, upper floor.",photo:`${BASE_PATH}/buildings/ogrenci-isleri.jpg`,keywords:["Transkript","Belge","Diploma","Mezuniyet","Kayıt Yenileme","Öğrenci Belgesi","Sertifika","Vizeler","Not"]},
+  {num:45,name:"Uluslararası Merkez", nameEN:"International Center",gps:[41.06769,28.94670],cats:["idari"],    emoji:"🌍",desc:"Uluslararası Öğrenci Merkezi.",descEN:"International Student Center.",photo:`${BASE_PATH}/buildings/uluslararasi.jpg`,keywords:["Yabancı Öğrenci","Mübadele","Uluslararası Öğrenci","International Student"]},
+  {num:21,name:"EN-1",                gps:[41.06757,28.94543],cats:["eğitsel","idari"],emoji:"🏢",desc:"Mühendislik ve Doğa Bilimleri Fakültesi – İnşaat Mühendisliği, Makine Mühendisliği, Mekatronik Mühendisliği, Matematik, Moleküler Biyoloji ve Genetik.",descEN:"Faculty of Engineering and Natural Sciences – Civil Engineering, Mechanical Engineering, Mechatronics Engineering, Mathematics, Molecular Biology and Genetics."},
+  {num:30,name:"ÖDM",                 gps:[41.06536,28.94620],cats:["idari"],    emoji:"🤝",desc:"Öğrenci Destek Merkezi (ÖDM) – danışmanlık ve kariyer.",descEN:"Student Support Center (ÖDM) – counseling and career services.",photo:`${BASE_PATH}/buildings/odm.jpg`,keywords:["Danışmanlık","Kariyer","Psikolojik Destek","PDR","Rehberlik","Öğrenci Destek","Psikoloji Merkezi"]},
+  {num:32,name:"BT",                  gps:[41.06589,28.94637],cats:["idari"],    emoji:"💻",desc:"Bilişim Teknolojileri birimi.",descEN:"Information Technologies unit.",photo:`${BASE_PATH}/buildings/bt.jpg`,keywords:["Bilişim","IT","Teknik Destek","Wifi","İnternet","Şifre","Parola","Yazıcı","Laptop","BİT","Helpdesk"]},
+  {num:40,name:"Yapı Kredi",          gps:[41.06746,28.94560],cats:["işlevsel"], emoji:"🏦",desc:"Yapı Kredi bankacılık şubesi.",descEN:"Yapı Kredi bank branch."},
+  {num:46,name:"Yapı Kredi ATM",      gps:[41.06828,28.94469],cats:["işlevsel"], emoji:"🏧",desc:"Yapı Kredi ATM – kafeterya yanı.",descEN:"Yapı Kredi ATM – next to cafeteria.",photo:`${BASE_PATH}/buildings/yapikredi-atm.jpg`},
+  {num:47,name:"VakıfBank ATM",       gps:[41.06702,28.94539],cats:["işlevsel"], emoji:"🏧",desc:"VakıfBank ATM – güney kampüs.",descEN:"VakıfBank ATM – south campus.",photo:`${BASE_PATH}/buildings/vakifbank-atm.jpg`},
   // ── Sosyal ────────────────────────────────────────────────────────────────
-  {num:4, name:"Yemekhane",           nameEN:"Cafeteria",           gps:[41.06814,28.94451],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",descEN:"Main campus cafeteria.",photo:"/buildings/yemekhane.jpg"},
-  {num:5, name:"Nero",               gps:[41.06809,28.94477],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",descEN:"Caffè Nero coffee.",logo:"/buildings/nero-logo.png",photo:"/buildings/nero.jpg"},
-  {num:38,name:"Starbucks",          gps:[41.06815,28.94466],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",descEN:"Starbucks Coffee – campus branch.",logo:"/buildings/starbucks-logo.png",logoSize:20,photo:"/buildings/starbucks.jpg"},
+  {num:4, name:"Yemekhane",           nameEN:"Cafeteria",           gps:[41.06814,28.94451],cats:["sosyal"],   emoji:"🍽️",desc:"Kampüs ana yemekhanesi.",descEN:"Main campus cafeteria.",photo:`${BASE_PATH}/buildings/yemekhane.jpg`},
+  {num:5, name:"Nero",                gps:[41.06809,28.94477],cats:["sosyal"],   emoji:"☕",desc:"Caffè Nero kahve.",descEN:"Caffè Nero coffee.",logo:`${BASE_PATH}/buildings/nero-logo.png`,photo:`${BASE_PATH}/buildings/nero.jpg`},
+  {num:38,name:"Starbucks",           gps:[41.06815,28.94466],cats:["sosyal"],   emoji:"☕",desc:"Starbucks Coffee – kampüs şubesi.",descEN:"Starbucks Coffee – campus branch.",logo:`${BASE_PATH}/buildings/starbucks-logo.png`,logoSize:20,photo:`${BASE_PATH}/buildings/starbucks.jpg`},
   {num:23,name:"Lokanta",             nameEN:"Restaurant",          gps:[41.06701,28.94566],cats:["sosyal"],   emoji:"🍜",desc:"Sosyal Lokanta – Lokma.",descEN:"Social Restaurant – Lokma."},
-  {num:24,name:"Espressolab",        gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve.",descEN:"Espressolab coffee.",photo:"/buildings/espressolab.jpg"},
-  {num:39,name:"Sunpeak",            gps:[41.06807,28.94463],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak Coffee – kampüs yeni binası.",descEN:"Sunpeak Coffee – new campus building.",photo:"/buildings/sunpeak.jpg",logo:"/buildings/sunpeak-logo.png"},
-  {num:15,name:"Enerji Müzesi",       nameEN:"Energy Museum",       gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık.",descEN:"santralistanbul Energy Museum – open to the public.",photo:"/buildings/enerji-muzesi.jpg"},
-  {num:27,name:"Etkinlik Çadırı",     nameEN:"Event Tent",          gps:[41.06562,28.94564],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",descEN:"Outdoor event tent area.",photo:"/buildings/etkinlik-cadiri.jpg"},
-  {num:35,name:"Amfi Girişi",         nameEN:"Amphitheater",        gps:[41.06463,28.94543],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu girişi.",descEN:"Open-air amphitheater entrance.",photo:"/buildings/amfi.jpg",photos:["/buildings/amfi.jpg","/buildings/amfi2.jpg"]},
+  {num:24,name:"Espressolab",         gps:[41.06692,28.94569],cats:["sosyal"],   emoji:"☕",desc:"Espressolab kahve.",descEN:"Espressolab coffee.",photo:`${BASE_PATH}/buildings/espressolab.jpg`},
+  {num:39,name:"Sunpeak",             gps:[41.06807,28.94463],cats:["sosyal"],   emoji:"🌞",desc:"Sunpeak Coffee – kampüs yeni binası.",descEN:"Sunpeak Coffee – new campus building.",photo:`${BASE_PATH}/buildings/sunpeak.jpg`,logo:`${BASE_PATH}/buildings/sunpeak-logo.png`},
+  {num:15,name:"Enerji Müzesi",       nameEN:"Energy Museum",       gps:[41.06659,28.94666],cats:["sosyal"],   emoji:"⚡",desc:"santralistanbul Enerji Müzesi – halka açık.",descEN:"santralistanbul Energy Museum – open to the public.",photo:`${BASE_PATH}/buildings/enerji-muzesi.jpg`},
+  {num:27,name:"Etkinlik Çadırı",     nameEN:"Event Tent",          gps:[41.06562,28.94564],cats:["sosyal"],   emoji:"⛺",desc:"Açık hava etkinlik çadırı alanı.",descEN:"Outdoor event tent area.",photo:`${BASE_PATH}/buildings/etkinlik-cadiri.jpg`},
+  {num:35,name:"Amfi Girişi",         nameEN:"Amphitheater",        gps:[41.06463,28.94543],cats:["sosyal"],   emoji:"🎭",desc:"Açık hava amfi tiyatrosu girişi.",descEN:"Open-air amphitheater entrance.",photo:`${BASE_PATH}/buildings/amfi.jpg`,photos:[`${BASE_PATH}/buildings/amfi.jpg`,`${BASE_PATH}/buildings/amfi2.jpg`]},
   // ── İşlevsel ──────────────────────────────────────────────────────────────
-  {num:28,name:"Kuluçka",             nameEN:"Incubator",           gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner.",descEN:"BİLGİ Social Incubation Center – CARE container.",photo:"/buildings/kulucka.jpg"},
-  {num:29,name:"Revir",               nameEN:"Health Center",       gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",descEN:"Campus health unit.",photo:"/buildings/revir.jpg",keywords:["Doktor","Sağlık","Hasta","İlaç","Hemşire","Acil","Sağlık Merkezi","Tıp","Revir"]},
-  {num:42,name:"Kuaför",              nameEN:"Hair Salon",          gps:[41.06820,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – HairCraft.",descEN:"Campus hair and barber salon – HairCraft.",logo:"/buildings/haircraft-logo.png",photo:"/buildings/haircraft.jpg"},
-  {num:43,name:"Çalışma Alanı",       nameEN:"Study Area",          gps:[41.06809,28.94445],cats:["işlevsel"], emoji:"📖",desc:"Yemekhane arkasındaki öğrenci çalışma salonu.",descEN:"Student study hall behind the cafeteria.",photo:"/buildings/calisma-salonu.jpg"},
+  {num:28,name:"Kuluçka",             nameEN:"Incubator",           gps:[41.06501,28.94550],cats:["işlevsel"], emoji:"💡",desc:"BİLGİ Sosyal Kuluçka Merkezi – CARE konteyner.",descEN:"BİLGİ Social Incubation Center – CARE container.",photo:`${BASE_PATH}/buildings/kulucka.jpg`},
+  {num:29,name:"Revir",               nameEN:"Health Center",       gps:[41.06548,28.94629],cats:["işlevsel"], emoji:"🏥",desc:"Kampüs sağlık birimi.",descEN:"Campus health unit.",photo:`${BASE_PATH}/buildings/revir.jpg`,keywords:["Doktor","Sağlık","Hasta","İlaç","Hemşire","Acil","Sağlık Merkezi","Tıp","Revir"]},
+  {num:42,name:"Kuaför",              nameEN:"Hair Salon",          gps:[41.06820,28.94466],cats:["işlevsel"], emoji:"✂️",desc:"Kampüs kuaför ve berber salonu – HairCraft.",descEN:"Campus hair and barber salon – HairCraft.",logo:`${BASE_PATH}/buildings/haircraft-logo.png`,photo:`${BASE_PATH}/buildings/haircraft.jpg`},
+  {num:43,name:"Çalışma Alanı",       nameEN:"Study Area",          gps:[41.06809,28.94445],cats:["işlevsel"], emoji:"📖",desc:"Yemekhane arkasındaki öğrenci çalışma salonu.",descEN:"Student study hall behind the cafeteria.",photo:`${BASE_PATH}/buildings/calisma-salonu.jpg`},
   // ── Otopark ───────────────────────────────────────────────────────────────
-  {num:26,name:"Otopark",             nameEN:"Car Park",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney.",descEN:"Main campus car park – south.",photo:"/buildings/otopark.jpg",photos:["/buildings/otopark.jpg","/buildings/otopark2.jpg"]},
-  {num:34,name:"Otopark Girişi",      nameEN:"Parking Entrance",    gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası.",descEN:"Car park vehicle entry/exit point.",photo:"/buildings/otopark-girisi.jpg"},
-  {num:44,name:"Arka Otopark",        nameEN:"North Car Park",      gps:[41.06930,28.94449],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – kuzey taraf.",descEN:"Rear campus car park – north side.",photo:"/buildings/arka-otopark.jpg"},
+  {num:26,name:"Otopark",             nameEN:"Car Park",            gps:[41.06587,28.94494],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs ana araç otoparkı – güney.",descEN:"Main campus car park – south.",photo:`${BASE_PATH}/buildings/otopark.jpg`,photos:[`${BASE_PATH}/buildings/otopark.jpg`,`${BASE_PATH}/buildings/otopark2.jpg`]},
+  {num:34,name:"Otopark Girişi",      nameEN:"Parking Entrance",    gps:[41.06471,28.94660],cats:["otopark"],  emoji:"🚗",desc:"Otopark araç giriş/çıkış noktası.",descEN:"Car park vehicle entry/exit point.",photo:`${BASE_PATH}/buildings/otopark-girisi.jpg`},
+  {num:44,name:"Arka Otopark",        nameEN:"North Car Park",      gps:[41.06930,28.94449],cats:["otopark"],  emoji:"🅿️",desc:"Kampüs arka otopark – kuzey taraf.",descEN:"Rear campus car park – north side.",photo:`${BASE_PATH}/buildings/arka-otopark.jpg`},
 ];
 
 // ── İkonlar ───────────────────────────────────────────────────────────────────
@@ -489,7 +491,7 @@ function ZoomWatcher({setShowLabels}:{setShowLabels:(v:boolean)=>void}){
 const PERSON=L.divIcon({
   html:`<div style="position:relative;width:64px;height:64px;">
     <div style="position:absolute;inset:-8px;border-radius:50%;background:rgba(249,115,22,0.20);animation:gps-pulse 2s ease-out infinite;"></div>
-    <img src="/karpuzgif.gif" style="position:absolute;inset:0;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));"/>
+    <img src="${BASE_PATH}/karpuzgif.gif" style="position:absolute;inset:0;width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));"/>
   </div>`,
   className:"",iconSize:[64,64],iconAnchor:[32,32]
 });
@@ -499,7 +501,7 @@ const PERSON=L.divIcon({
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
 export default function CampusMap(){
   // Temel state
-  const[from,setFrom]=useState<Loc|null>(null);    // null = GPS veya seçilmedi
+  const[from,setFrom]=useState<Loc|null>(null);     // null = GPS veya seçilmedi
   const[fromGPS,setFromGPS]=useState(false);        // from = kullanıcının GPS konumu
   const[to,setTo]=useState<Loc|null>(null);
   const[route,setRoute]=useState<[number,number][]|null>(null);
@@ -803,7 +805,7 @@ export default function CampusMap(){
   // Graf
   const[gd,setGd]=useState<GD|null>(null);
   const adList=useMemo(()=>gd?adj(gd):null,[gd]);
-  useEffect(()=>{fetch("/campus_graph.json").then(r=>r.json()).then(setGd).catch(()=>{});},[]);
+  useEffect(()=>{fetch(`${BASE_PATH}/campus_graph.json`).then(r=>r.json()).then(setGd).catch(()=>{});},[]);
 
   // Aktif adım (navigasyon veya simülasyon)
   const[curStepIdx,setCurStepIdx]=useState(0);
@@ -1262,12 +1264,12 @@ export default function CampusMap(){
           opacity:splash==="fading"?0:1,
           transition:"opacity 0.75s ease",
           pointerEvents:splash==="fading"?"none":"auto"}}>
-          <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz'a Sor"
+          <img src={isEN()?`${BASE_PATH}/karpuza-sor-en.png`:`${BASE_PATH}/karpuza-sor.png`} alt="Karpuz'a Sor"
             style={{height:"50vh",width:"auto",maxWidth:"82vw",
               objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 48px rgba(0,0,0,0.7)"}}/>
           <div style={{marginTop:28,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
-            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
+            <img src={`${BASE_PATH}/bilgi-logotype.png`} alt="İstanbul Bilgi Üniversitesi"
               style={{height:36,width:"auto",maxWidth:"72vw",objectFit:"contain",opacity:.95}}/>
             <div style={{color:"rgba(255,255,255,0.50)",fontSize:12,letterSpacing:.6}}>
               {t('campusName')}
@@ -1307,7 +1309,7 @@ export default function CampusMap(){
           </div>
 
           {/* Karpuz logosu – büyük */}
-          <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz'a Sor"
+          <img src={isEN()?`${BASE_PATH}/karpuza-sor-en.png`:`${BASE_PATH}/karpuza-sor.png`} alt="Karpuz'a Sor"
             style={{height:220,width:"auto",objectFit:"contain",borderRadius:24,
               boxShadow:"0 12px 40px rgba(0,0,0,0.7)",marginBottom:16}}/>
 
@@ -1410,13 +1412,13 @@ export default function CampusMap(){
           <div style={{marginTop:24,display:"flex",gap:20,alignItems:"center",justifyContent:"center"}}>
             <a href="https://www.instagram.com/bilgiedtech" target="_blank" rel="noopener noreferrer"
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,textDecoration:"none"}}>
-              <img src="/instagram-logo.png" alt="Instagram"
+              <img src={`${BASE_PATH}/instagram-logo.png`} alt="Instagram"
                 style={{width:36,height:36,objectFit:"contain",borderRadius:8,opacity:0.85}}/>
               <span style={{color:"rgba(255,255,255,0.45)",fontSize:9,letterSpacing:.3}}>@bilgiedtech</span>
             </a>
             <a href="https://www.youtube.com/@bilgiUZEM" target="_blank" rel="noopener noreferrer"
               style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,textDecoration:"none"}}>
-              <img src="/youtube-logo.png" alt="YouTube"
+              <img src={`${BASE_PATH}/youtube-logo.png`} alt="YouTube"
                 style={{width:36,height:36,objectFit:"contain",borderRadius:8,opacity:0.85}}/>
               <span style={{color:"rgba(255,255,255,0.45)",fontSize:9,letterSpacing:.3}}>@bilgiUZEM</span>
             </a>
@@ -1424,7 +1426,7 @@ export default function CampusMap(){
 
           {/* BİLGİ logotype alt */}
           <div style={{marginTop:16,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-            <img src="/bilgi-logotype.png" alt="BİLGİ"
+            <img src={`${BASE_PATH}/bilgi-logotype.png`} alt="BİLGİ"
               style={{height:22,width:"auto",maxWidth:"60vw",objectFit:"contain",opacity:.5}}/>
             <div style={{color:"rgba(255,255,255,0.25)",fontSize:10,letterSpacing:.4}}>
               {t('campusName')}
@@ -1492,7 +1494,7 @@ export default function CampusMap(){
             <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
               background:"#bbf7d0",flexShrink:0,
               boxShadow:"0 3px 12px rgba(22,163,74,0.3)"}}>
-              <img src="/karpuz-karsilama.png" alt="Karpuz"
+              <img src={`${BASE_PATH}/karpuz-karsilama.png`} alt="Karpuz"
                 style={{width:"100%",height:"100%",objectFit:"cover"}}/>
             </div>
 
@@ -1766,7 +1768,7 @@ export default function CampusMap(){
           {/* Sol: BİLGİ logotype + kullanıcı selamı – tıklayınca yenile */}
           <div onClick={()=>window.location.reload()}
             style={{display:"flex",flexDirection:"column",alignItems:"flex-start",gap:3,flexShrink:0,cursor:"pointer"}}>
-            <img src="/bilgi-logotype.png" alt="İstanbul Bilgi Üniversitesi"
+            <img src={`${BASE_PATH}/bilgi-logotype.png`} alt="İstanbul Bilgi Üniversitesi"
               style={{height:30,width:"auto",maxWidth:140,objectFit:"contain",opacity:1}}/>
             <div style={{color:"rgba(255,255,255,0.75)",fontSize:9.5,letterSpacing:.4,lineHeight:1,paddingLeft:2}}>
               {userProfile?greetUser(userProfile.name.split(" ")[0]):t('campusName')}
@@ -1774,7 +1776,7 @@ export default function CampusMap(){
           </div>
           {/* Orta: Karpuza logo ortalı — uzun basış turu yeniden başlatır */}
           <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
-            <img src={isEN()?"/karpuza-sor-en.png":"/karpuza-sor.png"} alt="Karpuz'a Sor"
+            <img src={isEN()?`${BASE_PATH}/karpuza-sor-en.png`:`${BASE_PATH}/karpuza-sor.png`} alt="Karpuz'a Sor"
               style={{height:58,width:"auto",objectFit:"contain",borderRadius:8,
                 boxShadow:"0 2px 10px rgba(0,0,0,0.45)"}}
               onTouchStart={handleLogoPress}
@@ -1945,7 +1947,7 @@ export default function CampusMap(){
                     if(to&&userPos)calcRoute(userPos[0],userPos[1],to);}}
                   style={{...BTN,background:"#0d9488",color:"#fff",fontSize:13,fontWeight:700,
                     padding:"8px 16px",borderRadius:20,gap:5,minHeight:36,whiteSpace:"nowrap"}}>
-                  <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
+                  <img src={`${BASE_PATH}/location-icon.png`} alt="" style={{width:14,height:14,objectFit:"contain"}}/>
                   {t('startFromLocation')}
                 </button>
                 <div style={{flex:1,height:1,background:"#1e293b"}}/>
@@ -2436,9 +2438,9 @@ export default function CampusMap(){
             </div>
 
             {/* ── Kart: 3 katmanlı sabit yükseklik ──────────────────────────── */}
-            {/* Katman 1: Fotoğraf + kaydırılabilir metin (flex:1)            */}
-            {/* Katman 2: Preview – sabit 130px (koşullu)                     */}
-            {/* Katman 3: Footer – grid 3 sütun, asla yerinden oynamaz        */}
+            {/* Katman 1: Fotoğraf + kaydırılabilir metin (flex:1)             */}
+            {/* Katman 2: Preview – sabit 130px (koşullu)                      */}
+            {/* Katman 3: Footer – grid 3 sütun, asla yerinden oynamaz         */}
             <div key={`ob${onboardStep}`} onClick={(e)=>{
               const r=e.currentTarget.getBoundingClientRect();
               if(e.clientX-r.left<r.width*0.33&&onboardStep>0)
@@ -2461,7 +2463,7 @@ export default function CampusMap(){
                 <div style={{width:72,height:72,borderRadius:"50%",overflow:"hidden",
                   background:"#bbf7d0",flexShrink:0,
                   boxShadow:"0 4px 16px rgba(22,163,74,0.25)"}}>
-                  <img src="/karpuz-karsilama.png" alt="Karpuz"
+                  <img src={`${BASE_PATH}/karpuz-karsilama.png`} alt="Karpuz"
                     style={{width:"100%",height:"100%",objectFit:"cover"}}/>
                 </div>
                 <div style={{color:"#1e293b",fontSize:14,fontWeight:500,lineHeight:1.7,
@@ -2525,7 +2527,7 @@ export default function CampusMap(){
                         border:"2.5px solid #f97316",
                         boxShadow:"0 0 0 3px rgba(249,115,22,0.3),0 0 14px rgba(249,115,22,0.5)",
                         animation:"onboard-glow 1.4s ease-in-out infinite"}}>
-                        <img src="/location-icon.png" alt="" style={{width:14,height:14,objectFit:"contain"}}/>
+                        <img src={`${BASE_PATH}/location-icon.png`} alt="" style={{width:14,height:14,objectFit:"contain"}}/>
                         {t('startFromLocation')}
                       </div>
                       <div style={{background:"#0f172a",borderRadius:8,padding:"10px 12px",

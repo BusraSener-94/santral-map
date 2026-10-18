@@ -1,18 +1,14 @@
 import type { NextConfig } from "next";
 
+const repoName = "santral-map";
+
 const nextConfig: NextConfig = {
-  devIndicators: false,
-  async headers() {
-    return [
-      {
-        source: "/sw.js",
-        headers: [
-          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
-          { key: "Pragma", value: "no-cache" },
-        ],
-      },
-    ];
+  output: "export",
+  basePath: process.env.NODE_ENV === "production" ? `/${repoName}` : "",
+  images: {
+    unoptimized: true,
   },
+  devIndicators: false,
 };
 
 export default nextConfig;

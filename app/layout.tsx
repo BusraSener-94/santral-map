@@ -17,10 +17,8 @@ const siteTitle = isEnBuild ? "Ask Karpuz" : "Karpuz'a Sor";
 const siteDesc = isEnBuild
   ? "Istanbul Bilgi University Santral Campus Navigation"
   : "İstanbul Bilgi Üniversitesi Santral Kampüs Navigasyon";
-const siteUrl = isEnBuild
-  ? "https://santral-map-en.vercel.app"
-  : "https://santral-map.vercel.app";
-const ogImage = isEnBuild ? "/og-image-en.jpg" : "/og-image.jpg";
+const siteUrl = "https://santral-map.web.app";
+const ogImage = isEnBuild ? "/karpuza-sor-en.png" : "/karpuza-sor.png";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -30,7 +28,17 @@ export const metadata: Metadata = {
   openGraph: {
     title: siteTitle,
     description: siteDesc,
-    images: [{ url: ogImage, width: 630, height: 630 }],
+    url: siteUrl,
+    siteName: siteTitle,
+    images: [{ url: ogImage, width: 630, height: 630, alt: siteTitle }],
+    locale: isEnBuild ? "en_US" : "tr_TR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDesc,
+    images: [ogImage],
   },
   appleWebApp: {
     capable: true,
@@ -47,10 +55,10 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="tr"
+      lang={isEnBuild ? "en" : "tr"}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>

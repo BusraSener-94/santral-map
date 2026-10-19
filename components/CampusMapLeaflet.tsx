@@ -9,7 +9,7 @@ import "leaflet-rotate";
 import ROOMS_RAW from "../public/rooms.json";
 import { t, greetUser, tFloor, tCat, isEN, setLang } from "../lib/i18n";
 
-const BASE_PATH = "/santral-map";
+const BASE_PATH = "";
 
 type Occupant={name:string;title:string};
 type RoomEntry={oda:string;label:string;cat:string;floor:string;cap?:number;unit?:string;occupants?:Occupant[]};
@@ -2004,7 +2004,7 @@ export default function CampusMap(){
                 return(
                   <div style={{background:"#1e293b",borderRadius:10,boxShadow:"0 2px 12px rgba(0,0,0,0.5)",
                     maxHeight:200,overflowY:"auto",marginTop:-2}}>
-                    {entRes.slice(0,4).map((ent,i)=>{
+                    {entRes.slice(0,4).map((ent)=>{
                       const parent=LOCS.find(l=>l.num===ent.parentPoiNum);
                       if(!parent)return null;
                       return(
